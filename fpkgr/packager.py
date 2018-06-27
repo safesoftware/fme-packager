@@ -4,6 +4,8 @@ import re
 import shutil
 import warnings
 import zipfile
+
+import png
 from jsonschema import validate
 from distutils.core import run_setup
 
@@ -17,10 +19,15 @@ def check_exists_and_copy(src, dest):
     shutil.copy(src, dest)
 
 
-def ensure_png(path):
+def enforce_png(path, min_width=0, min_height=0, square=False):
     filetype = imghdr.what(path)
     if filetype != 'png':
         raise ValueError("{} must be PNG, not {}".format(path, filetype))
+    width, height, _, _ = png.Reader(filename=path).read()
+    if width < min_width or height < min_height:
+        raise ValueError("Min dimensions are {}x{}. {} is {}x{}".format(min_width, min_height, path, width, height))
+    if square and width != height:
+        raise ValueError("{} is not square".format(path))
 
 
 def check_fmx(package_metadata, transformer_metadata, fmx_path):
@@ -119,7 +126,7 @@ class FMEPackager:
 
             icon_path = os.path.join(src, '{}.png'.format(web_filesystem.name))
             if os.path.exists(icon_path):
-                ensure_png(icon_path)
+                enforce_png(icon_path)
                 # Specification doesn't say anything about dimensions.
                 shutil.copy(icon_path, dest)
 
@@ -128,8 +135,7 @@ class FMEPackager:
         if not os.path.exists(path):
             print('FME package has no icon')
             return
-        # TODO: Enforce dimensions.
-        ensure_png(path)
+        enforce_png(path, min_width=200, min_height=200, square=True)
         shutil.copy(path, self.build_dir)
 
     def _build_wheels(self):

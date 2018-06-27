@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 click = "*"
 "e1839a8" = {path = ".", editable = true}
+pypng = "*"
 
 [dev-packages]
 

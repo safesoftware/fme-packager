@@ -26,6 +26,7 @@ setup(
         "cookiecutter",
         "wheel",
         "jsonschema",
+        "pypng",
     ],
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
