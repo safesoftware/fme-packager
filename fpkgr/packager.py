@@ -10,7 +10,7 @@ from jsonschema import validate
 from distutils.core import run_setup
 
 from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
-from fpkgr.operations import build_fpkg_filename
+from fpkgr.operations import build_fpkg_filename, parse_formatinfo
 
 
 def check_exists_and_copy(src, dest):
@@ -27,7 +27,7 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
     if width < min_width or height < min_height:
         raise ValueError("Min dimensions are {}x{}. {} is {}x{}".format(min_width, min_height, path, width, height))
     if square and width != height:
-        raise ValueError("{} is not square".format(path))
+        raise ValueError("{} must be square".format(path))
 
 
 def check_fmx(package_metadata, transformer_metadata, fmx_path):
@@ -38,13 +38,37 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
         raise ValueError('{} missing TRANSFORMER_NAME or VERSION'.format(fmx_path))
 
     fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, transformer_metadata.name)
-    for match in re.finditer(r'\nTRANSFORMER_NAME:\s*([^\n]+)\n'.format(fqname), contents):
+    transformer_names = list(re.finditer(r'\nTRANSFORMER_NAME:\s*([^\n]+)\n'.format(fqname), contents))
+    if not transformer_names:
+        raise ValueError("{} missing TRANSFORMER_NAME".format(fmx_path))
+    for match in transformer_names:
         name = match.group(1)
         if name != fqname:
             raise ValueError("{} all TRANSFORMER_NAME need to be '{}', not '{}'".format(fmx_path, fqname, name))
 
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
+
+
+def check_fmf(package_metadata, format_metadata, fmf_path):
+    with open(fmf_path) as inf:
+        contents = inf.read()
+
+    fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name.upper())
+
+    if 'SOURCE_READER {}'.format(fqname) not in contents or 'FORMAT_NAME {}'.format(fqname) not in contents:
+        raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
+
+
+def check_formatinfo(package_metadata, format_metadata, db_path):
+    with open(db_path) as inf:
+        contents = inf.read()
+
+    fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name.upper())
+
+    formatinfo = parse_formatinfo(contents)
+    if formatinfo.FORMAT_NAME != fqname:
+        raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
 
 class FMEPackager:
@@ -78,6 +102,36 @@ class FMEPackager:
         self._build_wheels()
         self._copy_wheels()
         self._check_wheels()
+
+    def _copy_formats(self):
+        # First, copy all files we don't specifically care about.
+        # Ignore FMF and etc for formats not mentioned in metadata.
+        src = os.path.join(self.src_dir, 'transformers')
+        dst = os.path.join(self.build_dir, 'transformers')
+        if os.path.isdir(src):
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns('*.fmf', '*.db', '*.fms'))
+
+        for format in self.metadata.formats:
+            print('Working on format: {}'.format(format.name))
+
+            if not os.path.isfile(os.path.join(dst, '{}.md'.format(format.name))):
+                raise ValueError("{} is missing doc".format(format.name))
+
+            fms_path = os.path.join(src, "{}.fms".format(format.name))
+            if os.path.isfile(fms_path):
+                shutil.copy(fms_path, dst)
+
+            fmf_path = os.path.join(src, "{}.fmf".format(format.name))
+            if not os.path.exists(fmf_path):
+                raise ValueError("{} is in metadata, but was not found".format(fmf_path))
+            check_fmf(self.metadata, format, fmf_path)
+            shutil.copy(fmf_path, dst)
+
+            db_path = os.path.join(src, "{}.db".format(format.db))
+            if not os.path.exists(db_path):
+                raise ValueError("{} is in metadata, but was not found".format(db_path))
+            check_formatinfo(self.metadata, format, db_path)
+            shutil.copy(db_path, dst)
 
     def _copy_transformers(self):
         # First, copy all files we don't specifically care about.
@@ -136,6 +190,7 @@ class FMEPackager:
             print('FME package has no icon')
             return
         enforce_png(path, min_width=200, min_height=200, square=True)
+        print("Icon is OK")
         shutil.copy(path, self.build_dir)
 
     def _build_wheels(self):

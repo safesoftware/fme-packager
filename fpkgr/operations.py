@@ -1,3 +1,6 @@
+from collections import namedtuple
+
+
 def split_fpkg_filename(filename):
     """
     Split a filename of the form `A.B-C.fpkg`.
@@ -26,3 +29,15 @@ def build_fpkg_filename(publisher_uid, package_uid, version):
     if not publisher_uid or not package_uid or not version:
         raise ValueError("All parts of the fpkg filename are required")
     return "{}.{}-{}.fpkg".format(publisher_uid, package_uid, version)
+
+
+FORMATINFO_HDR = 'FORMAT_NAME|FORMAT_LONG_NAME|DATASET_TYPE|DIRECTION|AUTOMATED_TRANSLATION_FLAG|COORDSYS_AWARE|FILTER|FORMAT_TYPE|USE_NATIVE_SPATIAL_INDEX|SOURCE_SETTINGS|DESTINATION_SETTINGS|VISIBLE|MIN_VERSION|MAX_VERSION|FORMAT_FAMILY|HAS_SIDECARS'
+FormatInfo = namedtuple('FormatInfo', FORMATINFO_HDR.replace('|', ' '))
+
+
+def parse_formatinfo(line):
+    parts = line.strip().split('|')
+    if len(parts) != len(FORMATINFO_HDR.split('|')):
+        print(line)
+        raise ValueError('FormatInfo has {} elements, but expects {}'.format(len(parts), len(FORMATINFO_HDR.split('|'))))
+    return FormatInfo(*parts)
