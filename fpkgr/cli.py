@@ -1,13 +1,9 @@
 """
 fpkgr command line interface
 """
-import os
-
 import click
 from cookiecutter.main import cookiecutter
-from jsonschema import validate as jsonschema_validate
 
-from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
 from fpkgr.packager import FMEPackager
 
 
@@ -38,27 +34,13 @@ def init(template):
 
 
 @cli.command()
-@click.argument('path', type=click.Path(exists=True, file_okay=False, writable=False))
-def validate(path):
-    """
-    Validate an FME Package.
-
-    path -- Path to an FME Package directory.
-    """
-    schema = load_metadata_json_schema()
-    metadata = load_fpkg_metadata(path)
-    jsonschema_validate(metadata.dict, schema)
-    print("VALIDATION PASSED")
-    print("{}.{} v{}".format(metadata.uid, metadata.publisher_uid, metadata.version))
-
-
-@cli.command()
 @click.argument('path', type=click.Path(exists=True, file_okay=False, writable=True))
 def pack(path):
     """
     Create an .fpkg file.
 
-    Package contents are validated first.
+    Package contents are validated during this process.
+    Components not referenced by the package's metadata.yml may not be included in the resulting fpkg.
 
     path -- Path to an FME Package directory.
     """
