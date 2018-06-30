@@ -21,12 +21,12 @@ setup(
     author_email="carson.lam@safe.com",
     url="https://gtb-1.safe.internal/clam/fpkgr",
     install_requires=[
-        "click",
-        "ruamel.yaml",
-        "cookiecutter",
-        "wheel",
-        "jsonschema",
-        "pypng",
+        "click >=6.7,<7.0",
+        "ruamel.yaml >=0.15.40,<1.0.0",
+        "cookiecutter >=1.6.0,<2.0.0",
+        "wheel >=0.31.1,<1.0.0",
+        "jsonschema >=2.6.0,<3.0.0",
+        "pypng >=0.0.18,<1.0.0",
     ],
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
