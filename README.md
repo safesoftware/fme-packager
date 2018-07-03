@@ -26,7 +26,7 @@ Once installed, the `fpkgr` command is available on your system.
 
 * Validate package.yml against the FME Packages Specification.
 * Verifies that components listed in package.yml are present.
-* Checks that transformer and version names are correct.
+* Checks that transformer and format names are valid and well-formed.
 * Verifies that the transformer version in the package.yml is
   included in the FMX.
 * Excludes components that are present in directories,
@@ -37,6 +37,18 @@ Once installed, the `fpkgr` command is available on your system.
 
 These steps are done while copying files into a temporary build directory,
 so existing files are not modified. 
+
+
+## Get started with a template
+
+`fpkgr init [template name]` helps you get started with developing FME Packages by
+using [Cookiecutter](https://cookiecutter.readthedocs.io/) templates. 
+
+Available templates:
+
+* `transformer`: [Transformer template for FME Packages](http://gtb-1.safe.internal/clam/fpkg-transformer-template)
+
+_These templates are not currently bundled with fpkgr, so gtb-1 must be accessible._
 
 
 ## Make an fpkg distribution
