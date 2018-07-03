@@ -28,8 +28,10 @@ def init(template):
 
     The template is initialized in a subdirectory of the current directory.
 
-    template -- name of the template to use
+    TEMPLATE -- name of the template to use.
+    "transformer" is the only one currently available.
     """
+    print("Enter the values to use for the template. Press Enter to accept the [default].")
     cookiecutter(COOKIECUTTER_TEMPLATES[template])
 
 

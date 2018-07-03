@@ -200,7 +200,7 @@ class FMEPackager:
             setup_py_path = os.path.join(path, 'setup.py')
             if os.path.isdir(path) and os.path.isfile(setup_py_path):
                 os.chdir(path)
-                shutil.rmtree(os.path.join(path, 'build'))
+                shutil.rmtree('build')
                 try:
                     run_setup(setup_py_path, ['bdist_wheel'])
                 finally:

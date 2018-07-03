@@ -132,6 +132,6 @@ def load_fpkg_metadata(fpkg_path):
         return FMEPackageMetadata(YAML(typ='safe').load(f))
 
 
-def load_metadata_json_schema() -> FMEPackageMetadata:
+def load_metadata_json_schema():
     with open(os.path.join(os.path.dirname(__file__), 'spec.json')) as f:
         return json.load(f)
