@@ -197,12 +197,12 @@ class FMEPackager:
         original_cwd = os.getcwd()
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
-            setup_py_path = os.path.join(path, 'setup.py')
-            if os.path.isdir(path) and os.path.isfile(setup_py_path):
+            if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'setup.py')):
                 os.chdir(path)
-                shutil.rmtree('build')
+                if os.path.exists('build'):
+                    shutil.rmtree('build')
                 try:
-                    run_setup(setup_py_path, ['bdist_wheel'])
+                    run_setup('setup.py', ['bdist_wheel'])
                 finally:
                     os.chdir(original_cwd)
 
