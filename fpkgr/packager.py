@@ -162,7 +162,8 @@ class FMEPackager:
 
     def _copy_web_services(self):
         for web_service in self.metadata.web_services:
-            definition_path = os.path.join(self.src_dir, 'web_services', '{}.xml'.format(web_service.name))
+            # fpkg spec says web service metadata entries must be full filename. Don't assume xml.
+            definition_path = os.path.join(self.src_dir, 'web_services', web_service.name)
             if not os.path.exists(definition_path):
                 raise ValueError("Web Service '{}' is in metadata, but was not found".format(web_service.name))
             # TODO: Validate contents of XML.
