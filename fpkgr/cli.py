@@ -4,6 +4,7 @@ fpkgr command line interface
 import click
 from cookiecutter.main import cookiecutter
 
+import fpkgr
 from fpkgr.packager import FMEPackager
 
 
@@ -49,6 +50,14 @@ def pack(path):
     steps = FMEPackager(path)
     steps.build()
     steps.make_fpkg()
+
+
+@cli.command()
+def version():
+    """
+    Print the version of fpkgr.
+    """
+    print('fpkgr ' + fpkgr.__version__)
 
 
 if __name__ == "__main__":
