@@ -161,13 +161,17 @@ class FMEPackager:
             shutil.copy(fmx_path, dst)
 
     def _copy_web_services(self):
+        dest = os.path.join(self.build_dir, 'web_services')
         for web_service in self.metadata.web_services:
             # fpkg spec says web service metadata entries must be full filename. Don't assume xml.
             definition_path = os.path.join(self.src_dir, 'web_services', web_service.name)
             if not os.path.exists(definition_path):
                 raise ValueError("Web Service '{}' is in metadata, but was not found".format(web_service.name))
+            if not os.path.exists(dest):
+                os.makedirs(dest)
+
             # TODO: Validate contents of XML.
-            shutil.copy(definition_path, os.path.join(self.build_dir, 'web_services'))
+            shutil.copy(definition_path, dest)
 
     def _copy_web_filesystems(self):
         src = os.path.join(self.src_dir, 'web_filesystems')
@@ -176,6 +180,9 @@ class FMEPackager:
             definition_path = os.path.join(src, '{}.fme'.format(web_filesystem.name))
             if not os.path.exists(definition_path):
                 raise ValueError("Web Filesystem '{}' is in metadata, but was not found".format(web_filesystem.name))
+            if not os.path.exists(dest):
+                os.makedirs(dest)
+
             # TODO: Validate contents of .fme file.
             shutil.copy(definition_path, dest)
 
