@@ -10,7 +10,7 @@ from jsonschema import validate
 from distutils.core import run_setup
 
 from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
-from fpkgr.operations import build_fpkg_filename, parse_formatinfo
+from fpkgr.operations import build_fpkg_filename, parse_formatinfo, get_custom_transformer_header
 
 
 def check_exists_and_copy(src, dest):
@@ -48,6 +48,30 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
 
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
+
+
+def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
+    # Cheating here. Only looking at the topmost (first and latest) TRANSFORMER_BEGIN.
+    header = get_custom_transformer_header(fmx_path)
+
+    fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, transformer_metadata.name)
+    if header.name != fqname:
+        raise ValueError("{} name needs to be '{}', not '{}'".format(fmx_path, fqname, header.name))
+
+    if transformer_metadata.version != header.version:
+        raise ValueError("{} is missing version {}".format(fmx_path, transformer_metadata.version))
+
+    if header.insert_mode != '"Linked Always"':
+        raise ValueError('Custom transformer Insert Mode must be "Linked Always", not {}'.format(header.insert_mode))
+
+    build_num = int(header.build_num)
+    if build_num < 19000:
+        raise ValueError('Custom transformer must be created from FME build 19000 or newer')
+    if build_num < package_metadata.minimum_fme_build:
+        raise ValueError('Custom transformer created with FME build older than fme_minimum_build in package.yml')
+
+    if header.pyver != '2or3' and not header.pyver.startswith('3'):
+        raise ValueError('Custom transformer Python Compatibility must be "2or3" or 3x')
 
 
 def check_fmf(package_metadata, format_metadata, fmf_path):
@@ -157,7 +181,13 @@ class FMEPackager:
             fmx_path = os.path.join(src, "{}.fmx".format(transformer.name))
             if not os.path.isfile(fmx_path):
                 raise ValueError("{} is in metadata, but was not found".format(fmx_path))
-            check_fmx(self.metadata, transformer, fmx_path)
+
+            if get_custom_transformer_header(fmx_path):
+                print('{} is a custom transformer'.format(transformer.name))
+                check_custom_fmx(self.metadata, transformer, fmx_path)
+            else:
+                print('{} is not a custom transformer'.format(transformer.name))
+                check_fmx(self.metadata, transformer, fmx_path)
             shutil.copy(fmx_path, dst)
 
     def _copy_web_services(self):

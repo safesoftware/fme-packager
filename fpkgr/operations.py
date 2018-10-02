@@ -41,3 +41,26 @@ def parse_formatinfo(line):
         print(line)
         raise ValueError('FormatInfo has {} elements, but expects {}'.format(len(parts), len(FORMATINFO_HDR.split('|'))))
     return FormatInfo(*parts)
+
+
+TRANSFORMER_HDR = 'name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver'
+NamedTransformerHeader = namedtuple('NamedTransformerHeader', TRANSFORMER_HDR.split())
+
+
+def is_custom_transformer_header(line):
+    return line.startswith('# TRANSFORMER_BEGIN ')
+
+
+def parse_custom_transformer_header(line):
+    fields = line.replace('# TRANSFORMER_BEGIN', '').strip().split(',')
+    fields[1] = int(fields[1])  # version
+    return NamedTransformerHeader(*fields[:len(NamedTransformerHeader._fields)])
+
+
+def get_custom_transformer_header(fmx_path):
+    with open(fmx_path) as f:
+        for _ in range(0, 3):
+            line = f.readline()
+            if is_custom_transformer_header(line):
+                return parse_custom_transformer_header(line)
+    return False
