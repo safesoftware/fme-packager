@@ -58,9 +58,11 @@ def parse_custom_transformer_header(line):
 
 
 def get_custom_transformer_header(fmx_path):
-    with open(fmx_path) as f:
+    # Don't open file as text: if it has encrypted transformers, it will be mixed with binary.
+    # File readahead then causes a decoding error.
+    with open(fmx_path, 'rb') as f:
         for _ in range(0, 3):
-            line = f.readline()
+            line = f.readline().decode('utf8')  # FIXME: File may not be UTF-8.
             if is_custom_transformer_header(line):
                 return parse_custom_transformer_header(line)
     return False
