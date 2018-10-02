@@ -203,6 +203,10 @@ class FMEPackager:
 
     def _build_wheels(self):
         original_cwd = os.getcwd()
+
+        if not os.path.exists(self.src_python_dir):
+            return
+
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
             if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'setup.py')):
@@ -217,6 +221,9 @@ class FMEPackager:
     def _copy_wheels(self):
         wheels_dest = os.path.join(self.build_dir, 'python')
         os.mkdir(wheels_dest)
+
+        if not os.path.exists(self.src_python_dir):
+            return
 
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
