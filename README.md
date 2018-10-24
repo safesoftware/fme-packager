@@ -21,6 +21,8 @@ $ pip install [fpkgr].whl
 Once installed, the `fpkgr` command is available on your system.
 `fpkgr --help` shows an overview of commands.
 
+`fpkgr` is also available on arty-1.
+
 
 ## What it does
 
@@ -29,6 +31,8 @@ Once installed, the `fpkgr` command is available on your system.
 * Checks that transformer and format names are valid and well-formed.
 * Verifies that the transformer version in the package.yml is
   included in the FMX.
+* Requires that Custom Transformers be Linked Always, declare Python 3 support, 
+  and authored with a sufficiently recent version of FME Workbench.
 * Excludes components that are present in directories,
   but not listed in package.yml.
 * Cleans and rebuilds wheels for Python packages that are subdirectories of `python/`.
@@ -60,3 +64,18 @@ $ fpkgr pack my-package
 ```
 
 If everything went well, the fpkg will be in `my-package/dist/`.
+
+
+## For fpkgr maintainers
+
+To upload wheels to arty-1, first ensure your ~/.pypirc is set up to use it:
+
+```
+[local]
+repository: http://arty-1/artifactory/api/pypi/pypi
+username: (your domain username)
+password: (your API key, found in your Artifactory user profile)
+```
+
+1. `python setup.py bdist_wheel`
+2. `twine upload -r local dist/`
