@@ -1,5 +1,10 @@
 # fpkgr changes
 
+## 0.3.1
+
+* Support Custom Transformers in UTF-8.
+
+
 ## 0.3.0
 
 * Support Custom Transformers, with extra validations specific to them.
