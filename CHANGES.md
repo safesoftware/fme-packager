@@ -1,5 +1,10 @@
 # fpkgr changes
 
+## 0.4.0
+
+* Support inclusion of localization files.
+  They were added to the fpkg specification on 2018-10-26.
+
 ## 0.3.1
 
 * Support Custom Transformers in UTF-8.
