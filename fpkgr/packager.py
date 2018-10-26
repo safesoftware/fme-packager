@@ -4,6 +4,7 @@ import re
 import shutil
 import warnings
 import zipfile
+from fnmatch import fnmatch
 
 import png
 from jsonschema import validate
@@ -126,6 +127,8 @@ class FMEPackager:
         self._build_wheels()
         self._copy_wheels()
         self._check_wheels()
+
+        self._copy_localization()
 
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
@@ -278,6 +281,29 @@ class FMEPackager:
             lib_name = expected_py_package.name
             if not any(wheel_name.startswith(lib_name) for wheel_name in wheels):
                 raise ValueError("Python library '{}' is in metadata, but was not found".format(lib_name))
+
+    def _copy_localization(self):
+        # Copy any optional localization files. The only sanity check is a filename whitelist:
+        # guiprompts_??.txt, transformer-localized.??, FormatOrTransformerName_??.md
+        # ?? is a 2-letter language code.
+        # Contents of files aren't validated. It's up to Workbench to ignore anything malformed.
+        dest = os.path.join(self.build_dir, 'localization')
+        src = os.path.join(self.src_dir, 'localization')
+        if not os.path.isdir(src):
+            return
+
+        keywords = [f.name for f in self.metadata.formats] + [t.name for t in self.metadata.transformers]
+        localized_doc_globs = [keyword + '_??.md' for keyword in keywords]
+
+        for name in os.listdir(src):
+            path = os.path.join(src, name)
+            if fnmatch(name, 'guiprompts_??.txt') or fnmatch(name, 'transformer-localized.??') or \
+                    any(fnmatch(name, glob) for glob in localized_doc_globs):
+                if not os.path.exists(dest):
+                    os.makedirs(dest)
+                print('Copying localization: ' + name)
+                shutil.copy(path, dest)
+
 
     def make_fpkg(self):
         if not os.path.exists(self.dist_dir):
