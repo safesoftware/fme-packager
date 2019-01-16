@@ -1,5 +1,12 @@
 # fpkgr changes
 
+## 0.5.0
+
+* Handle `bdist_wheel` creating wheels with filenames that replace `-` 
+  in the Python package name with `_`.
+* Delete `python/*/dist/` directories as part of Python wheel building.
+* Enable support for formats.
+
 ## 0.4.0
 
 * Support inclusion of localization files.
