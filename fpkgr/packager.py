@@ -283,7 +283,7 @@ class FMEPackager:
 
         for expected_py_package in self.metadata.python_packages:
             lib_name = expected_py_package.name
-            if not any(wheel_name.startswith(lib_name) for wheel_name in wheels):
+            if not any(wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace('-', '_')) for wheel_name in wheels):
                 raise ValueError("Python library '{}' is in metadata, but was not found".format(lib_name))
 
     def _copy_localization(self):
