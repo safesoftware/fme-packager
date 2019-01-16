@@ -246,6 +246,10 @@ class FMEPackager:
                 os.chdir(path)
                 if os.path.exists('build'):
                     shutil.rmtree('build')
+                # Simple solution to avoid needing to figure out which built artifact is the one we want.
+                # The only wheel in the directory will be the one to include in the fpkg.
+                if os.path.exists('dist'):
+                    shutil.rmtree('dist')
                 try:
                     run_setup('setup.py', ['bdist_wheel'])
                 finally:
