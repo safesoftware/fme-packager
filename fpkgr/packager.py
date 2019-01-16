@@ -86,12 +86,18 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
 
 
 def check_formatinfo(package_metadata, format_metadata, db_path):
+    line = None
     with open(db_path) as inf:
-        contents = inf.read()
+        for line in inf:
+            if line.startswith(';'):
+                continue  # comment line.
+
+    if not line:
+        raise ValueError('{} empty'.format(db_path))
 
     fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name.upper())
 
-    formatinfo = parse_formatinfo(contents)
+    formatinfo = parse_formatinfo(line)
     if formatinfo.FORMAT_NAME != fqname:
         raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
@@ -123,6 +129,7 @@ class FMEPackager:
         self._copy_transformers()
         self._copy_web_services()
         self._copy_web_filesystems()
+        self._copy_formats()
 
         self._build_wheels()
         self._copy_wheels()
@@ -133,8 +140,8 @@ class FMEPackager:
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
         # Ignore FMF and etc for formats not mentioned in metadata.
-        src = os.path.join(self.src_dir, 'transformers')
-        dst = os.path.join(self.build_dir, 'transformers')
+        src = os.path.join(self.src_dir, 'formats')
+        dst = os.path.join(self.build_dir, 'formats')
         if os.path.isdir(src):
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns('*.fmf', '*.db', '*.fms'))
 
@@ -154,7 +161,7 @@ class FMEPackager:
             check_fmf(self.metadata, format, fmf_path)
             shutil.copy(fmf_path, dst)
 
-            db_path = os.path.join(src, "{}.db".format(format.db))
+            db_path = os.path.join(src, "{}.db".format(format.name))
             if not os.path.exists(db_path):
                 raise ValueError("{} is in metadata, but was not found".format(db_path))
             check_formatinfo(self.metadata, format, db_path)
