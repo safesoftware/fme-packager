@@ -78,4 +78,4 @@ password: (your API key, found in your Artifactory user profile)
 ```
 
 1. `python setup.py bdist_wheel`
-2. `twine upload -r local dist/`
+2. `twine upload -r local dist/fpkgr-x.y.z-py2.py3-none-any.whl`
