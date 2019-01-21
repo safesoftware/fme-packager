@@ -75,11 +75,15 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
         raise ValueError('Custom transformer Python Compatibility must be "2or3" or 3x')
 
 
+def fq_format_short_name(publisher_uid, package_uid, format_name):
+    return '{}.{}.{}'.format(publisher_uid, package_uid, format_name).upper()
+
+
 def check_fmf(package_metadata, format_metadata, fmf_path):
     with open(fmf_path) as inf:
         contents = inf.read()
 
-    fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name.upper())
+    fqname = fq_format_short_name(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name)
 
     if 'SOURCE_READER {}'.format(fqname) not in contents or 'FORMAT_NAME {}'.format(fqname) not in contents:
         raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
@@ -95,7 +99,7 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
     if not line:
         raise ValueError('{} empty'.format(db_path))
 
-    fqname = '{}.{}.{}'.format(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name.upper())
+    fqname = fq_format_short_name(package_metadata.publisher_uid, package_metadata.uid, format_metadata.name)
 
     formatinfo = parse_formatinfo(line)
     if formatinfo.FORMAT_NAME != fqname:
