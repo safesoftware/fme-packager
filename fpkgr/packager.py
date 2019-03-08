@@ -106,6 +106,12 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
         raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
 
+# Matches files that should not automatically be copied into an fpkg.
+# Some of these are OS-specific metadata.
+# FME file extensions are here because their copy over is gated by validation.
+TREE_COPY_IGNORE_GLOBS = ['*.fmf', '*.fmx', '*.db', '*.fms', '.DS_Store', 'Thumbs.db', 'desktop.ini']
+
+
 class FMEPackager:
     def __init__(self, src_dir):
         self.src_dir = src_dir
@@ -147,7 +153,7 @@ class FMEPackager:
         src = os.path.join(self.src_dir, 'formats')
         dst = os.path.join(self.build_dir, 'formats')
         if os.path.isdir(src):
-            shutil.copytree(src, dst, ignore=shutil.ignore_patterns('*.fmf', '*.db', '*.fms'))
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for format in self.metadata.formats:
             print('Working on format: {}'.format(format.name))
@@ -177,7 +183,7 @@ class FMEPackager:
         src = os.path.join(self.src_dir, 'transformers')
         dst = os.path.join(self.build_dir, 'transformers')
         if os.path.isdir(src):
-            shutil.copytree(src, dst, ignore=shutil.ignore_patterns('*.fmx', '*.fms'))
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for transformer in self.metadata.transformers:
             print('Working on transformer: {}'.format(transformer.name))
