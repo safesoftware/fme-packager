@@ -267,11 +267,11 @@ class FMEPackager:
                     os.chdir(original_cwd)
 
     def _copy_wheels(self):
-        wheels_dest = os.path.join(self.build_dir, 'python')
-        os.mkdir(wheels_dest)
-
         if not os.path.exists(self.src_python_dir):
             return
+
+        wheels_dest = os.path.join(self.build_dir, 'python')
+        os.mkdir(wheels_dest)
 
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
