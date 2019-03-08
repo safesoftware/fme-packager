@@ -1,5 +1,10 @@
 # fpkgr changes
 
+## 0.6.0
+
+* Exclude .DS_Store, Thumbs.db, and desktop.ini from fpkg.
+* Avoid creating empty `python` directory in fpkg.
+
 ## 0.5.0
 
 * Handle `bdist_wheel` creating wheels with filenames that replace `-` 
