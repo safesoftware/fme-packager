@@ -18,6 +18,7 @@ def cli():
 
 COOKIECUTTER_TEMPLATES = {
     'transformer': 'http://gtb-1.safe.internal/clam/fpkg-transformer-template.git',
+    'pda_pipeline': 'http://gtb-1.base.safe.com/Safe/fpkg-pipeline-template.git',
 }
 
 
