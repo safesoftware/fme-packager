@@ -23,7 +23,7 @@ COOKIECUTTER_TEMPLATES = {
 
 
 @cli.command()
-@click.argument('template', type=click.Choice(['transformer']))
+@click.argument('template', type=click.Choice(sorted(COOKIECUTTER_TEMPLATES.keys())))
 def init(template):
     """
     Initialize an FME Package from a template.
@@ -31,7 +31,6 @@ def init(template):
     The template is initialized in a subdirectory of the current directory.
 
     TEMPLATE -- name of the template to use.
-    "transformer" is the only one currently available.
     """
     print("Enter the values to use for the template. Press Enter to accept the [default].")
     cookiecutter(COOKIECUTTER_TEMPLATES[template])
