@@ -22,7 +22,7 @@ setup(
     author_email="carson.lam@safe.com",
     url="https://gtb-1.safe.internal/clam/fpkgr",
     install_requires=[
-        "click~=6.7",
+        "click~=7.1.2",
         "ruamel.yaml~=0.15.40",
         "cookiecutter~=1.6.0",
         "wheel~=0.31.1",
