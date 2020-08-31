@@ -23,11 +23,11 @@ setup(
     url="https://gtb-1.safe.internal/clam/fpkgr",
     install_requires=[
         "click~=7.1.2",
-        "ruamel.yaml~=0.15.40",
-        "cookiecutter~=1.6.0",
-        "wheel~=0.31.1",
-        "jsonschema~=2.6.0",
-        "pypng~=0.0.18",
+        "ruamel.yaml~=0.16.10",
+        "cookiecutter~=1.7.2",
+        "wheel~=0.35.1",
+        "jsonschema~=3.2.0",
+        "pypng~=0.0.20",
     ],
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
