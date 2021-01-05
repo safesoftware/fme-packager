@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.6.2
+
+* Add MARKETING_FAMILY column validation for formatinfo.
+
 ## 0.6.1
 
 * Update dependencies
