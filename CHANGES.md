@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.6.3
+
+* Reorder MARKETING_FAMILY column in formatinfo definition.
+
 ## 0.6.2
 
 * Add MARKETING_FAMILY column validation for formatinfo.
