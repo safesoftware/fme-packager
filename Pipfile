@@ -5,8 +5,12 @@ name = "pypi"
 
 [packages]
 click = "*"
-"e1839a8" = {path = ".", editable = true}
+cookiecutter = "*"
+jsonschema = "*"
 pypng = "*"
+"e1839a8" = {path = ".", editable = true}
+"ruamel.yaml" = "*"
+wheel = "*"
 
 [dev-packages]
 twine = "*"
