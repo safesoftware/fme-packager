@@ -123,6 +123,7 @@ class FMEPackager:
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
+    def build(self):
         print('Collecting files into {}'.format(self.build_dir))
 
         # Clear out the build dir.
@@ -133,19 +134,17 @@ class FMEPackager:
         for required_file in ['package.yml', 'README.md', 'CHANGES.md']:
             check_exists_and_copy(os.path.join(self.src_dir, required_file), self.build_dir)
 
-    def build(self):
         self._copy_icon()
 
         self._copy_transformers()
         self._copy_web_services()
         self._copy_web_filesystems()
         self._copy_formats()
+        self._copy_localization()
 
         self._build_wheels()
         self._copy_wheels()
         self._check_wheels()
-
-        self._copy_localization()
 
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
