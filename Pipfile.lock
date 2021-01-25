@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "93644e2c9efc06cb5ac0cf412b21171abf692f28a4d204b0d8e317d579e87f88"
+            "sha256": "6f15b3a86016d7854fbe8fc57b6289c3ef86f5608bcb9fb27196c4ad7dd0f5e5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -69,6 +69,14 @@
             ],
             "index": "pypi",
             "version": "==1.7.2"
+        },
+        "defusedxml": {
+            "hashes": [
+                "sha256:6687150770438374ab581bb7a1b327a847dd9c5749e396102de3fad4e8a3ef93",
+                "sha256:f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5"
+            ],
+            "index": "pypi",
+            "version": "==0.6.0"
         },
         "e1839a8": {
             "editable": true,
@@ -284,6 +292,14 @@
             ],
             "index": "pypi",
             "version": "==0.35.1"
+        },
+        "xmltodict": {
+            "hashes": [
+                "sha256:50d8c638ed7ecb88d90561beedbf720c9b4e851a9fa6c47ebd64e99d166d8a21",
+                "sha256:8bbcb45cc982f48b2ca8fe7e7827c5d792f217ecf1792626f808bf41c3b86051"
+            ],
+            "index": "pypi",
+            "version": "==0.12.0"
         },
         "zipp": {
             "hashes": [

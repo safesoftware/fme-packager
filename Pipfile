@@ -6,11 +6,13 @@ name = "pypi"
 [packages]
 click = "*"
 cookiecutter = "*"
+defusedxml = "*"
 jsonschema = "*"
 pypng = "*"
 "e1839a8" = {path = ".", editable = true}
 "ruamel.yaml" = "*"
 wheel = "*"
+xmltodict = "*"
 
 [dev-packages]
 twine = "*"
