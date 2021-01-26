@@ -1,5 +1,11 @@
 # fpkgr changes
 
+## 0.7.0
+
+* Add `fpkgr apply-help [help_path] [fpkg_path]` command to import doc from Safe TechPubs
+  into an FME Package repository.
+* Update `fpkgr pack` to include contents of `help/`, with basic validation.
+
 ## 0.6.3
 
 * Reorder MARKETING_FAMILY column in formatinfo definition.

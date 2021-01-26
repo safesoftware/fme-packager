@@ -37,6 +37,22 @@ def init(template):
 
 
 @cli.command()
+@click.argument('help_path', type=click.Path(exists=True, file_okay=True))
+@click.argument('fpkg_path', type=click.Path(exists=True, file_okay=False, writable=True))
+def apply_help(help_path, fpkg_path):
+    """
+    Import an Safe TechPubs doc export into an FME Package directory.
+
+    This operation also converts package_aliases.flali to package_help.csv at the destination.
+
+    help_path -- Path to a ZIP or directory of an Safe TechPubs doc export. Read only.
+    fpkg_path -- Path to the FME Package root. Its 'help' subdirectory will be recreated.
+    """
+    steps = FMEPackager(fpkg_path)
+    steps.apply_help(help_path)
+
+
+@cli.command()
 @click.argument('path', type=click.Path(exists=True, file_okay=False, writable=True))
 def pack(path):
     """

@@ -1,12 +1,15 @@
+import csv
 import imghdr
 import os
 import re
 import shutil
+import tempfile
 import warnings
 import zipfile
 from fnmatch import fnmatch
 
 import png
+import xmltodict
 from jsonschema import validate
 from distutils.core import run_setup
 
@@ -109,7 +112,11 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
 # Matches files that should not automatically be copied into an fpkg.
 # Some of these are OS-specific metadata.
 # FME file extensions are here because their copy over is gated by validation.
-TREE_COPY_IGNORE_GLOBS = ['*.fmf', '*.fmx', '*.db', '*.fms', '.DS_Store', 'Thumbs.db', 'desktop.ini']
+TREE_COPY_IGNORE_GLOBS = [
+    '.*', '*.mclog', '*.flali',
+    '*.fmf', '*.fmx', '*.db', '*.fms',
+    '.DS_Store', 'Thumbs.db', 'desktop.ini',
+]
 
 
 class FMEPackager:
@@ -123,6 +130,7 @@ class FMEPackager:
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
+    def build(self):
         print('Collecting files into {}'.format(self.build_dir))
 
         # Clear out the build dir.
@@ -133,19 +141,18 @@ class FMEPackager:
         for required_file in ['package.yml', 'README.md', 'CHANGES.md']:
             check_exists_and_copy(os.path.join(self.src_dir, required_file), self.build_dir)
 
-    def build(self):
         self._copy_icon()
 
         self._copy_transformers()
         self._copy_web_services()
         self._copy_web_filesystems()
         self._copy_formats()
+        self._copy_localization()
+        self._copy_help()
 
         self._build_wheels()
         self._copy_wheels()
         self._check_wheels()
-
-        self._copy_localization()
 
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
@@ -260,6 +267,7 @@ class FMEPackager:
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
             if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'setup.py')):
+                print("\nBuilding Python wheel: {}".format(path))
                 os.chdir(path)
                 if os.path.exists('build'):
                     shutil.rmtree('build')
@@ -325,6 +333,86 @@ class FMEPackager:
                 print('Copying localization: ' + name)
                 shutil.copy(path, dest)
 
+    def apply_help(self, help_src):
+        tmp_doc_dir = tempfile.mkdtemp(prefix="fpkgr_")
+        try:
+            # If help source is a ZIP, extract it to a temporary folder.
+            if os.path.isfile(help_src):
+                with zipfile.ZipFile(help_src) as zipf:
+                    print("Extracting {} to {}".format(help_src, tmp_doc_dir))
+                    zipf.extractall(tmp_doc_dir)
+                root_contents = os.listdir(tmp_doc_dir)
+                # If help ZIP started with a single root level folder, then unnest.
+                if len(root_contents) == 1:
+                    nested_dir = os.path.join(tmp_doc_dir, root_contents[0])
+                    print("Flattening single top-level folder {}".format(nested_dir))
+                    for item in os.listdir(nested_dir):
+                        shutil.move(os.path.join(nested_dir, item), tmp_doc_dir)
+                    os.rmdir(nested_dir)
+                help_src = tmp_doc_dir
+
+            # Parse flali file ahead of anything else.
+            flali_path = os.path.join(help_src, "package_aliases.flali")
+            with open(flali_path, encoding="utf-8") as xmlin:
+                aliases_xml = xmltodict.parse(xmlin.read())
+
+            embedded_doc_dirs = list(filter(lambda x: x.startswith("!"), os.listdir(help_src)))
+            if embedded_doc_dirs:
+                warnings.warn(
+                    "{} embedded doc folders (starting with '!'). Avoid these if possible".format(
+                        len(embedded_doc_dirs)))
+
+            # (Re)create destination help folder and copy over the bulk of the doc files.
+            dest = os.path.join(self.src_dir, "help")
+            if os.path.exists(dest):
+                print("Deleting {}".format(dest))
+                shutil.rmtree(dest)
+            shutil.copytree(
+                help_src, dest,
+                ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
+        finally:
+            shutil.rmtree(tmp_doc_dir)
+
+        # Convert flali to CSV and put it in the destination.
+        # Skip rows that refer to doc files that aren't present in the doc ZIP.
+        copied_rows = 0
+        with open(os.path.join(dest, "package_help.csv"), "w", newline="") as csvout:
+            writer = csv.writer(csvout)
+            rows = aliases_xml["CatapultAliasFile"]["Map"]
+            if not isinstance(rows, list):
+                rows = [rows]
+            for row in rows:
+                name = row["@Name"].replace(".", "_")
+                link = row["@Link"]
+                if link.startswith("/Content"):
+                    new_link = link.replace("/Content", "", 1)
+                    link = new_link
+                expected_doc_path = os.path.join(dest, link.lstrip("/"))
+                if os.path.exists(expected_doc_path):
+                    print("{} exists".format(expected_doc_path))
+                    writer.writerow([name, link])
+                    copied_rows += 1
+        print("Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows)))
+        if not copied_rows:
+            raise ValueError("flali doesn't reference any included doc")
+
+    def _copy_help(self):
+        src = os.path.join(self.src_dir, "help")
+        dest = os.path.join(self.build_dir, "help")
+        if not os.path.isdir(src):
+            return
+
+        print("Copying help")
+        # Validate help index...
+        with open(os.path.join(src, "package_help.csv"), newline="") as csvin:
+            for row in csv.reader(csvin):
+                if "." in row[0]:
+                    raise ValueError("{} cannot contain '.'".format(row[0]))
+                expected_doc = os.path.join(src, row[1].lstrip("/"))
+                if not os.path.exists(expected_doc):
+                    raise ValueError("Help entry {} does not exist".format(expected_doc))
+
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
     def make_fpkg(self):
         if not os.path.exists(self.dist_dir):
