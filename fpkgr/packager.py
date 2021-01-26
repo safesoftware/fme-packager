@@ -148,6 +148,7 @@ class FMEPackager:
         self._copy_web_filesystems()
         self._copy_formats()
         self._copy_localization()
+        self._copy_help()
 
         self._build_wheels()
         self._copy_wheels()
@@ -266,6 +267,7 @@ class FMEPackager:
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
             if os.path.isdir(path) and os.path.isfile(os.path.join(path, 'setup.py')):
+                print("\nBuilding Python wheel: {}".format(path))
                 os.chdir(path)
                 if os.path.exists('build'):
                     shutil.rmtree('build')
@@ -372,13 +374,45 @@ class FMEPackager:
             shutil.rmtree(tmp_doc_dir)
 
         # Convert flali to CSV and put it in the destination.
-        with open(os.path.join(dest, "package_help.csv"), "w") as csvout:
+        # Skip rows that refer to doc files that aren't present in the doc ZIP.
+        copied_rows = 0
+        with open(os.path.join(dest, "package_help.csv"), "w", newline="") as csvout:
             writer = csv.writer(csvout)
             rows = aliases_xml["CatapultAliasFile"]["Map"]
             if not isinstance(rows, list):
                 rows = [rows]
             for row in rows:
-                writer.writerow([row["@Name"].replace(".", "_"), row["@Link"]])
+                name = row["@Name"].replace(".", "_")
+                link = row["@Link"]
+                if link.startswith("/Content"):
+                    new_link = link.replace("/Content", "", 1)
+                    link = new_link
+                expected_doc_path = os.path.join(dest, link.lstrip("/"))
+                if os.path.exists(expected_doc_path):
+                    print("{} exists".format(expected_doc_path))
+                    writer.writerow([name, link])
+                    copied_rows += 1
+        print("Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows)))
+        if not copied_rows:
+            raise ValueError("flali doesn't reference any included doc")
+
+    def _copy_help(self):
+        src = os.path.join(self.src_dir, "help")
+        dest = os.path.join(self.build_dir, "help")
+        if not os.path.isdir(src):
+            return
+
+        print("Copying help")
+        # Validate help index...
+        with open(os.path.join(src, "package_help.csv"), newline="") as csvin:
+            for row in csv.reader(csvin):
+                if "." in row[0]:
+                    raise ValueError("{} cannot contain '.'".format(row[0]))
+                expected_doc = os.path.join(src, row[1].lstrip("/"))
+                if not os.path.exists(expected_doc):
+                    raise ValueError("Help entry {} does not exist".format(expected_doc))
+
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
     def make_fpkg(self):
         if not os.path.exists(self.dist_dir):
