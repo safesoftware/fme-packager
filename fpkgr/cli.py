@@ -37,6 +37,20 @@ def init(template):
 
 
 @cli.command()
+@click.argument('help_path', type=click.Path(exists=True, file_okay=True))
+@click.argument('fpkg_path', type=click.Path(exists=True, file_okay=False, writable=True))
+def apply_help(help_path, fpkg_path):
+    """
+    Import an FME TechPubs doc export into an FME Package directory.
+
+    help_path -- Path to a ZIP or directory of an FME TechPubs doc export.
+    fpkg_path -- Path to an FME Package directory.
+    """
+    steps = FMEPackager(fpkg_path)
+    steps.apply_help(help_path)
+
+
+@cli.command()
 @click.argument('path', type=click.Path(exists=True, file_okay=False, writable=True))
 def pack(path):
     """
