@@ -11,7 +11,7 @@ from fpkgr.packager import FMEPackager
 @click.group()
 def cli():
     """
-    fpkgr: The FME Packages Tool
+    fpkgr: The FME Packages Tool.
     """
     pass
 
@@ -30,7 +30,7 @@ def init(template):
 
     The template is initialized in a subdirectory of the current directory.
 
-    TEMPLATE -- name of the template to use.
+    TEMPLATE -- Name of the template to use.
     """
     print(
         "Enter the values to use for the template. Press Enter to accept the [default]."
@@ -49,8 +49,9 @@ def apply_help(help_path, fpkg_path):
 
     This operation also converts package_aliases.flali to package_help.csv at the destination.
 
-    help_path -- Path to a ZIP or directory of an Safe TechPubs doc export. Read only.
-    fpkg_path -- Path to the FME Package root. Its 'help' subdirectory will be recreated.
+    HELP_PATH -- Path to a ZIP or directory of an Safe TechPubs doc export. Read only.
+
+    FPKG_PATH -- Path to the FME Package root. Its 'help' subdirectory will be recreated.
     """
     steps = FMEPackager(fpkg_path)
     steps.apply_help(help_path)
@@ -65,7 +66,7 @@ def pack(path):
     Package contents are validated during this process.
     Components not referenced by the package's metadata.yml may not be included in the resulting fpkg.
 
-    path -- Path to an FME Package directory.
+    PATH -- Path to an FME Package directory.
     """
     steps = FMEPackager(path)
     steps.build()
