@@ -53,6 +53,19 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
+    _validate_fmx_fme_python_version(contents, fmx_path)
+
+
+def _validate_fmx_fme_python_version(contents, fmx_path):
+    invalid_versions = {"27", "ArcGISDesktop"}
+
+    fme_python_version = re.finditer(r'\nFME_PYTHON_VERSION:\s*([^\n]+)\n', contents)
+    for match in fme_python_version:
+        python_version = match.group(1)
+        if python_version in invalid_versions:
+            raise ValueError(
+                "{} specifies FME_PYTHON_VERSION: '{}' which is not supported to be packaged.".format(fmx_path, python_version))
+
 
 def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
     # Cheating here. Only looking at the topmost (first and latest) TRANSFORMER_BEGIN.
