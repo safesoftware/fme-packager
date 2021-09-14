@@ -54,10 +54,10 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
-    _validate_fmx_fme_python_version(contents)
+    _validate_fmx_python_compatibility_version(contents)
 
 
-def _validate_fmx_fme_python_version(contents):
+def _validate_fmx_python_compatibility_version(contents):
     invalid_versions = {"27", "ArcGISDesktop"}
 
     fme_python_version = re.finditer(r'\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n', contents)
