@@ -13,6 +13,7 @@ import xmltodict
 from jsonschema import validate
 from distutils.core import run_setup
 
+from fpkgr.exception import PythonCompatibilityError
 from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
 from fpkgr.operations import build_fpkg_filename, parse_formatinfo, get_custom_transformer_header
 
@@ -53,18 +54,17 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
-    _validate_fmx_fme_python_version(contents, fmx_path)
+    _validate_fmx_fme_python_version(contents)
 
 
-def _validate_fmx_fme_python_version(contents, fmx_path):
+def _validate_fmx_fme_python_version(contents):
     invalid_versions = {"27", "ArcGISDesktop"}
 
     fme_python_version = re.finditer(r'\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n', contents)
     for match in fme_python_version:
         python_version = match.group(1)
         if python_version in invalid_versions:
-            raise ValueError(
-                "{} specifies PYTHON_COMPATIBILITY: '{}' which is not supported to be packaged.".format(fmx_path, python_version))
+            raise PythonCompatibilityError()
 
 
 def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
@@ -88,7 +88,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
         raise ValueError('Custom transformer created with FME build older than fme_minimum_build in package.yml')
 
     if header.pyver != '2or3' and not header.pyver.startswith('3'):
-        raise ValueError('Custom transformer Python Compatibility must be "2or3" or 3x')
+        raise PythonCompatibilityError()
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
