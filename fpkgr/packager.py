@@ -10,12 +10,27 @@ from fnmatch import fnmatch
 
 import png
 import xmltodict
+from packaging import version
 from jsonschema import validate
 from distutils.core import run_setup
 
 from fpkgr.exception import PythonCompatibilityError
 from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
 from fpkgr.operations import build_fpkg_filename, parse_formatinfo, get_custom_transformer_header
+
+
+def is_valid_python_compatibility(python_compat_version):
+    """Checks for valid python compatibility value.
+
+    :param str python_compat_version: Python compatibility version
+    :rtype: bool
+    """
+    minimum_requirement = "3.6"
+    is_python_3 = python_compat_version.startswith("3")
+    meets_minimum_requirements = False
+    if is_python_3:
+        meets_minimum_requirements = version.parse(python_compat_version) >= version.parse(minimum_requirement)
+    return is_python_3 and meets_minimum_requirements
 
 
 def check_exists_and_copy(src, dest):
@@ -54,16 +69,10 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
-    _validate_fmx_python_compatibility_version(contents)
-
-
-def _validate_fmx_python_compatibility_version(contents):
-    invalid_versions = {"27", "ArcGISDesktop"}
-
     fme_python_version = re.finditer(r'\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n', contents)
     for match in fme_python_version:
         python_version = match.group(1)
-        if python_version in invalid_versions:
+        if not is_valid_python_compatibility(python_version):
             raise PythonCompatibilityError()
 
 
@@ -87,7 +96,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
     if build_num < package_metadata.minimum_fme_build:
         raise ValueError('Custom transformer created with FME build older than fme_minimum_build in package.yml')
 
-    if header.pyver != '2or3' and not header.pyver.startswith('3'):
+    if not is_valid_python_compatibility(header.pyver):
         raise PythonCompatibilityError()
 
 

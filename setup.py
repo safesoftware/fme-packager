@@ -30,6 +30,7 @@ setup(
         "ruamel.yaml~=0.16.10",
         "wheel~=0.35.1",
         "xmltodict~=0.12.0",
+        "packaging~=21.0"
     ],
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
