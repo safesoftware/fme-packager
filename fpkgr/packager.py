@@ -69,8 +69,8 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     if not re.findall(r'\nVERSION:\s*{}\n'.format(transformer_metadata.version), contents):
         raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
-    fme_python_version = re.finditer(r'\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n', contents)
-    for match in fme_python_version:
+    python_compatibility = re.finditer(r'\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n', contents)
+    for match in python_compatibility:
         python_version = match.group(1)
         if not is_valid_python_compatibility(python_version):
             raise PythonCompatibilityError()
