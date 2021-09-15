@@ -23,7 +23,7 @@ COOKIECUTTER_TEMPLATES = {
 
 
 @cli.command()
-@click.argument('template', type=click.Choice(sorted(COOKIECUTTER_TEMPLATES.keys())))
+@click.argument("template", type=click.Choice(sorted(COOKIECUTTER_TEMPLATES.keys())))
 def init(template):
     """
     Initialize an FME Package from a template.
@@ -32,13 +32,17 @@ def init(template):
 
     TEMPLATE -- name of the template to use.
     """
-    print("Enter the values to use for the template. Press Enter to accept the [default].")
+    print(
+        "Enter the values to use for the template. Press Enter to accept the [default]."
+    )
     cookiecutter(COOKIECUTTER_TEMPLATES[template])
 
 
 @cli.command()
-@click.argument('help_path', type=click.Path(exists=True, file_okay=True))
-@click.argument('fpkg_path', type=click.Path(exists=True, file_okay=False, writable=True))
+@click.argument("help_path", type=click.Path(exists=True, file_okay=True))
+@click.argument(
+    "fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True)
+)
 def apply_help(help_path, fpkg_path):
     """
     Import an Safe TechPubs doc export into an FME Package directory.
@@ -53,7 +57,7 @@ def apply_help(help_path, fpkg_path):
 
 
 @cli.command()
-@click.argument('path', type=click.Path(exists=True, file_okay=False, writable=True))
+@click.argument("path", type=click.Path(exists=True, file_okay=False, writable=True))
 def pack(path):
     """
     Create an .fpkg file.
@@ -73,7 +77,7 @@ def version():
     """
     Print the version of fpkgr.
     """
-    print('fpkgr ' + fpkgr.__version__)
+    print("fpkgr " + fpkgr.__version__)
 
 
 if __name__ == "__main__":
