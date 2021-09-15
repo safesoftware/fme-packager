@@ -3,7 +3,7 @@ import os
 import pytest
 
 from fpkgr.exception import PythonCompatibilityError
-from fpkgr.packager import FMEPackager, check_fmx, is_valid_python_compatibility
+from fpkgr.packager import FMEPackager, check_fmx, is_valid_python_compatibility, check_custom_fmx
 
 
 @pytest.mark.parametrize("version, expected_validation", [
@@ -35,3 +35,21 @@ def test_check_fmx_with_compatibility_error(incompatible_package_dir):
 
         with pytest.raises(PythonCompatibilityError):
             check_fmx(packager.metadata, transformer, fmx_path)
+
+
+def test_check_custom_fmx(custom_package_dir):
+    packager = FMEPackager(custom_package_dir)
+    for transformer in packager.metadata.transformers:
+        src = os.path.join(custom_package_dir, 'transformers')
+        fmx_path = os.path.join(src, "{}.fmx".format(transformer.name))
+        check_custom_fmx(packager.metadata, transformer, fmx_path)
+
+
+def test_check_custom_fmx_with_error(incompatible_custom_package_dir):
+    packager = FMEPackager(incompatible_custom_package_dir)
+    for transformer in packager.metadata.transformers:
+        src = os.path.join(incompatible_custom_package_dir, 'transformers')
+        fmx_path = os.path.join(src, "{}.fmx".format(transformer.name))
+
+        with pytest.raises(PythonCompatibilityError):
+            check_custom_fmx(packager.metadata, transformer, fmx_path)
