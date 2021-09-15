@@ -12,5 +12,7 @@ package_content:
   transformers:
     - name: epochToTimestamp29
       version: 1
+    - name: customFooBar
+      version: 1
   python_packages:
     - name: fme-mygreeter

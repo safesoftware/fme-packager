@@ -25,9 +25,6 @@ def is_valid_python_compatibility(python_compat_version):
     :param str python_compat_version: Python compatibility version
     :rtype: bool
     """
-    if python_compat_version == "2or3":
-        return True
-
     minimum_requirement = "3.6"
     is_python_3 = python_compat_version.startswith("3")
     meets_minimum_requirements = False
@@ -99,7 +96,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
     if build_num < package_metadata.minimum_fme_build:
         raise ValueError('Custom transformer created with FME build older than fme_minimum_build in package.yml')
 
-    if not is_valid_python_compatibility(header.pyver):
+    if header.pyver != "2or3" and not is_valid_python_compatibility(header.pyver):
         raise PythonCompatibilityError(transformer_metadata.name)
 
 

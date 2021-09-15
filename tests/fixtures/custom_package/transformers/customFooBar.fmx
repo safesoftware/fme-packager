@@ -1,6 +1,6 @@
 #! <?xml version="1.0" encoding="UTF-8" ?>
 #! <TRANSFORMER
-# TRANSFORMER_BEGIN example.my-package.epochToTimestamp29,1,Attributes,4d874d87-714f-41b4-9dfe-9748ebd8b565,"Linked Always",No,NO_PARALLELISM,,No,19238,YES,No,2or3
+# TRANSFORMER_BEGIN example.my-package.customFooBar,1,Attributes,4d874d87-714f-41b4-9dfe-9748ebd8b565,"Linked Always",No,NO_PARALLELISM,,No,19238,YES,No,37
 # <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Convert Epoch format date to Timestamp </p>
 #
 # TRANSFORMER_END
