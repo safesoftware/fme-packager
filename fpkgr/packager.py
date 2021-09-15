@@ -73,7 +73,7 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     for match in python_compatibility:
         python_version = match.group(1)
         if not is_valid_python_compatibility(python_version):
-            raise PythonCompatibilityError()
+            raise PythonCompatibilityError(transformer_metadata.name)
 
 
 def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
@@ -97,7 +97,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
         raise ValueError('Custom transformer created with FME build older than fme_minimum_build in package.yml')
 
     if not is_valid_python_compatibility(header.pyver):
-        raise PythonCompatibilityError()
+        raise PythonCompatibilityError(transformer_metadata.name)
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
