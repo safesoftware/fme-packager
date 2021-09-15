@@ -25,6 +25,7 @@ def get_fmx_path(transformer_dir, transformer_name):
         ("36", True),
         ("37", True),
         ("3.8.9", True),
+        ("2or3", True)
     ],
 )
 def test_is_valid_python_compatibility(version, expected_validation):
