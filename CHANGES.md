@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.8.0
+
+* Add validation on PYTHON_COMPATIBILITY parameter in transformer fmx to be >= 3.6
+
 ## 0.7.0
 
 * Add `fpkgr apply-help [help_path] [fpkg_path]` command to import doc from Safe TechPubs

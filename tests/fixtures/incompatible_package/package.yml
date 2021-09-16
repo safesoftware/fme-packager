@@ -1,0 +1,16 @@
+fpkg_version: 1
+uid: my-package
+publisher_uid: example
+name: My FME Package
+description: A short description of my FME Package.
+version: 0.1.0
+minimum_fme_build: 19238
+author:
+  name: G Raymond
+  email: me@example.com
+package_content:
+  transformers:
+    - name: MyGreeter
+      version: 1
+  python_packages:
+    - name: fme-mygreeter
