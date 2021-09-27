@@ -204,6 +204,93 @@ class FMEPackager:
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
+    def apply_help(self, help_src):
+        tmp_doc_dir = tempfile.mkdtemp(prefix="fpkgr_")
+        try:
+            # If help source is a ZIP, extract it to a temporary folder.
+            if os.path.isfile(help_src):
+                with zipfile.ZipFile(help_src) as zipf:
+                    print("Extracting {} to {}".format(help_src, tmp_doc_dir))
+                    zipf.extractall(tmp_doc_dir)
+                root_contents = os.listdir(tmp_doc_dir)
+                # If help ZIP started with a single root level folder, then unnest.
+                if len(root_contents) == 1:
+                    nested_dir = os.path.join(tmp_doc_dir, root_contents[0])
+                    print("Flattening single top-level folder {}".format(nested_dir))
+                    for item in os.listdir(nested_dir):
+                        shutil.move(os.path.join(nested_dir, item), tmp_doc_dir)
+                    os.rmdir(nested_dir)
+                help_src = tmp_doc_dir
+
+            # Parse flali file ahead of anything else.
+            flali_path = os.path.join(help_src, "package_aliases.flali")
+            with open(flali_path, encoding="utf-8") as xmlin:
+                aliases_xml = xmltodict.parse(xmlin.read())
+
+            embedded_doc_dirs = list(
+                filter(lambda x: x.startswith("!"), os.listdir(help_src))
+            )
+            if embedded_doc_dirs:
+                warnings.warn(
+                    "{} embedded doc folders (starting with '!'). Avoid these if possible".format(
+                        len(embedded_doc_dirs)
+                    )
+                )
+
+            # (Re)create destination help folder and copy over the bulk of the doc files.
+            dest = os.path.join(self.src_dir, "help")
+            if os.path.exists(dest):
+                print("Deleting {}".format(dest))
+                shutil.rmtree(dest)
+            shutil.copytree(
+                help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
+            )
+        finally:
+            shutil.rmtree(tmp_doc_dir)
+
+        # Convert flali to CSV and put it in the destination.
+        # Skip rows that refer to doc files that aren't present in the doc ZIP.
+        copied_rows = 0
+        with open(os.path.join(dest, "package_help.csv"), "w", newline="") as csvout:
+            writer = csv.writer(csvout)
+            rows = aliases_xml["CatapultAliasFile"]["Map"]
+            if not isinstance(rows, list):
+                rows = [rows]
+            for row in rows:
+                name = row["@Name"].replace(".", "_")
+                link = row["@Link"]
+                if link.startswith("/Content"):
+                    new_link = link.replace("/Content", "", 1)
+                    link = new_link
+                expected_doc_path = os.path.join(dest, link.lstrip("/"))
+                if os.path.exists(expected_doc_path):
+                    print("{} exists".format(expected_doc_path))
+                    writer.writerow([name, link])
+                    copied_rows += 1
+        print(
+            "Wrote {} of {} flali row(s) to package_help.csv".format(
+                copied_rows, len(rows)
+            )
+        )
+        if not copied_rows:
+            raise ValueError("flali doesn't reference any included doc")
+
+    def make_fpkg(self):
+        if not os.path.exists(self.dist_dir):
+            os.makedirs(self.dist_dir)
+
+        fpkg_filename = build_fpkg_filename(
+            self.metadata.publisher_uid, self.metadata.uid, self.metadata.version
+        )
+        fpkg_path = os.path.join(self.dist_dir, fpkg_filename)
+        print("Saving fpkg to {}".format(fpkg_path))
+
+        if os.path.exists(fpkg_path):
+            os.remove(fpkg_path)
+
+        zipfile.main(["-c", fpkg_path, os.path.join(self.build_dir, ".")])
+        print("Done.")
+
     def build(self):
         print("Collecting files into {}".format(self.build_dir))
 
@@ -448,77 +535,6 @@ class FMEPackager:
                 print("Copying localization: " + name)
                 shutil.copy(path, dest)
 
-    def apply_help(self, help_src):
-        tmp_doc_dir = tempfile.mkdtemp(prefix="fpkgr_")
-        try:
-            # If help source is a ZIP, extract it to a temporary folder.
-            if os.path.isfile(help_src):
-                with zipfile.ZipFile(help_src) as zipf:
-                    print("Extracting {} to {}".format(help_src, tmp_doc_dir))
-                    zipf.extractall(tmp_doc_dir)
-                root_contents = os.listdir(tmp_doc_dir)
-                # If help ZIP started with a single root level folder, then unnest.
-                if len(root_contents) == 1:
-                    nested_dir = os.path.join(tmp_doc_dir, root_contents[0])
-                    print("Flattening single top-level folder {}".format(nested_dir))
-                    for item in os.listdir(nested_dir):
-                        shutil.move(os.path.join(nested_dir, item), tmp_doc_dir)
-                    os.rmdir(nested_dir)
-                help_src = tmp_doc_dir
-
-            # Parse flali file ahead of anything else.
-            flali_path = os.path.join(help_src, "package_aliases.flali")
-            with open(flali_path, encoding="utf-8") as xmlin:
-                aliases_xml = xmltodict.parse(xmlin.read())
-
-            embedded_doc_dirs = list(
-                filter(lambda x: x.startswith("!"), os.listdir(help_src))
-            )
-            if embedded_doc_dirs:
-                warnings.warn(
-                    "{} embedded doc folders (starting with '!'). Avoid these if possible".format(
-                        len(embedded_doc_dirs)
-                    )
-                )
-
-            # (Re)create destination help folder and copy over the bulk of the doc files.
-            dest = os.path.join(self.src_dir, "help")
-            if os.path.exists(dest):
-                print("Deleting {}".format(dest))
-                shutil.rmtree(dest)
-            shutil.copytree(
-                help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
-            )
-        finally:
-            shutil.rmtree(tmp_doc_dir)
-
-        # Convert flali to CSV and put it in the destination.
-        # Skip rows that refer to doc files that aren't present in the doc ZIP.
-        copied_rows = 0
-        with open(os.path.join(dest, "package_help.csv"), "w", newline="") as csvout:
-            writer = csv.writer(csvout)
-            rows = aliases_xml["CatapultAliasFile"]["Map"]
-            if not isinstance(rows, list):
-                rows = [rows]
-            for row in rows:
-                name = row["@Name"].replace(".", "_")
-                link = row["@Link"]
-                if link.startswith("/Content"):
-                    new_link = link.replace("/Content", "", 1)
-                    link = new_link
-                expected_doc_path = os.path.join(dest, link.lstrip("/"))
-                if os.path.exists(expected_doc_path):
-                    print("{} exists".format(expected_doc_path))
-                    writer.writerow([name, link])
-                    copied_rows += 1
-        print(
-            "Wrote {} of {} flali row(s) to package_help.csv".format(
-                copied_rows, len(rows)
-            )
-        )
-        if not copied_rows:
-            raise ValueError("flali doesn't reference any included doc")
-
     def _copy_help(self):
         src = os.path.join(self.src_dir, "help")
         dest = os.path.join(self.build_dir, "help")
@@ -540,19 +556,3 @@ class FMEPackager:
         shutil.copytree(
             src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
         )
-
-    def make_fpkg(self):
-        if not os.path.exists(self.dist_dir):
-            os.makedirs(self.dist_dir)
-
-        fpkg_filename = build_fpkg_filename(
-            self.metadata.publisher_uid, self.metadata.uid, self.metadata.version
-        )
-        fpkg_path = os.path.join(self.dist_dir, fpkg_filename)
-        print("Saving fpkg to {}".format(fpkg_path))
-
-        if os.path.exists(fpkg_path):
-            os.remove(fpkg_path)
-
-        zipfile.main(["-c", fpkg_path, os.path.join(self.build_dir, ".")])
-        print("Done.")

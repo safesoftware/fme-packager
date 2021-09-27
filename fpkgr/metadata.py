@@ -4,6 +4,16 @@ import os
 from ruamel.yaml import YAML
 
 
+def load_fpkg_metadata(fpkg_path):
+    with open(os.path.join(fpkg_path, "package.yml")) as f:
+        return FMEPackageMetadata(YAML(typ="safe").load(f))
+
+
+def load_metadata_json_schema():
+    with open(os.path.join(os.path.dirname(__file__), "spec.json")) as f:
+        return json.load(f)
+
+
 class TransformerMetadata:
     def __init__(self, metadata_dict):
         self.dict = metadata_dict
@@ -139,13 +149,3 @@ class FMEPackageMetadata:
             WebFilesystemMetadata(item)
             for item in self.package_content.get("web_filesystems", [])
         ]
-
-
-def load_fpkg_metadata(fpkg_path):
-    with open(os.path.join(fpkg_path, "package.yml")) as f:
-        return FMEPackageMetadata(YAML(typ="safe").load(f))
-
-
-def load_metadata_json_schema():
-    with open(os.path.join(os.path.dirname(__file__), "spec.json")) as f:
-        return json.load(f)
