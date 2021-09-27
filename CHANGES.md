@@ -1,5 +1,10 @@
 # fpkgr changes
 
+## 0.8.1
+
+* Update transformer cookiecutter template URL.
+* Remove pda_pipeline cookiecutter template. Used for internal purposes only.
+
 ## 0.8.0
 
 * Add validation on PYTHON_COMPATIBILITY parameter in transformer fmx to be >= 3.6
