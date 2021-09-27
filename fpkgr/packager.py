@@ -24,7 +24,8 @@ from fpkgr.operations import (
 
 
 def is_valid_python_compatibility(python_compat_version):
-    """Checks for valid python compatibility value.
+    """
+    Checks for a valid python compatibility value.
 
     :param str python_compat_version: Python compatibility version
     :rtype: bool
@@ -40,12 +41,28 @@ def is_valid_python_compatibility(python_compat_version):
 
 
 def check_exists_and_copy(src, dest):
+    """
+    Copy source contents to a source path.
+
+    :raises ValueError: If the source path does not exist.
+    :param src: The source path.
+    :param dest: The destination path.
+    """
     if not os.path.exists(src):
         raise ValueError("{} is required but does not exist".format(src))
     shutil.copy(src, dest)
 
 
 def enforce_png(path, min_width=0, min_height=0, square=False):
+    """
+    Enforces the path is a valid PNG file and the PNG meets a minimum height and width requirement.
+
+    :raises ValueError: If the PNG is invalid or does not meet the minimum requirements.
+    :param path: Path to PNG file.
+    :param min_width: The minimum width of the image.
+    :param min_height: The minimum width of the image.
+    :param square: Whether the image should be square.
+    """
     filetype = imghdr.what(path)
     if filetype != "png":
         raise ValueError("{} must be PNG, not {}".format(path, filetype))
@@ -61,6 +78,14 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
 
 
 def check_fmx(package_metadata, transformer_metadata, fmx_path):
+    """
+    Checks the fmx file is consistent with the package and transformer metadata.
+
+    :raises ValueError: If the fmx fails the check.
+    :param package_metadata: Package metadata.
+    :param transformer_metadata: Transformer metadata.
+    :param fmx_path: Path to the fmx file.
+    """
     with open(fmx_path) as inf:
         contents = inf.read()
 
@@ -101,6 +126,15 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
 
 
 def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
+    """
+    Checks the custom fmx file is consistent with the package and transformer metadata.
+
+    :raises ValueError: If the fmx fails the check.
+    :param package_metadata: Package metadata.
+    :param transformer_metadata: Transformer metadata.
+    :param fmx_path: Path to the fmx file.
+    """
+
     # Cheating here. Only looking at the topmost (first and latest) TRANSFORMER_BEGIN.
     header = get_custom_transformer_header(fmx_path)
 
@@ -139,10 +173,26 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
+    """
+    Formats the publisher_uid, package_uid and format_name
+
+    :param publisher_uid: The Publisher unique identifier.
+    :param package_uid: The package unique identifier.
+    :param format_name: The format name.
+    :return: publisher_uid, package_uid, format_name dot delimited and upper case.
+    """
     return "{}.{}.{}".format(publisher_uid, package_uid, format_name).upper()
 
 
 def check_fmf(package_metadata, format_metadata, fmf_path):
+    """
+    Checks the fmf file is consistent with the package and format metadata.
+
+    :raises ValueError: If the fmf fails the check.
+    :param package_metadata: The package metadata.
+    :param format_metadata: The format metadata.
+    :param fmf_path: The fmf file path.
+    """
     with open(fmf_path) as inf:
         contents = inf.read()
 
@@ -158,6 +208,13 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
 
 
 def check_formatinfo(package_metadata, format_metadata, db_path):
+    """
+    Checks formatinfo is consistent with the package and format metadata.
+
+    :param package_metadata: The package metadata.
+    :param format_metadata: The format metadata.
+    :param db_path: The path to the format file.
+    """
     line = None
     with open(db_path) as inf:
         for line in inf:
@@ -205,6 +262,11 @@ class FMEPackager:
         validate(self.metadata.dict, load_metadata_json_schema())
 
     def apply_help(self, help_src):
+        """
+        Import an Safe TechPubs doc export into an FME Package directory.
+
+        :param help_src: Help source path.
+        """
         tmp_doc_dir = tempfile.mkdtemp(prefix="fpkgr_")
         try:
             # If help source is a ZIP, extract it to a temporary folder.
@@ -276,6 +338,10 @@ class FMEPackager:
             raise ValueError("flali doesn't reference any included doc")
 
     def make_fpkg(self):
+        """
+        Create an .fpkg file from package build files.
+        """
+
         if not os.path.exists(self.dist_dir):
             os.makedirs(self.dist_dir)
 
@@ -292,6 +358,9 @@ class FMEPackager:
         print("Done.")
 
     def build(self):
+        """
+        Build and validate package files.
+        """
         print("Collecting files into {}".format(self.build_dir))
 
         # Clear out the build dir.

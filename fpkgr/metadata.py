@@ -5,11 +5,22 @@ from ruamel.yaml import YAML
 
 
 def load_fpkg_metadata(fpkg_path):
+    """
+    Load package.yml as a FMEPackageMetadata object.
+
+    :param str fpkg_path: Path to the directory where package.yml exists.
+    :rtype: FMEPackageMetadata
+    """
     with open(os.path.join(fpkg_path, "package.yml")) as f:
         return FMEPackageMetadata(YAML(typ="safe").load(f))
 
 
 def load_metadata_json_schema():
+    """
+    Load in package metadata specification and requirements.
+
+    :rtype: dict
+    """
     with open(os.path.join(os.path.dirname(__file__), "spec.json")) as f:
         return json.load(f)
 

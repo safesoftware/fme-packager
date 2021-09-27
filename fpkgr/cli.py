@@ -1,5 +1,5 @@
 """
-fpkgr command line interface
+fpkgr command line interface.
 """
 import click
 from cookiecutter.main import cookiecutter
