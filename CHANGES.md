@@ -1,5 +1,10 @@
 # fpkgr changes
 
+## 0.8.2
+
+* Correct validation for the fmx PYTHON_COMPATIBILITY parameter to be >= '36'.
+* Correct validation error messages related to PYTHON_COMPATIBILITY.
+
 ## 0.8.1
 
 * Update transformer cookiecutter template URL.
