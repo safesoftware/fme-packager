@@ -38,6 +38,12 @@ FormatInfo = namedtuple("FormatInfo", FORMATINFO_HDR.replace("|", " "))
 
 
 def parse_formatinfo(line):
+    """
+    Parse format info line with the FORMATINFO_HDR.
+
+    :param str line: raw format info.
+    :return: Parsed format into a FormatInfo named tuple.
+    """
     parts = line.strip().split("|")
     if len(parts) != len(FORMATINFO_HDR.split("|")):
         print(line)
@@ -54,16 +60,34 @@ NamedTransformerHeader = namedtuple("NamedTransformerHeader", TRANSFORMER_HDR.sp
 
 
 def is_custom_transformer_header(line):
+    """
+    Checks if the fmx line indicates a custom transformer.
+
+    :param str line: fmx line.
+    :returns boolean of whether the line header is custom.
+    """
     return line.startswith("# TRANSFORMER_BEGIN ")
 
 
 def parse_custom_transformer_header(line):
+    """
+    Parses custom transformer header.
+
+    :param str line: fmx line.
+    :return: Parsed format into a NamedTransformerHeader named tuple.
+    """
     fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
     fields[1] = int(fields[1])  # version
     return NamedTransformerHeader(*fields[: len(NamedTransformerHeader._fields)])
 
 
 def get_custom_transformer_header(fmx_path):
+    """
+    Get the custom transformer header.
+
+    :param fmx_path: Path to fmx file.
+    :return: The custom transformer header or False if the fmx is not a custom transformer.
+    """
     # Don't open file as text: if it has encrypted transformers, it will be mixed with binary.
     # File readahead then causes a decoding error.
     with open(fmx_path, "rb") as f:
