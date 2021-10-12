@@ -16,20 +16,20 @@ def get_fmx_path(transformer_dir, transformer_name):
 
 
 @pytest.mark.parametrize(
-    "version, expected_validation",
+    "version, expected_is_valid",
     [
         ("26", False),
-        ("2.6", False),
         ("27", False),
         ("ArcGISDesktop", False),
+        ("35", False),
         ("36", True),
         ("37", True),
-        ("3.8.9", True),
-        ("2or3", False),
+        ("3.8.9", False),  # 3.x.x is invalid version syntax for PYTHON_COMPATIBILITY
+        ("2or3", False),  # only valid for custom transformers
     ],
 )
-def test_is_valid_python_compatibility(version, expected_validation):
-    assert is_valid_python_compatibility(version) == expected_validation
+def test_is_valid_python_compatibility(version, expected_is_valid):
+    assert is_valid_python_compatibility(version) == expected_is_valid
 
 
 def test_check_fmx(valid_package_dir):
