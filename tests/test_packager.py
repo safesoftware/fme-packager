@@ -2,7 +2,10 @@ import os
 
 import pytest
 
-from fpkgr.exception import PythonCompatibilityError
+from fpkgr.exception import (
+    TransformerPythonCompatError,
+    CustomTransformerPythonCompatError,
+)
 from fpkgr.packager import (
     FMEPackager,
     check_fmx,
@@ -47,7 +50,7 @@ def test_check_fmx_with_compatibility_error(incompatible_package_dir):
         fmx_path = get_fmx_path(
             os.path.join(incompatible_package_dir, "transformers"), transformer.name
         )
-        with pytest.raises(PythonCompatibilityError):
+        with pytest.raises(TransformerPythonCompatError):
             check_fmx(packager.metadata, transformer, fmx_path)
 
 
@@ -67,5 +70,5 @@ def test_check_custom_fmx_with_error(incompatible_custom_package_dir):
             os.path.join(incompatible_custom_package_dir, "transformers"),
             transformer.name,
         )
-        with pytest.raises(PythonCompatibilityError):
+        with pytest.raises(CustomTransformerPythonCompatError):
             check_custom_fmx(packager.metadata, transformer, fmx_path)
