@@ -14,7 +14,10 @@ from packaging import version
 from jsonschema import validate
 from distutils.core import run_setup
 
-from fpkgr.exception import PythonCompatibilityError
+from fpkgr.exception import (
+    TransformerPythonCompatError,
+    CustomTransformerPythonCompatError,
+)
 from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
 from fpkgr.operations import (
     build_fpkg_filename,
@@ -30,7 +33,7 @@ def is_valid_python_compatibility(python_compat_version):
     :param str python_compat_version: Python compatibility version
     :rtype: bool
     """
-    minimum_requirement = "3.6"
+    minimum_requirement = "36"
     is_python_3 = python_compat_version.startswith("3")
     meets_minimum_requirements = False
     if is_python_3:
@@ -122,7 +125,7 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
     for match in python_compatibility:
         python_version = match.group(1)
         if not is_valid_python_compatibility(python_version):
-            raise PythonCompatibilityError(transformer_metadata.name)
+            raise TransformerPythonCompatError(transformer_metadata.name)
 
 
 def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
@@ -169,7 +172,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
         )
 
     if header.pyver != "2or3" and not is_valid_python_compatibility(header.pyver):
-        raise PythonCompatibilityError(transformer_metadata.name)
+        raise CustomTransformerPythonCompatError(transformer_metadata.name)
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
