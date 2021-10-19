@@ -20,7 +20,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Carson Lam",
     author_email="carson.lam@safe.com",
-    url="https://gtb-1.safe.internal/clam/fpkgr",
+    url="https://github.com/safesoftware/fpkgr",
     install_requires=[
         "click~=7.1.2",
         "cookiecutter~=1.7.2",
