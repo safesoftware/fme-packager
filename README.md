@@ -21,8 +21,6 @@ $ pip install [fpkgr].whl
 Once installed, the `fpkgr` command is available on your system.
 `fpkgr --help` shows an overview of commands.
 
-`fpkgr` is also available on arty-1.
-
 
 ## What it does
 
@@ -31,7 +29,7 @@ Once installed, the `fpkgr` command is available on your system.
 * Checks that transformer and format names are valid and well-formed.
 * Verifies that the transformer version in the package.yml is
   included in the FMX.
-* Requires that Custom Transformers be Linked Always, declare Python 3 support, 
+* Requires that Custom Transformers be Linked Always, declare Python 3 support,
   and authored with a sufficiently recent version of FME Workbench.
 * Excludes components that are present in directories,
   but not listed in package.yml.
@@ -40,19 +38,19 @@ Once installed, the `fpkgr` command is available on your system.
 * Enforces required package icon dimensions.
 
 These steps are done while copying files into a temporary build directory,
-so existing files are not modified. 
+so existing files are not modified.
 
 
 ## Get started with a template
 
 `fpkgr init [template name]` helps you get started with developing FME Packages by
-using [Cookiecutter](https://cookiecutter.readthedocs.io/) templates. 
+using [Cookiecutter](https://cookiecutter.readthedocs.io/) templates.
 
 Available templates:
 
-* `transformer`: [Transformer template for FME Packages](http://gtb-1.safe.internal/clam/fpkg-transformer-template)
+* `transformer`: [Transformer template for FME Packages](https://github.com/safesoftware/fpkg-transformer-template)
 
-_These templates are not currently bundled with fpkgr, so gtb-1 must be accessible._
+_These templates are not currently bundled with fpkgr.
 
 
 ## Make an fpkg distribution
