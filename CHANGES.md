@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.8.3
+
+* Change the transformer template URL to HTTPS.
+
 ## 0.8.2
 
 * Correct validation for the fmx PYTHON_COMPATIBILITY parameter to be >= '36'.
