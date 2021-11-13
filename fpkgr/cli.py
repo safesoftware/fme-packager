@@ -17,7 +17,7 @@ def cli():
 
 
 COOKIECUTTER_TEMPLATES = {
-    "transformer": "git@github.com:safesoftware/fpkg-transformer-template.git",
+    "transformer": "https://github.com/safesoftware/fpkg-transformer-template.git",
 }
 
 
