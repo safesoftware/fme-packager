@@ -6,13 +6,13 @@ import shutil
 import tempfile
 import warnings
 import zipfile
+from distutils.core import run_setup
 from fnmatch import fnmatch
 
 import png
 import xmltodict
-from packaging import version
 from jsonschema import validate
-from distutils.core import run_setup
+from packaging import version
 
 from fpkgr.exception import (
     TransformerPythonCompatError,
@@ -119,11 +119,14 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
             "{} is missing VERSION {}".format(fmx_path, transformer_metadata.version)
         )
 
-    python_compatibility = re.finditer(
+    # Validate PYTHON_COMPATIBILITY with the latest value in the FMX.
+    # Assumption: If earlier fmx versions contain PYTHON_COMPATIBILITY,
+    # the latest version should also have this attribute.
+    latest_python_compatibility = re.search(
         r"\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n", contents
     )
-    for match in python_compatibility:
-        python_version = match.group(1)
+    if latest_python_compatibility:
+        python_version = latest_python_compatibility.group(1)
         if not is_valid_python_compatibility(python_version):
             raise TransformerPythonCompatError(transformer_metadata.name)
 
