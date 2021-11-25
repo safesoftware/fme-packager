@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.8.5
+
+* Set minimum PYTHON_COMPATIBILITY to >= '35'.
+
 ## 0.8.4
 
 * Validate only the latest PYTHON_COMPATIBILITY value in the fmx.
