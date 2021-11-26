@@ -24,7 +24,8 @@ def get_fmx_path(transformer_dir, transformer_name):
         ("26", False),
         ("27", False),
         ("ArcGISDesktop", False),
-        ("35", False),
+        ("34", False),
+        ("35", True),
         ("36", True),
         ("37", True),
         ("3.8.9", False),  # 3.x.x is invalid version syntax for PYTHON_COMPATIBILITY

@@ -33,7 +33,7 @@ def is_valid_python_compatibility(python_compat_version):
     :param str python_compat_version: Python compatibility version
     :rtype: bool
     """
-    minimum_requirement = "36"
+    minimum_requirement = "35"
     is_python_3 = python_compat_version.startswith("3")
     meets_minimum_requirements = False
     if is_python_3:
