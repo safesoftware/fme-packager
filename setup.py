@@ -6,10 +6,10 @@ with open("README.md") as readme_file:
 
 
 with open("fpkgr/__init__.py") as f:
-    start = "__version__ = '"
+    start = '__version__ = "'
     body = f.read()
     start_index = body.find(start) + len(start)
-    version = body[start_index : body.find("'", start_index)]
+    version = body[start_index : body.find('"', start_index)]
 
 setup(
     name="fpkgr",
