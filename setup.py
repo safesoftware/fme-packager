@@ -33,6 +33,12 @@ setup(
         "xmltodict~=0.12.0",
         "packaging~=21.0",
     ],
+    extras_require={
+        "dev": [
+            "pytest",
+            "black~=22.1.0",
+        ],
+    },
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
     },
