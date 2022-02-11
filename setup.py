@@ -21,8 +21,9 @@ setup(
     author="Carson Lam",
     author_email="carson.lam@safe.com",
     url="https://github.com/safesoftware/fpkgr",
+    python_requires=">=3.6",
     install_requires=[
-        "click~=7.1.2",
+        "click~=8.0.0",
         "cookiecutter~=1.7.2",
         "defusedxml~=0.6.0",
         "jsonschema~=3.2.0",
@@ -32,6 +33,12 @@ setup(
         "xmltodict~=0.12.0",
         "packaging~=21.0",
     ],
+    extras_require={
+        "dev": [
+            "pytest",
+            "black~=22.1.0",
+        ],
+    },
     entry_points={
         "console_scripts": ["fpkgr = fpkgr.cli:cli"],
     },
@@ -40,11 +47,7 @@ setup(
         "DO NOT UPLOAD TO PYPI",
         "Framework :: FME",
         "Development Status :: 4 - Pre-Alpha",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
