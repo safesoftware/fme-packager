@@ -1,5 +1,9 @@
 # fpkgr changes
 
+## 0.9.0
+
+* Drop support for Python 2 and Python < 3.6.
+
 ## 0.8.5
 
 * Set minimum PYTHON_COMPATIBILITY to >= '35'.
