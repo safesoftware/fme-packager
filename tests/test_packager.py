@@ -39,9 +39,7 @@ def test_is_valid_python_compatibility(version, expected_is_valid):
 def test_check_fmx(valid_package_dir):
     packager = FMEPackager(valid_package_dir)
     for transformer in packager.metadata.transformers:
-        fmx_path = get_fmx_path(
-            os.path.join(valid_package_dir, "transformers"), transformer.name
-        )
+        fmx_path = get_fmx_path(os.path.join(valid_package_dir, "transformers"), transformer.name)
         check_fmx(packager.metadata, transformer, fmx_path)
 
 
@@ -58,9 +56,7 @@ def test_check_fmx_with_compatibility_error(incompatible_package_dir):
 def test_check_custom_fmx(custom_package_dir):
     packager = FMEPackager(custom_package_dir)
     for transformer in packager.metadata.transformers:
-        fmx_path = get_fmx_path(
-            os.path.join(custom_package_dir, "transformers"), transformer.name
-        )
+        fmx_path = get_fmx_path(os.path.join(custom_package_dir, "transformers"), transformer.name)
         check_custom_fmx(packager.metadata, transformer, fmx_path)
 
 

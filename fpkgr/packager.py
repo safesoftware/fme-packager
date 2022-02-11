@@ -37,9 +37,9 @@ def is_valid_python_compatibility(python_compat_version):
     is_python_3 = python_compat_version.startswith("3")
     meets_minimum_requirements = False
     if is_python_3:
-        meets_minimum_requirements = version.parse(
-            python_compat_version
-        ) >= version.parse(minimum_requirement)
+        meets_minimum_requirements = version.parse(python_compat_version) >= version.parse(
+            minimum_requirement
+        )
     return is_python_3 and meets_minimum_requirements
 
 
@@ -107,24 +107,16 @@ def check_fmx(package_metadata, transformer_metadata, fmx_path):
         name = match.group(1)
         if name != fqname:
             raise ValueError(
-                "{} all TRANSFORMER_NAME need to be '{}', not '{}'".format(
-                    fmx_path, fqname, name
-                )
+                "{} all TRANSFORMER_NAME need to be '{}', not '{}'".format(fmx_path, fqname, name)
             )
 
-    if not re.findall(
-        r"\nVERSION:\s*{}\n".format(transformer_metadata.version), contents
-    ):
-        raise ValueError(
-            "{} is missing VERSION {}".format(fmx_path, transformer_metadata.version)
-        )
+    if not re.findall(r"\nVERSION:\s*{}\n".format(transformer_metadata.version), contents):
+        raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
 
     # Validate PYTHON_COMPATIBILITY with the latest value in the FMX.
     # Assumption: If earlier fmx versions contain PYTHON_COMPATIBILITY,
     # the latest version should also have this attribute.
-    latest_python_compatibility = re.search(
-        r"\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n", contents
-    )
+    latest_python_compatibility = re.search(r"\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n", contents)
     if latest_python_compatibility:
         python_version = latest_python_compatibility.group(1)
         if not is_valid_python_compatibility(python_version):
@@ -148,14 +140,10 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
         package_metadata.publisher_uid, package_metadata.uid, transformer_metadata.name
     )
     if header.name != fqname:
-        raise ValueError(
-            "{} name needs to be '{}', not '{}'".format(fmx_path, fqname, header.name)
-        )
+        raise ValueError("{} name needs to be '{}', not '{}'".format(fmx_path, fqname, header.name))
 
     if transformer_metadata.version != header.version:
-        raise ValueError(
-            "{} is missing version {}".format(fmx_path, transformer_metadata.version)
-        )
+        raise ValueError("{} is missing version {}".format(fmx_path, transformer_metadata.version))
 
     if header.insert_mode != '"Linked Always"':
         raise ValueError(
@@ -166,9 +154,7 @@ def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
 
     build_num = int(header.build_num)
     if build_num < 19000:
-        raise ValueError(
-            "Custom transformer must be created from FME build 19000 or newer"
-        )
+        raise ValueError("Custom transformer must be created from FME build 19000 or newer")
     if build_num < package_metadata.minimum_fme_build:
         raise ValueError(
             "Custom transformer created with FME build older than fme_minimum_build in package.yml"
@@ -295,9 +281,7 @@ class FMEPackager:
             with open(flali_path, encoding="utf-8") as xmlin:
                 aliases_xml = xmltodict.parse(xmlin.read())
 
-            embedded_doc_dirs = list(
-                filter(lambda x: x.startswith("!"), os.listdir(help_src))
-            )
+            embedded_doc_dirs = list(filter(lambda x: x.startswith("!"), os.listdir(help_src)))
             if embedded_doc_dirs:
                 warnings.warn(
                     "{} embedded doc folders (starting with '!'). Avoid these if possible".format(
@@ -310,9 +294,7 @@ class FMEPackager:
             if os.path.exists(dest):
                 print("Deleting {}".format(dest))
                 shutil.rmtree(dest)
-            shutil.copytree(
-                help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
-            )
+            shutil.copytree(help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
         finally:
             shutil.rmtree(tmp_doc_dir)
 
@@ -335,11 +317,7 @@ class FMEPackager:
                     print("{} exists".format(expected_doc_path))
                     writer.writerow([name, link])
                     copied_rows += 1
-        print(
-            "Wrote {} of {} flali row(s) to package_help.csv".format(
-                copied_rows, len(rows)
-            )
-        )
+        print("Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows)))
         if not copied_rows:
             raise ValueError("flali doesn't reference any included doc")
 
@@ -375,9 +353,7 @@ class FMEPackager:
         os.makedirs(self.build_dir)
 
         for required_file in ["package.yml", "README.md", "CHANGES.md"]:
-            check_exists_and_copy(
-                os.path.join(self.src_dir, required_file), self.build_dir
-            )
+            check_exists_and_copy(os.path.join(self.src_dir, required_file), self.build_dir)
 
         self._copy_icon()
 
@@ -398,9 +374,7 @@ class FMEPackager:
         src = os.path.join(self.src_dir, "formats")
         dst = os.path.join(self.build_dir, "formats")
         if os.path.isdir(src):
-            shutil.copytree(
-                src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
-            )
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for format in self.metadata.formats:
             print("Working on format: {}".format(format.name))
@@ -414,9 +388,7 @@ class FMEPackager:
 
             fmf_path = os.path.join(src, "{}.fmf".format(format.name))
             if not os.path.exists(fmf_path):
-                raise ValueError(
-                    "{} is in metadata, but was not found".format(fmf_path)
-                )
+                raise ValueError("{} is in metadata, but was not found".format(fmf_path))
             check_fmf(self.metadata, format, fmf_path)
             shutil.copy(fmf_path, dst)
 
@@ -432,9 +404,7 @@ class FMEPackager:
         src = os.path.join(self.src_dir, "transformers")
         dst = os.path.join(self.build_dir, "transformers")
         if os.path.isdir(src):
-            shutil.copytree(
-                src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
-            )
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for transformer in self.metadata.transformers:
             print("Working on transformer: {}".format(transformer.name))
@@ -451,9 +421,7 @@ class FMEPackager:
 
             fmx_path = os.path.join(src, "{}.fmx".format(transformer.name))
             if not os.path.isfile(fmx_path):
-                raise ValueError(
-                    "{} is in metadata, but was not found".format(fmx_path)
-                )
+                raise ValueError("{} is in metadata, but was not found".format(fmx_path))
 
             if get_custom_transformer_header(fmx_path):
                 print("{} is a custom transformer".format(transformer.name))
@@ -467,14 +435,10 @@ class FMEPackager:
         dest = os.path.join(self.build_dir, "web_services")
         for web_service in self.metadata.web_services:
             # fpkg spec says web service metadata entries must be full filename. Don't assume xml.
-            definition_path = os.path.join(
-                self.src_dir, "web_services", web_service.name
-            )
+            definition_path = os.path.join(self.src_dir, "web_services", web_service.name)
             if not os.path.exists(definition_path):
                 raise ValueError(
-                    "Web Service '{}' is in metadata, but was not found".format(
-                        web_service.name
-                    )
+                    "Web Service '{}' is in metadata, but was not found".format(web_service.name)
                 )
             if not os.path.exists(dest):
                 os.makedirs(dest)
@@ -549,18 +513,12 @@ class FMEPackager:
                 shutil.copy(path, wheels_dest)
 
             built_wheels_dir = os.path.join(path, "dist")
-            if os.path.isfile(os.path.join(path, "setup.py")) and os.path.isdir(
-                built_wheels_dir
-            ):
+            if os.path.isfile(os.path.join(path, "setup.py")) and os.path.isdir(built_wheels_dir):
                 built_wheels_for_lib = [
-                    name
-                    for name in os.listdir(built_wheels_dir)
-                    if name.endswith(".whl")
+                    name for name in os.listdir(built_wheels_dir) if name.endswith(".whl")
                 ]
                 assert len(built_wheels_for_lib) == 1
-                shutil.copy(
-                    os.path.join(built_wheels_dir, built_wheels_for_lib[0]), wheels_dest
-                )
+                shutil.copy(os.path.join(built_wheels_dir, built_wheels_for_lib[0]), wheels_dest)
 
     def _check_wheels(self):
         wheels = os.listdir(os.path.join(self.build_dir, "python"))
@@ -573,14 +531,11 @@ class FMEPackager:
         for expected_py_package in self.metadata.python_packages:
             lib_name = expected_py_package.name
             if not any(
-                wheel_name.startswith(lib_name)
-                or wheel_name.startswith(lib_name.replace("-", "_"))
+                wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace("-", "_"))
                 for wheel_name in wheels
             ):
                 raise ValueError(
-                    "Python library '{}' is in metadata, but was not found".format(
-                        lib_name
-                    )
+                    "Python library '{}' is in metadata, but was not found".format(lib_name)
                 )
 
     def _copy_localization(self):
@@ -624,10 +579,6 @@ class FMEPackager:
                     raise ValueError("{} cannot contain '.'".format(row[0]))
                 expected_doc = os.path.join(src, row[1].lstrip("/"))
                 if not os.path.exists(expected_doc):
-                    raise ValueError(
-                        "Help entry {} does not exist".format(expected_doc)
-                    )
+                    raise ValueError("Help entry {} does not exist".format(expected_doc))
 
-        shutil.copytree(
-            src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS)
-        )
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))

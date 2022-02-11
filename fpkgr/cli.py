@@ -31,17 +31,13 @@ def init(template):
 
     TEMPLATE -- Name of the template to use.
     """
-    print(
-        "Enter the values to use for the template. Press Enter to accept the [default]."
-    )
+    print("Enter the values to use for the template. Press Enter to accept the [default].")
     cookiecutter(COOKIECUTTER_TEMPLATES[template])
 
 
 @cli.command()
 @click.argument("help_path", type=click.Path(exists=True, file_okay=True))
-@click.argument(
-    "fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True)
-)
+@click.argument("fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True))
 def apply_help(help_path, fpkg_path):
     """
     Import an Safe TechPubs doc export into an FME Package directory.
