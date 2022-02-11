@@ -62,18 +62,3 @@ $ fme-packager pack my-package
 ```
 
 If everything went well, the fpkg will be in `my-package/dist/`.
-
-
-## For fpkgr maintainers
-
-To upload wheels to arty-1, first ensure your ~/.pypirc is set up to use it:
-
-```
-[local]
-repository: http://arty-1/artifactory/api/pypi/pypi
-username: (your domain username)
-password: (your API key, found in your Artifactory user profile)
-```
-
-1. `python setup.py bdist_wheel`
-2. `twine upload -r local dist/fpkgr-x.y.z-py2.py3-none-any.whl`
