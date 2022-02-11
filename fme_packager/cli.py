@@ -1,17 +1,17 @@
 """
-fpkgr command line interface.
+fme_packager command line interface.
 """
 import click
 from cookiecutter.main import cookiecutter
 
-import fpkgr
-from fpkgr.packager import FMEPackager
+import fme_packager
+from fme_packager.packager import FMEPackager
 
 
 @click.group()
 def cli():
     """
-    fpkgr: The FME Packages Tool.
+    fme_packager: The FME Packages Tool.
     """
     pass
 
@@ -71,9 +71,9 @@ def pack(path):
 @cli.command()
 def version():
     """
-    Print the version of fpkgr.
+    Print the version of fme_packager.
     """
-    print("fpkgr " + fpkgr.__version__)
+    print("fme_packager " + fme_packager.__version__)
 
 
 if __name__ == "__main__":

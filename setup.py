@@ -5,14 +5,14 @@ with open("README.md") as readme_file:
     readme = readme_file.read()
 
 
-with open("fpkgr/__init__.py") as f:
+with open("fme_packager/__init__.py") as f:
     start = '__version__ = "'
     body = f.read()
     start_index = body.find(start) + len(start)
     version = body[start_index : body.find('"', start_index)]
 
 setup(
-    name="fpkgr",
+    name="fme_packager",
     packages=find_packages(),
     version=version,
     description="Tool for creating FME Packages",
@@ -20,7 +20,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Carson Lam",
     author_email="carson.lam@safe.com",
-    url="https://github.com/safesoftware/fpkgr",
+    url="https://github.com/safesoftware/fme-packager",
     python_requires=">=3.6",
     install_requires=[
         "click~=8.0.0",
@@ -40,7 +40,7 @@ setup(
         ],
     },
     entry_points={
-        "console_scripts": ["fpkgr = fpkgr.cli:cli"],
+        "console_scripts": ["fme_packager = fme_packager.cli:cli"],
     },
     keywords="fme fmepy package",
     classifiers=[

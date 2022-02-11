@@ -14,12 +14,12 @@ import xmltodict
 from jsonschema import validate
 from packaging import version
 
-from fpkgr.exception import (
+from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
 )
-from fpkgr.metadata import load_fpkg_metadata, load_metadata_json_schema
-from fpkgr.operations import (
+from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema
+from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
     get_custom_transformer_header,
@@ -259,7 +259,7 @@ class FMEPackager:
 
         :param help_src: Help source path.
         """
-        tmp_doc_dir = tempfile.mkdtemp(prefix="fpkgr_")
+        tmp_doc_dir = tempfile.mkdtemp(prefix="fme-packager_")
         try:
             # If help source is a ZIP, extract it to a temporary folder.
             if os.path.isfile(help_src):

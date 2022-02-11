@@ -2,11 +2,11 @@ import os
 
 import pytest
 
-from fpkgr.exception import (
+from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
 )
-from fpkgr.packager import (
+from fme_packager.packager import (
     FMEPackager,
     check_fmx,
     is_valid_python_compatibility,

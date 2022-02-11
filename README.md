@@ -1,10 +1,10 @@
-# fpkgr: FME Package Creator
+# fme-packager: FME Package Creator
 
-`fpkgr` is a Python command-line tool for validating and creating FME Packages.
+`fme-packager` is a Python command-line tool for validating and creating FME Packages.
 Give it the path to an FME Package directory, and it'll do some quick checks
 and build an `.fpkg` file out of it.
 
-The validations done by `fpkgr` will catch common mistakes in package development,
+The validations done by `fme-packager` will catch common mistakes in package development,
 but is still very basic. The FME Packages it creates will be
 validly formed according to the FME Packages Specification,
 but whether the installed components function correctly within FME is not in its scope.
@@ -15,11 +15,11 @@ but whether the installed components function correctly within FME is not in its
 Download the latest whl distribution from the releases page. Then install it:
 
 ```
-$ pip install [fpkgr].whl
+$ pip install [fme-packager].whl
 ```
 
-Once installed, the `fpkgr` command is available on your system.
-`fpkgr --help` shows an overview of commands.
+Once installed, the `fme-packager` command is available on your system.
+`fme-packager --help` shows an overview of commands.
 
 
 ## What it does
@@ -43,22 +43,22 @@ so existing files are not modified.
 
 ## Get started with a template
 
-`fpkgr init [template name]` helps you get started with developing FME Packages by
+`fme-packager init [template name]` helps you get started with developing FME Packages by
 using [Cookiecutter](https://cookiecutter.readthedocs.io/) templates.
 
 Available templates:
 
 * `transformer`: [Transformer template for FME Packages](https://github.com/safesoftware/fpkg-transformer-template)
 
-_These templates are not currently bundled with fpkgr.
+_These templates are not currently bundled with fme-packager.
 
 
 ## Make an fpkg distribution
 
-Call `fpkgr pack` with the path to your package directory (it contains package.yml):
+Call `fme-packager pack` with the path to your package directory (it contains package.yml):
 
 ```
-$ fpkgr pack my-package
+$ fme-packager pack my-package
 ```
 
 If everything went well, the fpkg will be in `my-package/dist/`.

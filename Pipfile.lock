@@ -82,7 +82,7 @@
             "editable": true,
             "path": "."
         },
-        "fpkgr": {
+        "fme-packager": {
             "editable": true,
             "path": "."
         },
