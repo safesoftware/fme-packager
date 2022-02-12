@@ -6,11 +6,11 @@ import shutil
 import tempfile
 import warnings
 import zipfile
-from distutils.core import run_setup
 from fnmatch import fnmatch
 
 import png
 import xmltodict
+from build import ProjectBuilder
 from jsonschema import validate
 from packaging import version
 
@@ -486,17 +486,19 @@ class FMEPackager:
 
         for name in os.listdir(self.src_python_dir):
             path = os.path.join(self.src_python_dir, name)
-            if os.path.isdir(path) and os.path.isfile(os.path.join(path, "setup.py")):
+            if os.path.isfile(os.path.join(path, "setup.py")) or os.path.isfile(
+                os.path.join(path, "setup.cfg")
+            ):
                 print("\nBuilding Python wheel: {}".format(path))
                 os.chdir(path)
                 if os.path.exists("build"):
                     shutil.rmtree("build")
-                # Simple solution to avoid needing to figure out which built artifact is the one we want.
+                # Simple solution to avoid needing to figure out which output is the one we want.
                 # The only wheel in the directory will be the one to include in the fpkg.
                 if os.path.exists("dist"):
                     shutil.rmtree("dist")
                 try:
-                    run_setup("setup.py", ["bdist_wheel"])
+                    ProjectBuilder(path).build("wheel", "dist")
                 finally:
                     os.chdir(original_cwd)
 
@@ -513,7 +515,7 @@ class FMEPackager:
                 shutil.copy(path, wheels_dest)
 
             built_wheels_dir = os.path.join(path, "dist")
-            if os.path.isfile(os.path.join(path, "setup.py")) and os.path.isdir(built_wheels_dir):
+            if os.path.isdir(built_wheels_dir):
                 built_wheels_for_lib = [
                     name for name in os.listdir(built_wheels_dir) if name.endswith(".whl")
                 ]
