@@ -523,8 +523,8 @@ class FMEPackager:
     def _check_wheels(self):
         wheels = os.listdir(os.path.join(self.build_dir, "python"))
         for wheel_name in wheels:
-            if "py2.py3" not in wheel_name:
-                warnings.warn("{} is not a Python universal wheel".format(wheel_name))
+            if "py3" not in wheel_name:
+                warnings.warn("{} is not a Python 3 wheel".format(wheel_name))
             if not wheel_name.endswith("-none-any.whl"):
                 warnings.warn("{} is not a pure-Python wheel".format(wheel_name))
 
