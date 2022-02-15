@@ -1,5 +1,9 @@
 # fme-packager changes
 
+## 1.0.1
+
+* Fix missing spec.json.
+
 ## 1.0.0
 
 * Rename to fme-packager.
