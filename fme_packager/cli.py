@@ -1,17 +1,17 @@
 """
-fpkgr command line interface.
+fme_packager command line interface.
 """
 import click
 from cookiecutter.main import cookiecutter
 
-import fpkgr
-from fpkgr.packager import FMEPackager
+import fme_packager
+from fme_packager.packager import FMEPackager
 
 
 @click.group()
 def cli():
     """
-    fpkgr: The FME Packages Tool.
+    fme_packager: The FME Packages Tool.
     """
     pass
 
@@ -31,17 +31,13 @@ def init(template):
 
     TEMPLATE -- Name of the template to use.
     """
-    print(
-        "Enter the values to use for the template. Press Enter to accept the [default]."
-    )
+    print("Enter the values to use for the template. Press Enter to accept the [default].")
     cookiecutter(COOKIECUTTER_TEMPLATES[template])
 
 
 @cli.command()
 @click.argument("help_path", type=click.Path(exists=True, file_okay=True))
-@click.argument(
-    "fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True)
-)
+@click.argument("fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True))
 def apply_help(help_path, fpkg_path):
     """
     Import an Safe TechPubs doc export into an FME Package directory.
@@ -75,9 +71,9 @@ def pack(path):
 @cli.command()
 def version():
     """
-    Print the version of fpkgr.
+    Print the version of fme_packager.
     """
-    print("fpkgr " + fpkgr.__version__)
+    print("fme_packager " + fme_packager.__version__)
 
 
 if __name__ == "__main__":

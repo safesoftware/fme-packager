@@ -129,34 +129,24 @@ class FMEPackageMetadata:
 
     @property
     def transformers(self):
-        return [
-            TransformerMetadata(item)
-            for item in self.package_content.get("transformers", [])
-        ]
+        return [TransformerMetadata(item) for item in self.package_content.get("transformers", [])]
 
     @property
     def python_packages(self):
         return [
-            PythonPackageMetadata(item)
-            for item in self.package_content.get("python_packages", [])
+            PythonPackageMetadata(item) for item in self.package_content.get("python_packages", [])
         ]
 
     @property
     def formats(self):
-        return [
-            FormatMetadata(item) for item in self.package_content.get("formats", [])
-        ]
+        return [FormatMetadata(item) for item in self.package_content.get("formats", [])]
 
     @property
     def web_services(self):
-        return [
-            WebServiceMetadata(item)
-            for item in self.package_content.get("web_services", [])
-        ]
+        return [WebServiceMetadata(item) for item in self.package_content.get("web_services", [])]
 
     @property
     def web_filesystems(self):
         return [
-            WebFilesystemMetadata(item)
-            for item in self.package_content.get("web_filesystems", [])
+            WebFilesystemMetadata(item) for item in self.package_content.get("web_filesystems", [])
         ]

@@ -12,9 +12,7 @@ def split_fpkg_filename(filename):
     """
     name, _, extension = filename.partition(".")
     if extension != "fpkg":
-        raise ValueError(
-            "FME Package extension must be 'fpkg', not '{}'".format(extension)
-        )
+        raise ValueError("FME Package extension must be 'fpkg', not '{}'".format(extension))
     publisher_uid, _, right = name.partition(".")
     package_uid, _, version = right.rpartition("-")
     if not publisher_uid or not package_uid or not version:
