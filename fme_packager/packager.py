@@ -498,7 +498,7 @@ class FMEPackager:
                 if os.path.exists("dist"):
                     shutil.rmtree("dist")
                 try:
-                    ProjectBuilder(path).build("wheel", "dist")
+                    ProjectBuilder(".").build("wheel", "dist")
                 finally:
                     os.chdir(original_cwd)
 
