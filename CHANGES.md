@@ -1,5 +1,9 @@
 # fme-packager changes
 
+## 1.0.2
+
+* Fix `fme-packager pack .` regression.
+
 ## 1.0.1
 
 * Fix missing spec.json.
