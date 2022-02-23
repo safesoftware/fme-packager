@@ -1,5 +1,9 @@
 # fme-packager changes
 
+## 1.1.0
+
+* Add `config-env` command to configure a Python environment to use fmeobjects.
+
 ## 1.0.2
 
 * Fix `fme-packager pack .` regression.
