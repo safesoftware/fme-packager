@@ -1,6 +1,6 @@
 # fme-packager changes
 
-## 1.1.1
+## 1.1.2
 
 * Prepare for PyPI release.
 
