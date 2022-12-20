@@ -1,7 +1,6 @@
 import csv
 import imghdr
 import os
-import re
 import shutil
 import tempfile
 import warnings
@@ -18,12 +17,12 @@ from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
 )
-from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema
+from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema, TransformerMetadata
 from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
-    get_custom_transformer_header,
 )
+from fme_packager.transformer import load_transformer, CustomTransformer
 
 
 def is_valid_python_compatibility(python_compat_version):
@@ -78,90 +77,6 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
         )
     if square and width != height:
         raise ValueError("{} must be square".format(path))
-
-
-def check_fmx(package_metadata, transformer_metadata, fmx_path):
-    """
-    Checks the fmx file is consistent with the package and transformer metadata.
-
-    :raises ValueError: If the fmx fails the check.
-    :param package_metadata: Package metadata.
-    :param transformer_metadata: Transformer metadata.
-    :param fmx_path: Path to the fmx file.
-    """
-    with open(fmx_path) as inf:
-        contents = inf.read()
-
-    if "TRANSFORMER_NAME:" not in contents or "VERSION:" not in contents:
-        raise ValueError("{} missing TRANSFORMER_NAME or VERSION".format(fmx_path))
-
-    fqname = "{}.{}.{}".format(
-        package_metadata.publisher_uid, package_metadata.uid, transformer_metadata.name
-    )
-    transformer_names = list(
-        re.finditer(r"\nTRANSFORMER_NAME:\s*([^\n]+)\n".format(fqname), contents)
-    )
-    if not transformer_names:
-        raise ValueError("{} missing TRANSFORMER_NAME".format(fmx_path))
-    for match in transformer_names:
-        name = match.group(1)
-        if name != fqname:
-            raise ValueError(
-                "{} all TRANSFORMER_NAME need to be '{}', not '{}'".format(fmx_path, fqname, name)
-            )
-
-    if not re.findall(r"\nVERSION:\s*{}\n".format(transformer_metadata.version), contents):
-        raise ValueError("{} is missing VERSION {}".format(fmx_path, transformer_metadata.version))
-
-    # Validate PYTHON_COMPATIBILITY with the latest value in the FMX.
-    # Assumption: If earlier fmx versions contain PYTHON_COMPATIBILITY,
-    # the latest version should also have this attribute.
-    latest_python_compatibility = re.search(r"\nPYTHON_COMPATIBILITY:\s*([^\n]+)\n", contents)
-    if latest_python_compatibility:
-        python_version = latest_python_compatibility.group(1)
-        if not is_valid_python_compatibility(python_version):
-            raise TransformerPythonCompatError(transformer_metadata.name)
-
-
-def check_custom_fmx(package_metadata, transformer_metadata, fmx_path):
-    """
-    Checks the custom fmx file is consistent with the package and transformer metadata.
-
-    :raises ValueError: If the fmx fails the check.
-    :param package_metadata: Package metadata.
-    :param transformer_metadata: Transformer metadata.
-    :param fmx_path: Path to the fmx file.
-    """
-
-    # Cheating here. Only looking at the topmost (first and latest) TRANSFORMER_BEGIN.
-    header = get_custom_transformer_header(fmx_path)
-
-    fqname = "{}.{}.{}".format(
-        package_metadata.publisher_uid, package_metadata.uid, transformer_metadata.name
-    )
-    if header.name != fqname:
-        raise ValueError("{} name needs to be '{}', not '{}'".format(fmx_path, fqname, header.name))
-
-    if transformer_metadata.version != header.version:
-        raise ValueError("{} is missing version {}".format(fmx_path, transformer_metadata.version))
-
-    if header.insert_mode != '"Linked Always"':
-        raise ValueError(
-            'Custom transformer Insert Mode must be "Linked Always", not {}'.format(
-                header.insert_mode
-            )
-        )
-
-    build_num = int(header.build_num)
-    if build_num < 19000:
-        raise ValueError("Custom transformer must be created from FME build 19000 or newer")
-    if build_num < package_metadata.minimum_fme_build:
-        raise ValueError(
-            "Custom transformer created with FME build older than fme_minimum_build in package.yml"
-        )
-
-    if header.pyver != "2or3" and not is_valid_python_compatibility(header.pyver):
-        raise CustomTransformerPythonCompatError(transformer_metadata.name)
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
@@ -398,6 +313,46 @@ class FMEPackager:
             check_formatinfo(self.metadata, format, db_path)
             shutil.copy(db_path, dst)
 
+    def validate_transformer(self, transformer_path, expected_metadata: TransformerMetadata):
+        print(f"Checking {transformer_path}")
+        transformer_file = load_transformer(transformer_path)
+
+        expected_fqname = "{}.{}.{}".format(
+            self.metadata.publisher_uid, self.metadata.uid, expected_metadata.name
+        )
+
+        transformer_versions = list(transformer_file.versions())
+        if not transformer_versions:
+            raise ValueError(f"{transformer_path} defines no versions")
+        # Validations below apply to all versions of the transformer
+        for transformer in transformer_versions:
+            if transformer.version < 1:
+                raise ValueError(f"Invalid transformer version {transformer.version}")
+            if transformer.name != expected_fqname:
+                raise ValueError(f"Name must be '{expected_fqname}', not '{transformer.name}'")
+            if isinstance(transformer, CustomTransformer):
+                if transformer.header.insert_mode != '"Linked Always"':
+                    raise ValueError(
+                        f'Custom transformer Insert Mode must be "Linked Always", not {transformer.header.insert_mode}'
+                    )
+                if transformer.header.build_num < self.metadata.minimum_fme_build:
+                    raise ValueError(
+                        "Custom transformer created with FME build older than fme_minimum_build in package.yml"
+                    )
+
+        # Validations below apply only to the latest version of the transformer
+        newest_transformer = transformer_versions[0]  # First definition in file
+        if newest_transformer.version != expected_metadata.version:
+            raise ValueError(f"Missing version {expected_metadata.version}")
+        if not is_valid_python_compatibility(newest_transformer.python_compatibility):
+            if not isinstance(newest_transformer, CustomTransformer):
+                raise TransformerPythonCompatError(expected_metadata.name)
+            elif (
+                isinstance(newest_transformer, CustomTransformer)
+                and newest_transformer.python_compatibility != "2or3"
+            ):
+                raise CustomTransformerPythonCompatError(expected_metadata.name)
+
     def _copy_transformers(self):
         # First, copy all files we don't specifically care about.
         # Ignore FMX and FMS for transformers not mentioned in metadata.
@@ -423,12 +378,8 @@ class FMEPackager:
             if not os.path.isfile(fmx_path):
                 raise ValueError("{} is in metadata, but was not found".format(fmx_path))
 
-            if get_custom_transformer_header(fmx_path):
-                print("{} is a custom transformer".format(transformer.name))
-                check_custom_fmx(self.metadata, transformer, fmx_path)
-            else:
-                print("{} is not a custom transformer".format(transformer.name))
-                check_fmx(self.metadata, transformer, fmx_path)
+            # Copy file if it passed validation
+            self.validate_transformer(fmx_path, transformer)
             shutil.copy(fmx_path, dst)
 
     def _copy_web_services(self):

@@ -101,7 +101,7 @@
     "minimum_fme_build": {
       "description": "Minimum required FME Build version to use the package",
       "type": "integer",
-      "minimum": 18000
+      "minimum": 19000
     },
     "author": {
       "description": "Author of the package",
