@@ -2,7 +2,9 @@ import os
 import pathlib
 
 import pytest
+from click.testing import CliRunner
 
+from fme_packager.cli import pack
 from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
@@ -75,3 +77,9 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
         # Expect a particular exception class
         with pytest.raises(expected_exc):
             packager.validate_transformer(transformer_abs_path, metadata)
+
+
+def test_pack():
+    runner = CliRunner()
+    result = runner.invoke(pack, [str(pathlib.Path(__file__).parent.resolve() / "fixtures" / "valid_package")])
+    assert result.exit_code == 0
