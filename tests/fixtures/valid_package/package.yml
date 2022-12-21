@@ -14,5 +14,3 @@ package_content:
       version: 1
     - name: MyYeller
       version: 2
-  python_packages:
-    - name: fme-mygreeter
