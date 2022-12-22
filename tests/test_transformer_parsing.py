@@ -1,11 +1,15 @@
 import os
+import pathlib
 
 from fme_packager.transformer import (
     load_transformer,
     CustomTransformerFmxFile,
     CustomTransformer,
-    FmxFile,
+    FmxFile, FmxjFile,
 )
+
+
+CWD = pathlib.Path(__file__).parent.resolve()
 
 
 def test_custom_transformer(custom_package_dir):
@@ -46,3 +50,16 @@ def test_fmx_transformer(valid_package_dir):
     assert item.name == "example.my-package.MyGreeter"
     assert item.version == 1
     assert item.python_compatibility == "36"
+
+
+def test_fmxj_transformer(valid_package_dir):
+    fmx = load_transformer(
+        CWD / "fixtures" / "fmxj_package" / "transformers" / "DemoGreeter.fmxj"
+    )
+    assert isinstance(fmx, FmxjFile)
+    defs = list(fmx.versions())
+    assert len(defs) == 1
+    item = defs[0]
+    assert item.name == "example.my-package.DemoGreeter"
+    assert item.version == 1
+    assert not item.python_compatibility

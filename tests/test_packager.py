@@ -16,6 +16,9 @@ from fme_packager.packager import (
 )
 
 
+CWD = pathlib.Path(__file__).parent.resolve()
+
+
 @pytest.mark.parametrize(
     "version, expected_is_valid",
     [
@@ -44,6 +47,7 @@ def test_is_valid_python_compatibility(version, expected_is_valid):
         ("custom_package/transformers/customFooBar.fmx", None, None),
         ("custom_package/transformers/epochToTimestamp29.fmx", None, None),
         ("custom_package/transformers/customEncrypted2Ver.fmx", {"name": "test", "version": 2}, 'Custom transformer Insert Mode must be "Linked Always"'),
+        ("fmxj_package/transformers/DemoGreeter.fmxj", None, None),
     ],
 )
 def test_validate_transformer(transformer_path, metadata, expected_exc):
@@ -55,7 +59,7 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
     The metadata argument overrides the transformer's entry in package.yml.
     If the transformer has no entry in package.yml, the metadata must be provided.
     """
-    transformer_abs_path = pathlib.Path(__file__).parent.resolve() / "fixtures" / transformer_path
+    transformer_abs_path = CWD / "fixtures" / transformer_path
     packager = FMEPackager(transformer_abs_path.parent.parent)
     if metadata:
         metadata = TransformerMetadata(metadata)
@@ -79,7 +83,8 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
             packager.validate_transformer(transformer_abs_path, metadata)
 
 
-def test_pack():
+@pytest.mark.parametrize("package_name", ["valid_package", "fmxj_package"])
+def test_pack(package_name):
     runner = CliRunner()
-    result = runner.invoke(pack, [str(pathlib.Path(__file__).parent.resolve() / "fixtures" / "valid_package")])
+    result = runner.invoke(pack, [str(CWD / "fixtures" / package_name)])
     assert result.exit_code == 0
