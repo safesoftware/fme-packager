@@ -1,6 +1,7 @@
 """
 Tools for extracting key information out of FME's transformer definition files.
 """
+import json
 import os.path
 import re
 from abc import ABC, abstractmethod
@@ -84,6 +85,25 @@ class FmxTransformer(Transformer):
         return self.props.get("PYTHON_COMPATIBILITY")
 
 
+class FmxjTransformer(Transformer):
+    def __init__(self, info, version_def):
+        self.info = info
+        self.json_def = version_def
+
+    @property
+    def name(self):
+        return self.info["name"]
+
+    @property
+    def version(self):
+        return self.json_def["version"]
+
+    @property
+    def python_compatibility(self):
+        # FIXME: key typo from tstportConfiguration/testdata/PortConfiguration.fmxj
+        return self.json_def.get("pythonCompatability")
+
+
 class TransformerFile(ABC):
     """Represents a transformer file containing one or more transformer versions."""
 
@@ -148,6 +168,17 @@ class CustomTransformerFmxFile(TransformerFile):
             yield CustomTransformer(lines[i - 1 : end_idx])
 
 
+class FmxjFile(TransformerFile):
+    def __init__(self, file_path):
+        super().__init__(file_path)
+        with open(file_path) as f:
+            self.body = json.load(f)
+
+    def versions(self):
+        for item in self.body["versions"]:
+            yield FmxjTransformer(self.body["info"], item)
+
+
 def load_transformer(transformer_path) -> TransformerFile:
     filename, ext = os.path.splitext(transformer_path)
     ext = ext.lower()
@@ -158,4 +189,6 @@ def load_transformer(transformer_path) -> TransformerFile:
         if line.startswith(b"#!") or line.startswith(b"FMW0001"):
             return CustomTransformerFmxFile(transformer_path)
         return FmxFile(transformer_path)
+    if ext == ".fmxj":
+        return FmxjFile(transformer_path)
     raise ValueError(f"Unrecognized transformer: {transformer_path}")

@@ -342,16 +342,15 @@ class FMEPackager:
                     )
 
         # Validations below apply only to the latest version of the transformer
-        newest_transformer = transformer_versions[0]  # First definition in file
-        if newest_transformer.version != expected_metadata.version:
+        latest = transformer_versions[0]  # First definition in file
+        if latest.version != expected_metadata.version:
             raise ValueError(f"Missing version {expected_metadata.version}")
-        if not is_valid_python_compatibility(newest_transformer.python_compatibility):
-            if not isinstance(newest_transformer, CustomTransformer):
+        if not latest.python_compatibility and self.metadata.minimum_fme_build < 23000:
+            raise ValueError("Python Compatibility setting required when minimum_fme_build < 23000")
+        elif latest.python_compatibility and not is_valid_python_compatibility(latest.python_compatibility):
+            if not isinstance(latest, CustomTransformer):
                 raise TransformerPythonCompatError(expected_metadata.name)
-            elif (
-                isinstance(newest_transformer, CustomTransformer)
-                and newest_transformer.python_compatibility != "2or3"
-            ):
+            elif isinstance(latest, CustomTransformer) and latest.python_compatibility != "2or3":
                 raise CustomTransformerPythonCompatError(expected_metadata.name)
 
     def _copy_transformers(self):
@@ -376,12 +375,18 @@ class FMEPackager:
                 shutil.copy(fms_path, dst)
 
             fmx_path = src / f"{transformer.name}.fmx"
-            if not fmx_path.is_file():
+            fmxj_path = src / f"{transformer.name}.fmxj"
+            if fmx_path.is_file() and fmxj_path.is_file():
+                raise ValueError(f"{transformer.name} cannot have both FMX and FMXJ")
+            if not fmx_path.is_file() and not fmxj_path.is_file():
                 raise ValueError(f"{fmx_path} is in metadata, but was not found")
+            transformer_path = fmx_path if fmx_path.is_file() else fmxj_path
+            if transformer_path == fmxj_path and self.metadata.minimum_fme_build < 23146:
+                raise ValueError("FMXJ requires minimum_fme_build >= 23146")
 
             # Copy file if it passed validation
-            self.validate_transformer(fmx_path, transformer)
-            shutil.copy(fmx_path, dst)
+            self.validate_transformer(transformer_path, transformer)
+            shutil.copy(transformer_path, dst)
 
     def _copy_web_services(self):
         dest = self.build_dir / "web_services"
