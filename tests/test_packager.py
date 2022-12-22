@@ -1,5 +1,6 @@
 import os
 import pathlib
+from zipfile import ZipFile
 
 import pytest
 from click.testing import CliRunner
@@ -88,3 +89,9 @@ def test_pack(package_name):
     runner = CliRunner()
     result = runner.invoke(pack, [str(CWD / "fixtures" / package_name)])
     assert result.exit_code == 0
+
+    # Sanity check: expect FPKG to exist and contain package.yml at root level
+    dist_dir = CWD / "fixtures" / package_name / "dist"
+    fpkg_name = os.listdir(dist_dir)[0]
+    with ZipFile(dist_dir / fpkg_name) as z:
+        assert "package.yml" in z.namelist()

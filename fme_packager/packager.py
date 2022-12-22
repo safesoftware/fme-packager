@@ -254,7 +254,8 @@ class FMEPackager:
         if fpkg_path.exists():
             fpkg_path.unlink()
 
-        zipfile.main(["-c", str(fpkg_path), str(self.build_dir / ".")])
+        new_zip = shutil.make_archive(fpkg_path, "zip", root_dir=self.build_dir)
+        Path(new_zip).rename(fpkg_path)  # Strip zip extension
         print("Done.")
 
     def build(self):
