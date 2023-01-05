@@ -5,8 +5,7 @@ import json
 import os.path
 import re
 from abc import ABC, abstractmethod
-
-from fme_packager.operations import parse_custom_transformer_header, NamedTransformerHeader
+from collections import namedtuple
 
 
 class Transformer(ABC):
@@ -26,6 +25,24 @@ class Transformer(ABC):
     @abstractmethod
     def python_compatibility(self):
         pass
+
+
+NamedTransformerHeader = namedtuple(
+    "NamedTransformerHeader",
+    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver",
+)
+
+
+def parse_custom_transformer_header(line):
+    """
+    Parses custom transformer header.
+
+    :param str line: Custom transformer header line from FMX.
+    :return: Parsed header
+    """
+    fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
+    header = NamedTransformerHeader(*fields[: len(NamedTransformerHeader._fields)])
+    return header._replace(version=int(header.version), build_num=int(header.build_num))
 
 
 class CustomTransformer(Transformer):

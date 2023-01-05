@@ -51,20 +51,3 @@ def parse_formatinfo(line):
             )
         )
     return FormatInfo(*parts)
-
-
-TRANSFORMER_HDR = "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver"
-NamedTransformerHeader = namedtuple("NamedTransformerHeader", TRANSFORMER_HDR.split())
-
-
-def parse_custom_transformer_header(line):
-    """
-    Parses custom transformer header.
-
-    :param str line: fmx line.
-    :return: Parsed format into a NamedTransformerHeader named tuple.
-    """
-    fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
-    fields[1] = int(fields[1])  # version
-    fields[9] = int(fields[9])  # build_num
-    return NamedTransformerHeader(*fields[: len(NamedTransformerHeader._fields)])
