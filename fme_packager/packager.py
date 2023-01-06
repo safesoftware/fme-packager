@@ -348,7 +348,9 @@ class FMEPackager:
             raise ValueError(f"Missing version {expected_metadata.version}")
         if not latest.python_compatibility and self.metadata.minimum_fme_build < 23000:
             raise ValueError("Python Compatibility setting required when minimum_fme_build < 23000")
-        elif latest.python_compatibility and not is_valid_python_compatibility(latest.python_compatibility):
+        elif latest.python_compatibility and not is_valid_python_compatibility(
+            latest.python_compatibility
+        ):
             if not isinstance(latest, CustomTransformer):
                 raise TransformerPythonCompatError(expected_metadata.name)
             elif isinstance(latest, CustomTransformer) and latest.python_compatibility != "2or3":
@@ -486,9 +488,7 @@ class FMEPackager:
                 wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace("-", "_"))
                 for wheel_name in wheel_names
             ):
-                raise ValueError(
-                    f"Python library '{lib_name}' is in metadata, but was not found"
-                )
+                raise ValueError(f"Python library '{lib_name}' is in metadata, but was not found")
 
         if not wheels_path.is_dir():
             return
