@@ -33,7 +33,7 @@
                 "FACTORY_DEF {*} TestFactory",
                 "    FACTORY_NAME { $(XFORMER_NAME)_ROUTER }",
                 "    INPUT { FEATURE_TYPE $(XFORMER_NAME)_PROCESSED }",
-                "    TEST &fme_rejection_code == ",
+                "    TEST &fme_rejection_code == \"\"",
                 "    OUTPUT { PASSED FEATURE_TYPE $(OUTPUT_Output_FTYPE)",
                 "        @RenameAttributes(FME_STRICT,fme_rejection_code,___fme_rejection_code___)",
                 "        @RemoveAttributes(fme_regexp_match,^___XF_.*$)",
