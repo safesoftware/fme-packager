@@ -476,7 +476,7 @@ class FMEPackager:
                     name for name in built_wheels_dir.iterdir() if name.suffix == ".whl"
                 ]
                 assert len(built_wheels_for_lib) == 1
-                shutil.copy(built_wheels_dir / built_wheels_for_lib[0], wheels_dest)
+                shutil.copy(built_wheels_for_lib[0], wheels_dest)
 
     def _check_wheels(self):
         wheels_path = self.build_dir / "python"
