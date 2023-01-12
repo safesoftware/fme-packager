@@ -1,0 +1,155 @@
+{
+    "info": {
+        "categories": [
+            "Integrations"
+        ],
+        "name": "example.my-package.DemoGreeter"
+    },
+    "versions": [
+        {
+            "changeLog": [
+                "Initial version of transformer"
+            ],
+            "executionTemplate": [
+                "#Put config values onto input feature as internal -prefixed attributes.",
+                "FACTORY_DEF {*} TeeFactory",
+                "   FACTORY_NAME { $(XFORMER_NAME)_CATCHER }",
+                "   $(INPUT_LINES)",
+                "   OUTPUT { FEATURE_TYPE $(XFORMER_NAME)_READY",
+                "      @RenameAttributes(FME_STRICT,___fme_rejection_code___,fme_rejection_code)",
+                "      $(FME_PARM_VAL_LIST)",
+                "   }",
+                "",
+                "# Pass input feature to Python.",
+                "FACTORY_DEF {*} PythonFactory",
+                "    FACTORY_NAME { $(XFORMER_NAME) }",
+                "    INPUT { FEATURE_TYPE $(XFORMER_NAME)_READY }",
+                "    PYTHON_NAMESPACE FMEOBJECTS",
+                "    SYMBOL_NAME fme_demogreeter.transformer.TransformerImpl",
+                "    OUTPUT { PYOUTPUT FEATURE_TYPE $(XFORMER_NAME)_PROCESSED }",
+                "",
+                "# Removed all internal-prefixed attributes from output feature",
+                "# and emit to the correct output port based on value of fme_rejection_code.",
+                "FACTORY_DEF {*} TestFactory",
+                "    FACTORY_NAME { $(XFORMER_NAME)_ROUTER }",
+                "    INPUT { FEATURE_TYPE $(XFORMER_NAME)_PROCESSED }",
+                "    TEST &fme_rejection_code == \"\"",
+                "    OUTPUT { PASSED FEATURE_TYPE $(OUTPUT_Output_FTYPE)",
+                "        @RenameAttributes(FME_STRICT,fme_rejection_code,___fme_rejection_code___)",
+                "        @RemoveAttributes(fme_regexp_match,^___XF_.*$)",
+                "        $(OUTPUT_Output_FUNCS) }",
+                "    OUTPUT { FAILED FEATURE_TYPE $(OUTPUT_<REJECTED>_FTYPE)",
+                "        @RemoveAttributes(___fme_rejection_code___)",
+                "        @RemoveAttributes(fme_regexp_match,^___XF_.*$)",
+                "        $(OUTPUT_<REJECTED>_FUNCS) }"
+            ],
+            "featureHolding": "none",
+            "form": {
+                "parameters": [
+                    {
+                        "name": "TRANSFORMER_GROUP",
+                        "parameters": [
+                            {
+                                "defaultValue": "example.my-package.DemoGreeter",
+                                "name": "XFORMER_NAME",
+                                "prompt": "Transformer Name",
+                                "type": "text",
+                                "valueType": "string"
+                            }
+                        ],
+                        "prompt": "",
+                        "type": "group",
+                        "valueType": "string"
+                    },
+                    {
+                        "name": "GROUP_PROCESSING_GROUP",
+                        "parameters": [
+                            {
+                                "choiceSettings": {
+                                    "choiceSet": "attributeNames"
+                                },
+                                "defaultValue": "",
+                                "name": "GROUP_BY",
+                                "prompt": "Group By",
+                                "type": "tree",
+                                "valueType": "string"
+                            },
+                            {
+                                "choiceSettings": {
+                                    "choiceSet": "userDefined",
+                                    "choices": [
+                                        {
+                                            "display": "When All Features Received",
+                                            "value": "No"
+                                        },
+                                        {
+                                            "display": "When Group Changes (Advanced)",
+                                            "value": "Yes"
+                                        }
+                                    ]
+                                },
+                                "defaultValue": "No",
+                                "name": "GROUP_BY_MODE",
+                                "prompt": "Complete Groups",
+                                "type": "dropdown",
+                                "valueType": "string"
+                            }
+                        ],
+                        "prompt": "Group Processing",
+                        "style": "checkable",
+                        "type": "group",
+                        "valueType": "string"
+                    },
+                    {
+                        "defaultValue": "<Unused>",
+                        "name": "PARAMETERS_GROUP",
+                        "parameters": [
+                            {
+                                "defaultValue": "World",
+                                "name": "___XF_FIRST_NAME",
+                                "prompt": "First Name",
+                                "type": "text",
+                                "valueType": "string"
+                            }
+                        ],
+                        "prompt": "Parameters",
+                        "required": false,
+                        "type": "group",
+                        "valueType": "string"
+                    }
+                ]
+            },
+            "inputPorts": [
+                {
+                    "name": ""
+                }
+            ],
+            "outputPorts": [
+                {
+                    "attributesAdded": [
+                        {
+                            "name": "_greeting",
+                            "type": "buffer"
+                        }
+                    ],
+                    "name": "Output"
+                },
+                {
+                    "attributesAdded": [
+                        {
+                            "name": "fme_rejection_code",
+                            "type": "buffer"
+                        },
+                        {
+                            "name": "fme_rejection_message",
+                            "type": "buffer"
+                        }
+                    ],
+                    "name": "<REJECTED>"
+                }
+            ],
+            "upgradeWarning": "",
+            "version": 1
+        }
+    ]
+}

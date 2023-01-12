@@ -1,5 +1,10 @@
 # fme-packager changes
 
+## 1.2.0
+
+* Add support for FMXJ transformers.
+* Don't require Git when using `fme-packager init transformer`.
+
 ## 1.1.3
 
 * Prepare for PyPI release.

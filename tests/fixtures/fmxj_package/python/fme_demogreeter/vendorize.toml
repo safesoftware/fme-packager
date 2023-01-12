@@ -1,0 +1,4 @@
+target = "src/fme_demogreeter/_vendor"
+packages = [
+    "fmetools>=0.3.0",
+]
