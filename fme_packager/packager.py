@@ -18,10 +18,11 @@ from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
 )
+from fme_packager.help import HelpBuilder
 from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema, TransformerMetadata
 from fme_packager.operations import (
     build_fpkg_filename,
-    parse_formatinfo,
+    parse_formatinfo, TREE_COPY_IGNORE_GLOBS,
 )
 from fme_packager.transformer import load_transformer, CustomTransformer
 
@@ -139,23 +140,6 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
     formatinfo = parse_formatinfo(line)
     if formatinfo.FORMAT_NAME != fqname:
         raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
-
-
-# Matches files that should not automatically be copied into an fpkg.
-# Some of these are OS-specific metadata.
-# FME file extensions are here because their copy over is gated by validation.
-TREE_COPY_IGNORE_GLOBS = [
-    ".*",
-    "*.mclog",
-    "*.flali",
-    "*.fmf",
-    "*.fmx",
-    "*.db",
-    "*.fms",
-    ".DS_Store",
-    "Thumbs.db",
-    "desktop.ini",
-]
 
 
 class FMEPackager:
@@ -533,13 +517,5 @@ class FMEPackager:
             return
 
         print("Copying help")
-        # Validate help index...
-        with open(src / "package_help.csv", newline="") as csvin:
-            for row in csv.reader(csvin):
-                if "." in row[0]:
-                    raise ValueError(f"{row[0]} cannot contain '.'")
-                expected_doc = src / row[1].lstrip("/")
-                if not expected_doc.exists():
-                    raise ValueError(f"Help entry {expected_doc} does not exist")
-
-        shutil.copytree(src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
+        builder = HelpBuilder(self.metadata, src, dest)
+        builder.build()

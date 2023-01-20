@@ -51,3 +51,20 @@ def parse_formatinfo(line):
             )
         )
     return FormatInfo(*parts)
+
+
+# Matches files that should not automatically be copied into an fpkg.
+# Some of these are OS-specific metadata.
+# FME file extensions are here because their copy over is gated by validation.
+TREE_COPY_IGNORE_GLOBS = [
+    ".*",
+    "*.mclog",
+    "*.flali",
+    "*.fmf",
+    "*.fmx",
+    "*.db",
+    "*.fms",
+    ".DS_Store",
+    "Thumbs.db",
+    "desktop.ini",
+]
