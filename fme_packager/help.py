@@ -10,7 +10,8 @@ import shutil
 import warnings
 from pathlib import Path
 
-import markdown
+from markdown import Markdown
+from markdown.extensions.toc import TocExtension
 
 from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.operations import TREE_COPY_IGNORE_GLOBS
@@ -26,6 +27,12 @@ class DocCopier:
     def __init__(self):
         self.convert_md = True
         self.converted_files = {}
+        self._md_converter = Markdown(
+            extensions=["tables", "fenced_code", TocExtension(toc_depth="2-3", title="Contents")],
+        )
+
+    def md_to_html(self, text):
+        return self._md_converter.reset().convert(text)
 
     def __call__(self, src, dst, *args, **kwargs):
         # Has same signature as shutil.copy(), for use with shutil.copytree().
@@ -38,7 +45,7 @@ class DocCopier:
             else:
                 dst = dst.with_name(dst_filename)
             with src.open("r", encoding="utf8") as f:
-                htm = markdown.markdown(f.read())
+                htm = self.md_to_html(f.read())
             with dst.open("w", encoding="utf8") as f:
                 f.write(htm)
             self.converted_files[src] = dst
