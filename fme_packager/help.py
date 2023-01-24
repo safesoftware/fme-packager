@@ -17,6 +17,17 @@ from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.operations import TREE_COPY_IGNORE_GLOBS
 
 
+HTML_TPL = """<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+{body}
+</body>
+</html>
+"""
+
+
 class DocCopier:
     """
     Callable with the same signature as shutil.copy2(), for use with shutil.copytree().
@@ -28,11 +39,17 @@ class DocCopier:
         self.convert_md = True
         self.converted_files = {}
         self._md_converter = Markdown(
-            extensions=["tables", "fenced_code", TocExtension(toc_depth="2-3", title="Contents")],
+            extensions=[
+                "tables",
+                "fenced_code",
+                TocExtension(toc_depth="2-3", title="Contents"),
+            ],
         )
 
     def md_to_html(self, text):
-        return self._md_converter.reset().convert(text)
+        # This is a one-off transformation of the md output,
+        # so do it without the python-markdown extensions API.
+        return HTML_TPL.format(body=self._md_converter.reset().convert(text))
 
     def __call__(self, src, dst, *args, **kwargs):
         # Has same signature as shutil.copy(), for use with shutil.copytree().

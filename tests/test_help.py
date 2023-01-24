@@ -65,7 +65,10 @@ def test_md(mock_metadata, tmp_path):
     maker = HelpBuilder(mock_metadata, HELP_FIXTURES_DIR / "md", tmp_path)
     maker.build()
     assert not (tmp_path / "Transformer.md").is_file()
-    assert (tmp_path / "Transformer.htm").is_file()
+    html_file = tmp_path / "Transformer.htm"
+    with html_file.open("r") as f:
+        html = f.read()
+        assert html.startswith("<!DOCTYPE html>")
     index_file = tmp_path / "package_help.csv"
     assert index_file.is_file()
     with index_file.open("r") as f:
