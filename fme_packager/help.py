@@ -20,6 +20,7 @@ from fme_packager.operations import TREE_COPY_IGNORE_GLOBS
 HTML_TPL = """<!DOCTYPE html>
 <html>
 <head>
+<title>{title}</title>
 </head>
 <body>
 {body}
@@ -46,10 +47,13 @@ class DocCopier:
             ],
         )
 
-    def md_to_html(self, text):
-        # This is a one-off transformation of the md output,
-        # so do it without the python-markdown extensions API.
-        return HTML_TPL.format(body=self._md_converter.reset().convert(text))
+    def md_to_html(self, src_file):
+        # Not using python-markdown extensions API because this is a one-off task.
+        body = self._md_converter.reset().convert(src_file.read_text("utf8"))
+        return HTML_TPL.format(
+            title=src_file.stem,
+            body=body,
+        )
 
     def __call__(self, src, dst, *args, **kwargs):
         # Has same signature as shutil.copy(), for use with shutil.copytree().
@@ -61,8 +65,7 @@ class DocCopier:
                 dst = dst / dst_filename
             else:
                 dst = dst.with_name(dst_filename)
-            with src.open("r", encoding="utf8") as f:
-                htm = self.md_to_html(f.read())
+            htm = self.md_to_html(src)
             with dst.open("w", encoding="utf8") as f:
                 f.write(htm)
             self.converted_files[src] = dst
