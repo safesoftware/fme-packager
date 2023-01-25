@@ -21,6 +21,7 @@ HTML_TPL = """<!DOCTYPE html>
 <html>
 <head>
 <title>{title}</title>
+<link rel="stylesheet" href="{css_path}" />
 </head>
 <body>
 {body}
@@ -36,7 +37,12 @@ class DocCopier:
     Identical to shutil.copy2() when conversion is disabled.
     """
 
-    def __init__(self):
+    def __init__(self, root_path):
+        """
+        :param root_path: All files copied must be descendants of this root.
+            Used to determine hardcoded relative paths in generated HTML.
+        """
+        self.root_path = root_path
         self.convert_md = True
         self.converted_files = {}
         self._md_converter = Markdown(
@@ -46,13 +52,19 @@ class DocCopier:
                 TocExtension(toc_depth="2-3", title="Contents"),
             ],
         )
+        # DEVOPS-3078: Path to CSS relative to the doc root folder
+        self._css_path_rel_doc = "../../../css/style.css"
 
-    def md_to_html(self, src_file):
+    def md_to_html(self, src_file: Path):
         # Not using python-markdown extensions API because this is a one-off task.
         body = self._md_converter.reset().convert(src_file.read_text("utf8"))
+        # Count number of subfolders down from the root,
+        # so the CSS relative path gets updated correctly.
+        subfolder_count = len(src_file.relative_to(self.root_path).parts) - 1
         return HTML_TPL.format(
             title=src_file.stem,
             body=body,
+            css_path="../" * subfolder_count + self._css_path_rel_doc,
         )
 
     def __call__(self, src, dst, *args, **kwargs):
@@ -123,7 +135,7 @@ class HelpBuilder:
         To map help contexts to their doc, the Markdown files must follow a naming convention.
         """
         src_index_file = self.help_src_dir / "package_help.csv"
-        copier = DocCopier()
+        copier = DocCopier(self.help_src_dir)
         if src_index_file.is_file():
             self.validate_index(self.help_src_dir)
             copier.convert_md = False

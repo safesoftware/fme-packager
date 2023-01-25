@@ -69,6 +69,7 @@ def test_md(mock_metadata, tmp_path):
     with html_file.open("r") as f:
         html = f.read()
         assert html.startswith("<!DOCTYPE html>")
+        assert '<link rel="stylesheet" href="../../../css/style.css" />' in html
     index_file = tmp_path / "package_help.csv"
     assert index_file.is_file()
     with index_file.open("r") as f:
