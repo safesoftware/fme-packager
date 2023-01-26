@@ -88,19 +88,19 @@ class DocCopier:
     def __call__(self, src, dst, *args, **kwargs):
         # Has same signature as shutil.copy(), for use with shutil.copytree().
         src = Path(src)
-        if self.convert_md and src.suffix.lower() == ".md":
-            dst = Path(dst)
-            dst_filename = src.stem + ".htm"
-            if dst.is_dir():
-                dst = dst / dst_filename
-            else:
-                dst = dst.with_name(dst_filename)
-            htm = self.md_to_html(src)
-            with dst.open("w", encoding="utf8") as f:
-                f.write(htm)
-            self.converted_files[src] = dst
-            return dst
-        return shutil.copy2(src, dst, *args, **kwargs)
+        if not self.convert_md or src.suffix.lower() != ".md":
+            return shutil.copy2(src, dst, *args, **kwargs)
+        dst = Path(dst)
+        dst_filename = src.stem + ".htm"
+        if dst.is_dir():
+            dst = dst / dst_filename
+        else:
+            dst = dst.with_name(dst_filename)
+        htm = self.md_to_html(src)
+        with dst.open("w", encoding="utf8") as f:
+            f.write(htm)
+        self.converted_files[src] = dst
+        return dst
 
 
 def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions=None):
