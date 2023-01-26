@@ -72,10 +72,14 @@ class DocCopier:
         # DEVOPS-3078: Path to CSS relative to the doc root folder
         self._css_path_rel_doc = "../../../css/style.css"
 
+        # When generating HTML, transformer doc gets special treatment.
+        self.transformer_names = set()
+
     def md_to_html(self, src_file: Path):
         # Not using python-markdown extensions API because this is a one-off task.
         body = self._md_converter.reset().convert(src_file.read_text("utf8"))
-        body = add_transformer_classes_to_doc(body)
+        if src_file.stem in self.transformer_names:
+            body = add_transformer_classes_to_doc(body)
         # Count number of subfolders down from the root,
         # so the CSS relative path gets updated correctly.
         subfolder_count = len(src_file.relative_to(self.root_path).parts) - 1
@@ -154,6 +158,8 @@ class HelpBuilder:
         """
         src_index_file = self.help_src_dir / "package_help.csv"
         copier = DocCopier(self.help_src_dir)
+        for item in self.fpkg_metadata.transformers:
+            copier.transformer_names.add(item.name)
         if src_index_file.is_file():
             self.validate_index(self.help_src_dir)
             copier.convert_md = False
