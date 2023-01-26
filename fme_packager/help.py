@@ -124,18 +124,18 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
     fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}"
     # Each transformer has only one topic.
     for xformer in fpkg_metadata.transformers:
-        index[f"fmx_{fpkg_ident}_{xformer.name}"] = f"{xformer.name}.htm"
+        index[f"fmx_{fpkg_ident}_{xformer.name}"] = f"/{xformer.name}.htm"
     # Each format has many topics.
     for fmt in fpkg_metadata.formats:
         fmt_ident = f"{fpkg_ident}_{fmt.name}".lower()
         directions = format_directions.get(fmt.name, "rw")
         # Format prefix is "rw" even when read-only or write-only
-        index[f"rw_{fmt_ident}_index"] = f"{fmt.name}.htm"
-        index[f"rw_{fmt_ident}_feature_rep"] = f"{fmt.name}_feature_rep.htm"
+        index[f"rw_{fmt_ident}_index"] = f"/{fmt.name}.htm"
+        index[f"rw_{fmt_ident}_feature_rep"] = f"/{fmt.name}_feature_rep.htm"
         for direction in directions:
-            index[f"param_{fmt_ident}_{direction}"] = f"{fmt.name}_param_{direction}.htm"
-            index[f"ft_{fmt_ident}_param_{direction}"] = f"{fmt.name}_ft_param_{direction}.htm"
-        index[f"ft_{fmt_ident}_user_attr"] = f"{fmt.name}_ft_user_attr.htm"
+            index[f"param_{fmt_ident}_{direction}"] = f"/{fmt.name}_param_{direction}.htm"
+            index[f"ft_{fmt_ident}_param_{direction}"] = f"/{fmt.name}_ft_param_{direction}.htm"
+        index[f"ft_{fmt_ident}_user_attr"] = f"/{fmt.name}_ft_user_attr.htm"
     return index
 
 
@@ -211,6 +211,8 @@ class HelpBuilder:
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
         for ctx, doc_path in links.items():
+            if not doc_path.startswith("/"):
+                raise ValueError(f"Path must start with /: {doc_path}")
             expected_doc = Path(doc_dir) / doc_path.lstrip("/")
             if not expected_doc.exists():
                 raise FileNotFoundError(f"{expected_doc} does not exist")
