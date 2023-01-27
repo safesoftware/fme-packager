@@ -1,5 +1,10 @@
 # fme-packager changes
 
+## 1.3.0
+
+* Automatically generate HTML doc from Markdown files in help folder.
+* Improve validation of help/package_help.csv.
+
 ## 1.2.0
 
 * Add support for FMXJ transformers.
