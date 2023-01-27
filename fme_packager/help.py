@@ -70,7 +70,7 @@ class DocCopier:
             ],
         )
         # DEVOPS-3078: Path to CSS relative to the doc root folder
-        self._css_path_rel_doc = "../../../css/style.css"
+        self._css_path_rel_doc = "../../css/style.css"
 
         # When generating HTML, transformer doc gets special treatment.
         self.transformer_names = set()
