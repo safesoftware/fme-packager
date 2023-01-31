@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en-us" xml:lang="en-us">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="cshid"
+          content="fmx_example_package_Transformer"/>
+    <meta name="tocPath" content="Transformer"/>
+    <link href="../Resources/css/style.css" rel="stylesheet">
+</head>
+<body>
+<h1>Transformer</h1>
+<p>A description of the transformer.</p>
+
+<h3>Typical Uses</h3>
+<ul>
+    <li>Displays Hello, <code>FIRST_NAME</code>!</li>
+</ul>
+
+<h2>How does it work?</h2>
+<p>Description of how the transformer works.</p>
+
+<h2>Configuration</h2>
+<h3>Input Ports</h3>
+
+<h4>Input</h4>
+<p>This transformer accepts any feature. </p>
+
+<h3>Output Ports</h3>
+<h4>Output</h4>
+<table>
+    <col/>
+    <col/>
+    <tbody>
+    <tr>
+        <td>
+            <p><b>_greeting</b>
+            </p>
+        </td>
+        <td>
+            <p>Output greeting with the specified first name.</p>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<h4>Initiator</h4>
+<p>The incoming feature is output through this port. </p>
+
+<h4>&lt;Rejected&gt;</h4>
+<p>Features that cause the operation to fail are output through this port. An <code>fme_rejection_code</code>
+    attribute, will be added, along with a more descriptive <code>fme_rejection_message</code>
+    attribute which contains more specific details as to the reason for the failure.
+</p>
+<p><b>Note: </b> If
+    a feature comes in to the {{cookiecutter.transformer_name}} already having a value for <code>fme_rejection_code</code>,
+    this value will be removed.</p>
+<p><b>Rejected Feature Handling:</b> can be set to either terminate the translation or
+    continue running when it encounters a rejected feature. This setting is available both as a default <a
+        href="https://docs.safe.com/fme/html/FME_Desktop_Documentation/FME_Workbench/Workbench/options_workspace_defaults.htm">FME
+        option</a> and as a <a
+        href="https://docs.safe.com/fme/html/FME_Desktop_Documentation/FME_Workbench/Workbench/workspace_parameters.htm">workspace
+        parameter</a>. </p>
+
+<h3>Parameters</h3>
+<h4>Options</h4>
+<table>
+    <col/>
+    <col/>
+    <tbody>
+    <tr>
+        <td>First Name</td>
+        <td>
+            <p>First name to be greeted by. Defaults to <b>World</b>.</p>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
