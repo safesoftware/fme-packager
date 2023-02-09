@@ -1,5 +1,4 @@
 import csv
-import imghdr
 import os
 import shutil
 import tempfile
@@ -22,7 +21,8 @@ from fme_packager.help import HelpBuilder
 from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema, TransformerMetadata
 from fme_packager.operations import (
     build_fpkg_filename,
-    parse_formatinfo, TREE_COPY_IGNORE_GLOBS,
+    parse_formatinfo,
+    TREE_COPY_IGNORE_GLOBS,
 )
 from fme_packager.transformer import load_transformer, CustomTransformer
 
@@ -67,10 +67,7 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
     :param min_height: The minimum width of the image.
     :param square: Whether the image should be square.
     """
-    filetype = imghdr.what(path)
-    if filetype != "png":
-        raise ValueError("{} must be PNG, not {}".format(path, filetype))
-    width, height, _, _ = png.Reader(filename=path).read()
+    width, height, _, _ = png.Reader(filename=path).read()  # Raises if not PNG
     if width < min_width or height < min_height:
         raise ValueError(
             "Min dimensions are {}x{}. {} is {}x{}".format(
