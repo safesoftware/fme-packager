@@ -1,5 +1,9 @@
 # fme-packager changes
 
+## 1.3.1
+
+* Fix regression in Python 3.6 and 3.7 support when processing help folder.
+
 ## 1.3.0
 
 * Automatically generate HTML doc from Markdown files in help folder.
