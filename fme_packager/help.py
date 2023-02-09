@@ -146,7 +146,7 @@ class HelpBuilder:
 
     def build(self):
         """
-        Copies help from src to dst.
+        Copies help from src to dst. If dst folder exists, it's deleted first.
 
         If the src has a package_help.csv, then switch to the "manual" mode
         where doc is copied as-is and package_help.csv is validated for correctness.
@@ -163,10 +163,12 @@ class HelpBuilder:
             self.validate_index(self.help_src_dir)
             copier.convert_md = False
 
+        if self.help_dst_dir.exists():
+            shutil.rmtree(self.help_dst_dir)
+
         shutil.copytree(
             self.help_src_dir,
             self.help_dst_dir,
-            dirs_exist_ok=True,
             ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS),
             copy_function=copier,
         )
