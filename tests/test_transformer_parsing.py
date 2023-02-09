@@ -5,7 +5,8 @@ from fme_packager.transformer import (
     load_transformer,
     CustomTransformerFmxFile,
     CustomTransformer,
-    FmxFile, FmxjFile,
+    FmxFile,
+    FmxjFile,
 )
 
 
@@ -53,9 +54,7 @@ def test_fmx_transformer(valid_package_dir):
 
 
 def test_fmxj_transformer(valid_package_dir):
-    fmx = load_transformer(
-        CWD / "fixtures" / "fmxj_package" / "transformers" / "DemoGreeter.fmxj"
-    )
+    fmx = load_transformer(CWD / "fixtures" / "fmxj_package" / "transformers" / "DemoGreeter.fmxj")
     assert isinstance(fmx, FmxjFile)
     defs = list(fmx.versions())
     assert len(defs) == 1

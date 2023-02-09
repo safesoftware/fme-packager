@@ -42,12 +42,24 @@ def test_is_valid_python_compatibility(version, expected_is_valid):
     "transformer_path,metadata,expected_exc",
     [
         ("valid_package/transformers/MyGreeter.fmx", None, None),
-        ("valid_package/transformers/MyGreeter.fmx", {"name": "TheirGreeter", "version": 1}, "Name must be"),
+        (
+            "valid_package/transformers/MyGreeter.fmx",
+            {"name": "TheirGreeter", "version": 1},
+            "Name must be",
+        ),
         ("incompatible_package/transformers/MyGreeter.fmx", None, TransformerPythonCompatError),
-        ("incompatible_custom_package/transformers/epochToTimestamp29.fmx", None, CustomTransformerPythonCompatError),
+        (
+            "incompatible_custom_package/transformers/epochToTimestamp29.fmx",
+            None,
+            CustomTransformerPythonCompatError,
+        ),
         ("custom_package/transformers/customFooBar.fmx", None, None),
         ("custom_package/transformers/epochToTimestamp29.fmx", None, None),
-        ("custom_package/transformers/customEncrypted2Ver.fmx", {"name": "test", "version": 2}, 'Custom transformer Insert Mode must be "Linked Always"'),
+        (
+            "custom_package/transformers/customEncrypted2Ver.fmx",
+            {"name": "test", "version": 2},
+            'Custom transformer Insert Mode must be "Linked Always"',
+        ),
         ("fmxj_package/transformers/DemoGreeter.fmxj", None, None),
     ],
 )
@@ -66,9 +78,13 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
         metadata = TransformerMetadata(metadata)
     else:
         try:
-            metadata = {i.name: i for i in packager.metadata.transformers}[transformer_abs_path.stem]
+            metadata = {i.name: i for i in packager.metadata.transformers}[
+                transformer_abs_path.stem
+            ]
         except KeyError as e:
-            raise KeyError(f"{transformer_abs_path.stem} not in package.yml, but no metadata given") from e
+            raise KeyError(
+                f"{transformer_abs_path.stem} not in package.yml, but no metadata given"
+            ) from e
 
     if not expected_exc:
         # Expect success

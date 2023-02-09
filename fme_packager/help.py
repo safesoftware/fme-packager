@@ -43,7 +43,7 @@ def add_transformer_classes_to_doc(html):
     # Must be exact match: Workbench finds these tags through text search, not DOM.
     html, _ = re.subn(r"<h1>", '<h1 class="fmx">', html, count=1)
     html, _ = re.subn(r"<p>", '<p><span class="TransformerSummary">', html, count=1)
-    html, _ = re.subn(r"</p>", '</span></p>', html, count=1)
+    html, _ = re.subn(r"</p>", "</span></p>", html, count=1)
     return html
 
 
