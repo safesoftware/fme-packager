@@ -8,9 +8,11 @@ from ._vendor.fmetools.guiparams import GuiParameterParser
 
 # Build a parser for getting GUI parameter values from input features.
 # It takes a mapping of the internal attribute name to the GUI type supplying its value.
-param_parser = GuiParameterParser({
-    "___XF_FIRST_NAME": "STRING_OR_ATTR_ENCODED",
-})
+param_parser = GuiParameterParser(
+    {
+        "___XF_FIRST_NAME": "STRING_OR_ATTR_ENCODED",
+    }
+)
 
 
 class TransformerImpl(FMEEnhancedTransformer):

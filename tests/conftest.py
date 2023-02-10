@@ -2,10 +2,11 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 
 import os
+import pathlib
 
 import pytest
 
-FIXTURES_DIR = os.path.join(os.getcwd(), "fixtures")
+FIXTURES_DIR = pathlib.Path(__file__).parent.resolve() / "fixtures"
 
 
 @pytest.fixture
