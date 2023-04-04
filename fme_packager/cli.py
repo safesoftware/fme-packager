@@ -22,8 +22,6 @@ def cli():
     """
     fme_packager: The FME Packages Tool.
     """
-    # import pydevd_pycharm
-    # pydevd_pycharm.settrace('localhost', port=58456, stdoutToServer=True, stderrToServer=True)
     pass
 
 
@@ -36,7 +34,7 @@ COOKIECUTTER_TEMPLATES = {
 @click.argument("template", type=click.Choice(sorted(COOKIECUTTER_TEMPLATES.keys())))
 def init(template):
     """
-    Initialize an FME Package from a template.
+    Initialize a FME Package from a template.
 
     The template is initialized in a subdirectory of the current directory.
 
@@ -51,11 +49,11 @@ def init(template):
 @click.argument("fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True))
 def apply_help(help_path, fpkg_path):
     """
-    Import an Safe TechPubs doc export into an FME Package directory.
+    Import a Safe TechPubs doc export into an FME Package directory.
 
     This operation also converts package_aliases.flali to package_help.csv at the destination.
 
-    HELP_PATH -- Path to a ZIP or directory of an Safe TechPubs doc export. Read only.
+    HELP_PATH -- Path to a ZIP or directory of a Safe TechPubs doc export. Read only.
 
     FPKG_PATH -- Path to the FME Package root. Its 'help' subdirectory will be recreated.
     """
@@ -83,11 +81,11 @@ def pack(path):
 @click.argument("file", type=click.File())
 def verify(file):
     """
-    Verifies that the .fpkg file is correct.
+    Verify that a .fpkg file is valid.
 
     Package contents are validated during this process.
 
-    FILE -- Path to an FME Package.
+    FILE -- Path to an FME .fpkg package file.
     """
     verifier = FMEVerifier(file)
     verifier.verify()
