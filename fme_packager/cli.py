@@ -13,13 +13,17 @@ from cookiecutter.main import cookiecutter
 
 import fme_packager
 from fme_packager.packager import FMEPackager
+from fme_packager.verifier import FMEVerifier
 
 
 @click.group()
+@click.version_option(package_name="fme_packager")
 def cli():
     """
     fme_packager: The FME Packages Tool.
     """
+    # import pydevd_pycharm
+    # pydevd_pycharm.settrace('localhost', port=58456, stdoutToServer=True, stderrToServer=True)
     pass
 
 
@@ -76,6 +80,21 @@ def pack(path):
 
 
 @cli.command()
+@click.argument("file", type=click.File())
+def verify(file):
+    """
+    Verifies that the .fpkg file is correct.
+
+    Package contents are validated during this process.
+
+    FILE -- Path to an FME Package.
+    """
+    verifier = FMEVerifier(file)
+    verifier.verify()
+    print("Success: Package is verified.")
+
+
+@cli.command()
 @click.option(
     "--fme-home",
     prompt=True,
@@ -120,14 +139,6 @@ def config_env(fme_home, site_packages_dir):
 
     print("\nThis Python environment is now set up for access to FME and fmeobjects.")
     print("If the FME install location changes, re-run this script to update paths.")
-
-
-@cli.command()
-def version():
-    """
-    Print the version of fme_packager.
-    """
-    print("fme_packager " + fme_packager.__version__)
 
 
 if __name__ == "__main__":

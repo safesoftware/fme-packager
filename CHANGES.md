@@ -1,5 +1,10 @@
 # fme-packager changes
 
+# 1.4.0
+
+* Added `fme-packager verify` to check that a `.fpkg` is valid
+* Moved `fme-packager version` to the standardized `fme-packager --version`
+
 ## 1.3.1
 
 * Fix regression in Python 3.6 and 3.7 support when processing help folder.
