@@ -79,7 +79,9 @@ def pack(path):
 
 @cli.command()
 @click.argument("file", type=click.File())
-def verify(file):
+@click.option("--verbose", "-v", is_flag=True, help="Show build steps")
+@click.option("--json", is_flag=True, help="Output result as JSON")
+def verify(file, verbose, json):
     """
     Verify that a .fpkg file is valid.
 
@@ -87,9 +89,9 @@ def verify(file):
 
     FILE -- Path to an FME .fpkg package file.
     """
-    verifier = FMEVerifier(file)
-    verifier.verify()
-    print("Success: Package is verified.")
+    verifier = FMEVerifier(file, verbose, json)
+    result = verifier.verify()
+    print(result)
 
 
 @cli.command()

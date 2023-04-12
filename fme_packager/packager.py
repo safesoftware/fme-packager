@@ -140,13 +140,18 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
 
 
 class FMEPackager:
-    def __init__(self, src_dir):
+    def __init__(self, src_dir, verbose=True):
+        """
+        :param src_dir: FME package directory
+        :param verbose: If true, print out build steps
+        """
         self.src_dir = Path(src_dir)
         self.build_dir = self.src_dir / "build"
         self.dist_dir = self.src_dir / "dist"
         self.src_python_dir = self.src_dir / "python"
 
         self.metadata = load_fpkg_metadata(src_dir)
+        self.verbose = verbose
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
@@ -161,13 +166,13 @@ class FMEPackager:
             # If help source is a ZIP, extract it to a temporary folder.
             if os.path.isfile(help_src):
                 with zipfile.ZipFile(help_src) as zipf:
-                    print("Extracting {} to {}".format(help_src, tmp_doc_dir))
+                    self._print("Extracting {} to {}".format(help_src, tmp_doc_dir))
                     zipf.extractall(tmp_doc_dir)
                 root_contents = os.listdir(tmp_doc_dir)
                 # If help ZIP started with a single root level folder, then unnest.
                 if len(root_contents) == 1:
                     nested_dir = os.path.join(tmp_doc_dir, root_contents[0])
-                    print("Flattening single top-level folder {}".format(nested_dir))
+                    self._print("Flattening single top-level folder {}".format(nested_dir))
                     for item in os.listdir(nested_dir):
                         shutil.move(os.path.join(nested_dir, item), tmp_doc_dir)
                     os.rmdir(nested_dir)
@@ -189,7 +194,7 @@ class FMEPackager:
             # (Re)create destination help folder and copy over the bulk of the doc files.
             dest = os.path.join(self.src_dir, "help")
             if os.path.exists(dest):
-                print("Deleting {}".format(dest))
+                self._print("Deleting {}".format(dest))
                 shutil.rmtree(dest)
             shutil.copytree(help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
         finally:
@@ -211,10 +216,12 @@ class FMEPackager:
                     link = new_link
                 expected_doc_path = os.path.join(dest, link.lstrip("/"))
                 if os.path.exists(expected_doc_path):
-                    print("{} exists".format(expected_doc_path))
+                    self._print("{} exists".format(expected_doc_path))
                     writer.writerow([name, link])
                     copied_rows += 1
-        print("Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows)))
+        self._print(
+            "Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows))
+        )
         if not copied_rows:
             raise ValueError("flali doesn't reference any included doc")
 
@@ -230,20 +237,20 @@ class FMEPackager:
             self.metadata.publisher_uid, self.metadata.uid, self.metadata.version
         )
         fpkg_path = self.dist_dir / fpkg_filename
-        print(f"Saving fpkg to {fpkg_path}")
+        self._print(f"Saving fpkg to {fpkg_path}")
 
         if fpkg_path.exists():
             fpkg_path.unlink()
 
         new_zip = shutil.make_archive(fpkg_path, "zip", root_dir=self.build_dir)
         Path(new_zip).rename(fpkg_path)  # Strip zip extension
-        print("Done.")
+        self._print("Done.")
 
     def build(self):
         """
         Build and validate package files.
         """
-        print("Collecting files into {}".format(self.build_dir))
+        self._print("Collecting files into {}".format(self.build_dir))
 
         # Clear out the build dir.
         if os.path.exists(self.build_dir):
@@ -275,7 +282,7 @@ class FMEPackager:
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for fmt in self.metadata.formats:
-            print(f"Working on format: {fmt.name}")
+            self._print(f"Working on format: {fmt.name}")
 
             if not (dst / f"{fmt.name}.md").is_file():
                 raise ValueError(f"{fmt.name} is missing doc")
@@ -297,7 +304,7 @@ class FMEPackager:
             shutil.copy(db_path, dst)
 
     def validate_transformer(self, transformer_path, expected_metadata: TransformerMetadata):
-        print(f"Checking {transformer_path}")
+        self._print(f"Checking {transformer_path}")
         transformer_file = load_transformer(transformer_path)
 
         expected_fqname = "{}.{}.{}".format(
@@ -346,7 +353,7 @@ class FMEPackager:
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for transformer in self.metadata.transformers:
-            print(f"Working on transformer: {transformer.name}")
+            self._print(f"Working on transformer: {transformer.name}")
 
             if transformer.version < 1:
                 raise ValueError(f"{transformer.name} version must be >= 1")
@@ -385,7 +392,7 @@ class FMEPackager:
                 dest.mkdir(parents=True)
 
             # TODO: Validate contents of XML.
-            print(f"Copying Web Service: {definition_path.name}")
+            self._print(f"Copying Web Service: {definition_path.name}")
             shutil.copy(definition_path, dest)
 
     def _copy_web_filesystems(self):
@@ -401,7 +408,7 @@ class FMEPackager:
                 dest.mkdir(parents=True)
 
             # TODO: Validate contents of .fme file.
-            print(f"Copying Web Filesystem: {definition_path.name}")
+            self._print(f"Copying Web Filesystem: {definition_path.name}")
             shutil.copy(definition_path, dest)
 
             icon_path = src / f"{web_filesystem.name}.png"
@@ -413,10 +420,10 @@ class FMEPackager:
     def _copy_icon(self):
         path = self.src_dir / "icon.png"
         if not path.is_file():
-            print("FME package has no icon")
+            self._print("FME package has no icon")
             return
         enforce_png(path, min_width=200, min_height=200, square=True)
-        print("Icon is OK")
+        self._print("Icon is OK")
         shutil.copy(path, self.build_dir)
 
     def _build_wheels(self):
@@ -427,7 +434,7 @@ class FMEPackager:
 
         for path in self.src_python_dir.iterdir():
             if (path / "setup.py").is_file() or (path / "setup.cfg").is_file():
-                print(f"\nBuilding Python wheel: {path}")
+                self._print(f"\nBuilding Python wheel: {path}")
                 os.chdir(path)
                 if os.path.exists("build"):
                     shutil.rmtree("build")
@@ -504,7 +511,7 @@ class FMEPackager:
             ):
                 if not os.path.exists(dest):
                     os.makedirs(dest)
-                print(f"Copying localization: {name}")
+                self._print(f"Copying localization: {name}")
                 shutil.copy(path, dest)
 
     def _copy_help(self):
@@ -513,6 +520,10 @@ class FMEPackager:
         if not src.is_dir():
             return
 
-        print("Copying help")
+        self._print("Copying help")
         builder = HelpBuilder(self.metadata, src, dest)
         builder.build()
+
+    def _print(self, msg):
+        if self.verbose:
+            print(msg)
