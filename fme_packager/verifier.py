@@ -4,6 +4,7 @@ import tempfile
 import os
 from json import dumps as json_dumps
 
+from fme_packager.operations import build_fpkg_filename
 from fme_packager.packager import FMEPackager
 
 
@@ -34,9 +35,7 @@ class FMEVerifier:
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             # Change the extension of the file to .zip
-            temp_zip_file = str(
-                pathlib.Path(temp_dir) / os.path.basename(self.file[:-5] + ".zip")
-            )
+            temp_zip_file = str(pathlib.Path(temp_dir) / os.path.basename(self.file[:-5] + ".zip"))
             shutil.copy(self.file, temp_zip_file)
             self._print(f"Creating temporary zip file {temp_zip_file}")
 
@@ -46,6 +45,17 @@ class FMEVerifier:
             # Verify the fpkg files by building the package
             steps = FMEPackager(temp_dir, self.verbose)
             steps.build()
+            steps.make_fpkg()
+
+            # Verify package file name is the same
+            if not os.path.exists(pathlib.Path(temp_dir) / "dist" / os.path.basename(self.file)):
+                raise ValueError(
+                    "The file name is invalid. Expected {}".format(
+                        build_fpkg_filename(
+                            steps.metadata.publisher_uid, steps.metadata.uid, steps.metadata.version
+                        )
+                    )
+                )
 
     def _print(self, msg):
         if self.verbose:
