@@ -78,7 +78,7 @@ def pack(path):
 
 
 @cli.command()
-@click.argument("file", type=click.File())
+@click.argument("file", type=click.Path(exists=False, file_okay=True))
 @click.option("--verbose", "-v", is_flag=True, help="Show build steps")
 @click.option("--json", is_flag=True, help="Output result as JSON")
 def verify(file, verbose, json):

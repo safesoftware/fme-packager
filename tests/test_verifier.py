@@ -52,4 +52,10 @@ def test_verify_invalid(flags):
 def test_verify_non_fpkg():
     runner = CliRunner()
     result = runner.invoke(verify, [str(CWD / "fixtures" / "valid_package" / "package.yml")])
-    assert "The file must have a .fpkg extension" in result.output
+    assert "The file must exist and have a .fpkg extension" in result.output
+
+
+def test_verify_non_existant():
+    runner = CliRunner()
+    result = runner.invoke(verify, [str(CWD / "fixtures" / "does-not-exist.fpkg")])
+    assert "The file must exist and have a .fpkg extension" in result.output

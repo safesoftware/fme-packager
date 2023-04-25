@@ -28,16 +28,16 @@ class FMEVerifier:
         return result
 
     def _unzip_and_build(self):
-        if not self.file.name.lower().endswith(".fpkg"):
-            raise ValueError("The file must have a .fpkg extension")
+        if not self.file.lower().endswith(".fpkg") or not os.path.exists(self.file):
+            raise ValueError("The file must exist and have a .fpkg extension")
 
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             # Change the extension of the file to .zip
             temp_zip_file = str(
-                pathlib.Path(temp_dir) / os.path.basename(self.file.name[:-5] + ".zip")
+                pathlib.Path(temp_dir) / os.path.basename(self.file[:-5] + ".zip")
             )
-            shutil.copy(self.file.name, temp_zip_file)
+            shutil.copy(self.file, temp_zip_file)
             self._print(f"Creating temporary zip file {temp_zip_file}")
 
             # Unpack the zip file
