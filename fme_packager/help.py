@@ -120,7 +120,8 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
     index = {}
     if not format_directions:
         format_directions = {}
-    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}"
+    # dashes in the UIDs get turned to underscores
+    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}".replace("-", "_")
     # Each transformer has only one topic.
     for xformer in fpkg_metadata.transformers:
         index[f"fmx_{fpkg_ident}_{xformer.name}"] = f"/{xformer.name}.htm"
