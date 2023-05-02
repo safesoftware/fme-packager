@@ -13,9 +13,11 @@ from cookiecutter.main import cookiecutter
 
 import fme_packager
 from fme_packager.packager import FMEPackager
+from fme_packager.verifier import FMEVerifier
 
 
 @click.group()
+@click.version_option(package_name="fme_packager")
 def cli():
     """
     fme_packager: The FME Packages Tool.
@@ -32,7 +34,7 @@ COOKIECUTTER_TEMPLATES = {
 @click.argument("template", type=click.Choice(sorted(COOKIECUTTER_TEMPLATES.keys())))
 def init(template):
     """
-    Initialize an FME Package from a template.
+    Initialize a FME Package from a template.
 
     The template is initialized in a subdirectory of the current directory.
 
@@ -47,11 +49,11 @@ def init(template):
 @click.argument("fpkg_path", type=click.Path(exists=True, file_okay=False, writable=True))
 def apply_help(help_path, fpkg_path):
     """
-    Import an Safe TechPubs doc export into an FME Package directory.
+    Import a Safe TechPubs doc export into an FME Package directory.
 
     This operation also converts package_aliases.flali to package_help.csv at the destination.
 
-    HELP_PATH -- Path to a ZIP or directory of an Safe TechPubs doc export. Read only.
+    HELP_PATH -- Path to a ZIP or directory of a Safe TechPubs doc export. Read only.
 
     FPKG_PATH -- Path to the FME Package root. Its 'help' subdirectory will be recreated.
     """
@@ -73,6 +75,23 @@ def pack(path):
     steps = FMEPackager(path)
     steps.build()
     steps.make_fpkg()
+
+
+@cli.command()
+@click.argument("file", type=click.Path(exists=False, file_okay=True))
+@click.option("--verbose", "-v", is_flag=True, help="Show build steps")
+@click.option("--json", is_flag=True, help="Output result as JSON")
+def verify(file, verbose, json):
+    """
+    Verify that a .fpkg file is valid.
+
+    Package contents are validated during this process.
+
+    FILE -- Path to an FME .fpkg package file.
+    """
+    verifier = FMEVerifier(file, verbose, json)
+    result = verifier.verify()
+    print(result)
 
 
 @cli.command()
@@ -120,14 +139,6 @@ def config_env(fme_home, site_packages_dir):
 
     print("\nThis Python environment is now set up for access to FME and fmeobjects.")
     print("If the FME install location changes, re-run this script to update paths.")
-
-
-@cli.command()
-def version():
-    """
-    Print the version of fme_packager.
-    """
-    print("fme_packager " + fme_packager.__version__)
 
 
 if __name__ == "__main__":
