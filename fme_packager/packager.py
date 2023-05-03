@@ -113,45 +113,53 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
         raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
 
 
-def check_formatinfo(package_metadata, format_metadata, db_path):
+def get_formatinfo(package_metadata, format_metadata, db_path):
     """
-    Checks formatinfo is consistent with the package and format metadata.
+    Retrieves formatinfo and checks that it is consistent with the package and format metadata.
 
     :param package_metadata: The package metadata.
     :param format_metadata: The format metadata.
     :param db_path: The path to the format file.
     """
+    fqname = fq_format_short_name(
+        package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
+    )
+
     line = None
     with open(db_path) as inf:
         for line in inf:
             if line.startswith(";"):
                 continue  # comment line.
+            formatinfo = parse_formatinfo(db_path)
+            if formatinfo.FORMAT_NAME == fqname:
+                return formatinfo
 
     if not line:
         raise ValueError("{} empty".format(db_path))
 
-    fqname = fq_format_short_name(
-        package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
-    )
+    raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
-    formatinfo = parse_formatinfo(line)
-    if formatinfo.FORMAT_NAME != fqname:
-        raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
-    if formatinfo.VISIBLE == "NO":
-        return ""
-    if formatinfo.VISIBLE == "YES" and formatinfo.DIRECTION == "BOTH":
-        return "rw"
-    if formatinfo.VISIBLE in {"INPUT", "YES"} and formatinfo.DIRECTION in {"BOTH", "INPUT"}:
-        return "r"
-    if formatinfo.VISIBLE in {"OUTPUT", "YES"} and formatinfo.DIRECTION in {"BOTH", "OUTPUT"}:
-        return "w"
+def get_format_visibility(formatinfo):
+    """
+    Get the directions for which a format is visible to the user
 
-    raise ValueError(
-        "Format visibility '{visible}' is not compatible with direction '{direction}'".format(
-            visible=formatinfo.VISIBLE, direction=formatinfo.DIRECTION
+    :param formatinfo: the format info.
+    """
+    direction_to_visibility_map = {
+        "BOTH": {"YES": "rw", "INPUT": "r", "OUTPUT": "w", "NO": ""},
+        "INPUT": {"YES": "r", "INPUT": "r", "NO": ""},  # exclude visibility: OUTPUT
+        "OUTPUT": {"YES": "w", "OUTPUT": "w", "NO": ""},  # exclude visibility: INPUT
+    }
+
+    try:
+        return direction_to_visibility_map[formatinfo.DIRECTION][formatinfo.VISIBLE]
+    except KeyError:
+        raise ValueError(
+            "Format visibility '{visible}' is not compatible with direction '{direction}'".format(
+                visible=formatinfo.VISIBLE, direction=formatinfo.DIRECTION
+            )
         )
-    )
 
 
 class FMEPackager:
@@ -317,8 +325,9 @@ class FMEPackager:
             db_path = src / f"{fmt.name}.db"
             if not db_path.is_file():
                 raise ValueError(f"{db_path} is in metadata, but was not found")
+            formatinfo = get_formatinfo(self.metadata, fmt, db_path)
 
-            self.visible_formats[fmt.name] = check_formatinfo(self.metadata, fmt, db_path)
+            self.visible_formats[fmt.name] = get_format_visibility(formatinfo)
 
             shutil.copy(db_path, dst)
 

@@ -2,7 +2,7 @@
 
 # 1.4.1
 
-* Improve help validation for packages containing formatas.
+* Improve help validation for packages containing formats.
 
 # 1.4.0
 
