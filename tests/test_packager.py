@@ -81,23 +81,24 @@ def test_get_format_visibility():
         "EXAMPLE.PACKAGE.MYFORMAT|My Format|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|3|3|MYFORMAT|NO|MYFORMAT"
     )
 
+    assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="NO")) == ""
     assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="YES")) == "rw"
+
     assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="INPUT")) == "r"
+    for visibility in ["YES", "INPUT"]:
+        assert (
+            get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE=visibility))
+            == "r"
+        )
+
     assert (
         get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="OUTPUT")) == "w"
     )
-
-    assert get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE="YES")) == "r"
-    assert (
-        get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE="INPUT")) == "r"
-    )
-
-    assert get_format_visibility(base_formatinfo._replace(DIRECTION="OUTPUT", VISIBLE="YES")) == "w"
-    assert (
-        get_format_visibility(base_formatinfo._replace(DIRECTION="OUTPUT", VISIBLE="OUTPUT")) == "w"
-    )
-
-    assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="NO")) == ""
+    for visibility in ["YES", "OUTPUT"]:
+        assert (
+            get_format_visibility(base_formatinfo._replace(DIRECTION="OUTPUT", VISIBLE=visibility))
+            == "w"
+        )
 
     with pytest.raises(ValueError):
         assert get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE="OUTPUT"))
