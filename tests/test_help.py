@@ -54,15 +54,41 @@ def test_get_expected_help_contexts_format():
     ]
 
 
+def test_get_expected_help_contexts_format_one_dir():
+    metadata = FMEPackageMetadata(
+        {
+            "uid": "package",
+            "publisher_uid": "example",
+            "package_content": {"formats": [{"name": "demoformat"}]},
+        }
+    )
+    read_only = {"demoformat": "r"}
+    write_only = {"demoformat": "w"}
+    assert sorted(get_expected_help_index(metadata, read_only)) == [
+        "ft_example_package_demoformat_param_r",
+        "ft_example_package_demoformat_user_attr",
+        "param_example_package_demoformat_r",
+        "rw_example_package_demoformat_feature_rep",
+        "rw_example_package_demoformat_index",
+    ]
+    assert sorted(get_expected_help_index(metadata, write_only)) == [
+        "ft_example_package_demoformat_param_w",
+        "ft_example_package_demoformat_user_attr",
+        "param_example_package_demoformat_w",
+        "rw_example_package_demoformat_feature_rep",
+        "rw_example_package_demoformat_index",
+    ]
+
+
 def test_htm(mock_metadata, tmp_path):
-    maker = HelpBuilder(mock_metadata, HELP_FIXTURES_DIR / "htm", tmp_path)
+    maker = HelpBuilder(mock_metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
     maker.build()
     assert (tmp_path / "Transformers" / "Transformer-pkg.htm").is_file()
     assert (tmp_path / "package_help.csv").is_file()
 
 
 def test_md(mock_metadata, tmp_path):
-    maker = HelpBuilder(mock_metadata, HELP_FIXTURES_DIR / "md", tmp_path)
+    maker = HelpBuilder(mock_metadata, HELP_FIXTURES_DIR / "md", tmp_path, {})
     maker.build()
     assert not (tmp_path / "Transformer.md").is_file()
     html_file = tmp_path / "Transformer.htm"

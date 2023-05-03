@@ -1,9 +1,13 @@
 # fme-packager changes
 
+# 1.4.1
+
+* Improve help validation for packages containing formats.
+
 # 1.4.0
 
-* Added `fme-packager verify` to check that a `.fpkg` is valid
-* Moved `fme-packager version` to the standardized `fme-packager --version`
+* Added `fme-packager verify` to check that a `.fpkg` is valid.
+* Moved `fme-packager version` to the standardized `fme-packager --version`.
 
 ## 1.3.1
 

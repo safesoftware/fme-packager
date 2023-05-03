@@ -120,7 +120,8 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
     index = {}
     if not format_directions:
         format_directions = {}
-    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}"
+    # dashes in the UIDs get turned to underscores
+    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}".replace("-", "_")
     # Each transformer has only one topic.
     for xformer in fpkg_metadata.transformers:
         index[f"fmx_{fpkg_ident}_{xformer.name}"] = f"/{xformer.name}.htm"
@@ -139,10 +140,17 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
 
 
 class HelpBuilder:
-    def __init__(self, fpkg_metadata: FMEPackageMetadata, help_src_dir, help_dst_dir):
+    def __init__(
+        self,
+        fpkg_metadata: FMEPackageMetadata,
+        help_src_dir,
+        help_dst_dir,
+        format_visible_directions,
+    ):
         self.fpkg_metadata = fpkg_metadata
         self.help_src_dir = Path(help_src_dir)
         self.help_dst_dir = Path(help_dst_dir)
+        self.format_directions = format_visible_directions
 
     def build(self):
         """
@@ -183,7 +191,7 @@ class HelpBuilder:
         Help contexts missing a doc file results in a warning,
         and its row omitted from the output.
         """
-        expected = get_expected_help_index(self.fpkg_metadata)
+        expected = get_expected_help_index(self.fpkg_metadata, self.format_directions)
 
         path = Path(doc_dir) / "package_help.csv"
         with path.open("w", encoding="utf8", newline="") as f:
@@ -219,7 +227,7 @@ class HelpBuilder:
                 raise FileNotFoundError(f"{expected_doc} does not exist")
             if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
                 raise ValueError(f"{expected_doc} must be htm(l) or md")
-        expected = set(get_expected_help_index(self.fpkg_metadata).keys())
+        expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
         unrecognized = contexts_present - expected
         if unrecognized:
