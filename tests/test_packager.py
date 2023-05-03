@@ -10,10 +10,13 @@ from fme_packager.exception import (
     TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
 )
-from fme_packager.metadata import TransformerMetadata
+from fme_packager.metadata import TransformerMetadata, FormatMetadata, FMEPackageMetadata
+from fme_packager.operations import parse_formatinfo
 from fme_packager.packager import (
     FMEPackager,
     is_valid_python_compatibility,
+    get_formatinfo,
+    get_format_visibility,
 )
 
 
@@ -36,6 +39,69 @@ CWD = pathlib.Path(__file__).parent.resolve()
 )
 def test_is_valid_python_compatibility(version, expected_is_valid):
     assert is_valid_python_compatibility(version) == expected_is_valid
+
+
+def test_get_formatinfo(tmp_path):
+    package_metadata = FMEPackageMetadata(
+        {
+            "uid": "package",
+            "publisher_uid": "example",
+            "package_content": {"formats": [{"name": "myformat"}]},
+        }
+    )
+    format_metadata = FormatMetadata({"name": "myformat"})
+
+    with pytest.raises(ValueError):
+        filepath = tmp_path / "emptyformat.db"
+        with open(filepath, "w") as f:
+            f.write(";")
+        get_formatinfo(package_metadata, format_metadata, filepath)
+
+    with pytest.raises(ValueError):
+        filepath = tmp_path / "formatnotfound.db"
+        with open(filepath, "w") as f:
+            f.write(
+                "SAFE.CKAN.CKANDATASTORE|CKAN DataStore|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|3|3|CKAN|NO|CKAN"
+            )
+        get_formatinfo(package_metadata, format_metadata, filepath)
+
+    filepath = tmp_path / "myformat.db"
+    with open(filepath, "w") as f:
+        f.writelines(
+            "EXAMPLE.PACKAGE.MYFORMAT|My Format|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|3|3|MYFORMAT|NO|MYFORMAT\n"
+            + "EXAMPLE.PACKAGE.NOTMYFORMAT|Not My Format|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|3|3|MYFORMAT|NO|MYFORMAT"
+        )
+
+    formatinfo = get_formatinfo(package_metadata, format_metadata, filepath)
+    assert formatinfo.FORMAT_NAME == "EXAMPLE.PACKAGE.MYFORMAT"
+
+
+def test_get_format_visibility():
+    base_formatinfo = parse_formatinfo(
+        "EXAMPLE.PACKAGE.MYFORMAT|My Format|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|3|3|MYFORMAT|NO|MYFORMAT"
+    )
+
+    assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="NO")) == ""
+    assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="YES")) == "rw"
+
+    assert get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="INPUT")) == "r"
+    for visibility in ["YES", "INPUT"]:
+        assert (
+            get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE=visibility))
+            == "r"
+        )
+
+    assert (
+        get_format_visibility(base_formatinfo._replace(DIRECTION="BOTH", VISIBLE="OUTPUT")) == "w"
+    )
+    for visibility in ["YES", "OUTPUT"]:
+        assert (
+            get_format_visibility(base_formatinfo._replace(DIRECTION="OUTPUT", VISIBLE=visibility))
+            == "w"
+        )
+
+    with pytest.raises(ValueError):
+        assert get_format_visibility(base_formatinfo._replace(DIRECTION="INPUT", VISIBLE="OUTPUT"))
 
 
 @pytest.mark.parametrize(

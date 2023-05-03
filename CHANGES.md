@@ -1,6 +1,6 @@
 # fme-packager changes
 
-# 1.4.1
+# 1.4.2
 
 * Improve help validation for packages containing formats.
 
