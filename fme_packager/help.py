@@ -140,10 +140,11 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
 
 
 class HelpBuilder:
-    def __init__(self, fpkg_metadata: FMEPackageMetadata, help_src_dir, help_dst_dir):
+    def __init__(self, fpkg_metadata: FMEPackageMetadata, help_src_dir, help_dst_dir, visible_formats):
         self.fpkg_metadata = fpkg_metadata
         self.help_src_dir = Path(help_src_dir)
         self.help_dst_dir = Path(help_dst_dir)
+        self.format_directions = visible_formats
 
     def build(self):
         """
@@ -184,7 +185,7 @@ class HelpBuilder:
         Help contexts missing a doc file results in a warning,
         and its row omitted from the output.
         """
-        expected = get_expected_help_index(self.fpkg_metadata)
+        expected = get_expected_help_index(self.fpkg_metadata, self.format_directions)
 
         path = Path(doc_dir) / "package_help.csv"
         with path.open("w", encoding="utf8", newline="") as f:
@@ -220,7 +221,7 @@ class HelpBuilder:
                 raise FileNotFoundError(f"{expected_doc} does not exist")
             if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
                 raise ValueError(f"{expected_doc} must be htm(l) or md")
-        expected = set(get_expected_help_index(self.fpkg_metadata).keys())
+        expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
         unrecognized = contexts_present - expected
         if unrecognized:
