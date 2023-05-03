@@ -176,7 +176,7 @@ class FMEPackager:
         self.metadata = load_fpkg_metadata(src_dir)
         self.verbose = verbose
 
-        self.visible_formats = {}
+        self.fmt_visible_directions = {}
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
@@ -327,7 +327,7 @@ class FMEPackager:
                 raise ValueError(f"{db_path} is in metadata, but was not found")
             formatinfo = get_formatinfo(self.metadata, fmt, db_path)
 
-            self.visible_formats[fmt.name] = get_format_visibility(formatinfo)
+            self.fmt_visible_directions[fmt.name] = get_format_visibility(formatinfo)
 
             shutil.copy(db_path, dst)
 
@@ -549,7 +549,7 @@ class FMEPackager:
             return
 
         self._print("Copying help")
-        builder = HelpBuilder(self.metadata, src, dest, self.visible_formats)
+        builder = HelpBuilder(self.metadata, src, dest, self.fmt_visible_directions)
         builder.build()
 
     def _print(self, msg):

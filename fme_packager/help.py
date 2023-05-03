@@ -140,11 +140,17 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
 
 
 class HelpBuilder:
-    def __init__(self, fpkg_metadata: FMEPackageMetadata, help_src_dir, help_dst_dir, visible_formats):
+    def __init__(
+        self,
+        fpkg_metadata: FMEPackageMetadata,
+        help_src_dir,
+        help_dst_dir,
+        format_visible_directions,
+    ):
         self.fpkg_metadata = fpkg_metadata
         self.help_src_dir = Path(help_src_dir)
         self.help_dst_dir = Path(help_dst_dir)
-        self.format_directions = visible_formats
+        self.format_directions = format_visible_directions
 
     def build(self):
         """
