@@ -138,6 +138,21 @@ def check_formatinfo(package_metadata, format_metadata, db_path):
     if formatinfo.FORMAT_NAME != fqname:
         raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
+    if formatinfo.VISIBLE == "NO":
+        return ""
+    if formatinfo.VISIBLE == "YES" and formatinfo.DIRECTION == "BOTH":
+        return "rw"
+    if formatinfo.VISIBLE in {"INPUT", "YES"} and formatinfo.DIRECTION in {"BOTH", "INPUT"}:
+        return "r"
+    if formatinfo.VISIBLE in {"OUTPUT", "YES"} and formatinfo.DIRECTION in {"BOTH", "OUTPUT"}:
+        return "w"
+
+    raise ValueError(
+        "Format visibility '{visible}' is not compatible with direction '{direction}'".format(
+            visible=formatinfo.VISIBLE, direction=formatinfo.DIRECTION
+        )
+    )
+
 
 class FMEPackager:
     def __init__(self, src_dir, verbose=True):
@@ -152,6 +167,8 @@ class FMEPackager:
 
         self.metadata = load_fpkg_metadata(src_dir)
         self.verbose = verbose
+
+        self.visible_formats = {}
 
         validate(self.metadata.dict, load_metadata_json_schema())
 
@@ -300,7 +317,9 @@ class FMEPackager:
             db_path = src / f"{fmt.name}.db"
             if not db_path.is_file():
                 raise ValueError(f"{db_path} is in metadata, but was not found")
-            check_formatinfo(self.metadata, fmt, db_path)
+
+            self.visible_formats[fmt.name] = check_formatinfo(self.metadata, fmt, db_path)
+
             shutil.copy(db_path, dst)
 
     def validate_transformer(self, transformer_path, expected_metadata: TransformerMetadata):
@@ -521,7 +540,7 @@ class FMEPackager:
             return
 
         self._print("Copying help")
-        builder = HelpBuilder(self.metadata, src, dest)
+        builder = HelpBuilder(self.metadata, src, dest, self.visible_formats)
         builder.build()
 
     def _print(self, msg):
