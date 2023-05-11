@@ -50,7 +50,7 @@ Available templates:
 
 * `transformer`: [Transformer template for FME Packages](https://github.com/safesoftware/fpkg-transformer-template)
 
-_These templates are not currently bundled with fme-packager.
+_These templates are not currently bundled with fme-packager._
 
 
 ## Make an fpkg distribution
