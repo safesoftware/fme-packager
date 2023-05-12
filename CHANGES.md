@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.4.3
+
+* Improve verify command
+
 # 1.4.2
 
 * Improve help validation for packages containing formats.

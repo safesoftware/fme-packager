@@ -59,22 +59,3 @@ def test_verify_non_existant():
     runner = CliRunner()
     result = runner.invoke(verify, [str(CWD / "fixtures" / "does-not-exist.fpkg")])
     assert "The file must exist and have a .fpkg extension" in result.output
-
-
-@pytest.mark.parametrize("flags", [[], ["--json"]])
-def test_verify_wrong_filename(flags):
-    runner = CliRunner()
-    result = runner.invoke(
-        verify,
-        [
-            str(CWD / "fixtures" / "fpkgs" / "example.my-package-changed-filename-0.1.0.fpkg"),
-            *flags,
-        ],
-    )
-    if "--json" in flags:
-        assert (
-            '{"status": "error", "message": "The file name is invalid. Expected example.my-package-0.1.0.fpkg"}'
-            in result.output
-        )
-    else:
-        assert "The file name is invalid. Expected example.my-package-0.1.0.fpkg" in result.output

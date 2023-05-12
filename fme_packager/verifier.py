@@ -47,16 +47,6 @@ class FMEVerifier:
             steps.build()
             steps.make_fpkg()
 
-            # Verify package file name is the same
-            if not os.path.exists(pathlib.Path(temp_dir) / "dist" / os.path.basename(self.file)):
-                raise ValueError(
-                    "The file name is invalid. Expected {}".format(
-                        build_fpkg_filename(
-                            steps.metadata.publisher_uid, steps.metadata.uid, steps.metadata.version
-                        )
-                    )
-                )
-
     def _print(self, msg):
         if self.verbose:
             print(msg)
