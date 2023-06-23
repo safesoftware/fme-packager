@@ -13,7 +13,7 @@ HELP_FIXTURES_DIR = CWD / "fixtures" / "help"
 def mock_metadata():
     return FMEPackageMetadata(
         {
-            "uid": "package",
+            "uid": "package-hyphen",
             "publisher_uid": "example",
             "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
         }
@@ -22,35 +22,35 @@ def mock_metadata():
 
 def test_get_expected_help_contexts_transformer(mock_metadata):
     assert get_expected_help_index(mock_metadata) == {
-        "fmx_example_package_Transformer": "/Transformer.htm"
+        "fmx_example_package-hyphen_Transformer": "/Transformer.htm"
     }
 
 
 def test_get_expected_help_contexts_format():
     metadata = FMEPackageMetadata(
         {
-            "uid": "package",
+            "uid": "package-hyphen",
             "publisher_uid": "example",
             "package_content": {"formats": [{"name": "demoformat"}]},
         }
     )
     assert get_expected_help_index(metadata) == {
-        "ft_example_package_demoformat_param_r": "/demoformat_ft_param_r.htm",
-        "ft_example_package_demoformat_param_w": "/demoformat_ft_param_w.htm",
-        "ft_example_package_demoformat_user_attr": "/demoformat_ft_user_attr.htm",
-        "param_example_package_demoformat_r": "/demoformat_param_r.htm",
-        "param_example_package_demoformat_w": "/demoformat_param_w.htm",
-        "rw_example_package_demoformat_feature_rep": "/demoformat_feature_rep.htm",
-        "rw_example_package_demoformat_index": "/demoformat.htm",
+        "ft_example_package_hyphen_demoformat_param_r": "/demoformat_ft_param_r.htm",
+        "ft_example_package_hyphen_demoformat_param_w": "/demoformat_ft_param_w.htm",
+        "ft_example_package_hyphen_demoformat_user_attr": "/demoformat_ft_user_attr.htm",
+        "param_example_package_hyphen_demoformat_r": "/demoformat_param_r.htm",
+        "param_example_package_hyphen_demoformat_w": "/demoformat_param_w.htm",
+        "rw_example_package_hyphen_demoformat_feature_rep": "/demoformat_feature_rep.htm",
+        "rw_example_package_hyphen_demoformat_index": "/demoformat.htm",
     }
     assert sorted(get_expected_help_index(metadata)) == [
-        "ft_example_package_demoformat_param_r",
-        "ft_example_package_demoformat_param_w",
-        "ft_example_package_demoformat_user_attr",
-        "param_example_package_demoformat_r",
-        "param_example_package_demoformat_w",
-        "rw_example_package_demoformat_feature_rep",
-        "rw_example_package_demoformat_index",
+        "ft_example_package_hyphen_demoformat_param_r",
+        "ft_example_package_hyphen_demoformat_param_w",
+        "ft_example_package_hyphen_demoformat_user_attr",
+        "param_example_package_hyphen_demoformat_r",
+        "param_example_package_hyphen_demoformat_w",
+        "rw_example_package_hyphen_demoformat_feature_rep",
+        "rw_example_package_hyphen_demoformat_index",
     ]
 
 
@@ -101,4 +101,4 @@ def test_md(mock_metadata, tmp_path):
     index_file = tmp_path / "package_help.csv"
     assert index_file.is_file()
     with index_file.open("r") as f:
-        assert f.read() == "fmx_example_package_Transformer,/Transformer.htm\n"
+        assert f.read() == "fmx_example_package-hyphen_Transformer,/Transformer.htm\n"
