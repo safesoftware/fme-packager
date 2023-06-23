@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.4.2
+
+* Improve help validation for packages with hyphenated UIDs.
+
 # 1.4.1
 
 * Improve help validation for packages containing formats.
