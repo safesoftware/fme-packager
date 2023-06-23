@@ -120,13 +120,14 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
     index = {}
     if not format_directions:
         format_directions = {}
-    # dashes in the UIDs get turned to underscores
-    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}".replace("-", "_")
+    fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}"
     # Each transformer has only one topic.
     for xformer in fpkg_metadata.transformers:
         index[f"fmx_{fpkg_ident}_{xformer.name}"] = f"/{xformer.name}.htm"
     # Each format has many topics.
     for fmt in fpkg_metadata.formats:
+        # dashes in the UIDs get turned to underscores when looking for format help
+        fpkg_ident = fpkg_ident.replace("-", "_")
         fmt_ident = f"{fpkg_ident}_{fmt.name}".lower()
         directions = format_directions.get(fmt.name, "rw")
         # Format prefix is "rw" even when read-only or write-only
