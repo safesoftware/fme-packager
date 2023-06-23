@@ -130,7 +130,7 @@ def get_formatinfo(package_metadata, format_metadata, db_path):
         for line in inf:
             if line.startswith(";"):
                 continue  # comment line.
-            formatinfo = parse_formatinfo(db_path)
+            formatinfo = parse_formatinfo(line)
             if formatinfo.FORMAT_NAME == fqname:
                 return formatinfo
 
