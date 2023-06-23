@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.4.4
+
+* Improve help validation for packages with hyphenated UIDs.
+
 # 1.4.3
 
 * Improve verify command
