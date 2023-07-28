@@ -1,5 +1,10 @@
 # fme-packager changes
 
+# 1.5.0
+
+* Require Python 3.7 or newer.
+* Update dependencies.
+
 # 1.4.4
 
 * Improve help validation for packages with hyphenated UIDs.

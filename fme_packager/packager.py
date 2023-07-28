@@ -208,7 +208,7 @@ class FMEPackager:
             with open(flali_path, encoding="utf-8") as xmlin:
                 aliases_xml = xmltodict.parse(xmlin.read())
 
-            embedded_doc_dirs = list(filter(lambda x: x.startswith("!"), os.listdir(help_src)))
+            embedded_doc_dirs = [x for x in os.listdir(help_src) if x.startswith("!")]
             if embedded_doc_dirs:
                 warnings.warn(
                     "{} embedded doc folders (starting with '!'). Avoid these if possible".format(

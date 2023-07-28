@@ -1,0 +1,23 @@
+name: Build and release wheel to PyPI
+on:
+  release:
+    types: [created]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - name: Install
+      run: pip install .[dev]
+    - name: Run tests
+      run: pytest
+    - name: Build
+      run: python -m build
+    - name: Release to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
