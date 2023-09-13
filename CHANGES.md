@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.6.0
+
+* Update `fme-packager config-env` for path changes in FME 2023.2+.
+
 # 1.5.0
 
 * Require Python 3.7 or newer.

@@ -121,6 +121,11 @@ def config_env(fme_home, site_packages_dir):
     paths_to_add = [
         "#" + fme_home,
         os.path.join(fme_home, "python"),
+        os.path.join(
+            fme_home,
+            "python",
+            f"fme-plugins-py{sys.version_info.major}{sys.version_info.minor}.zip",
+        ),
         os.path.join(fme_home, "python", leaf_dir),
         os.path.join(fme_home, "fmeobjects", leaf_dir),
     ]
