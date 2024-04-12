@@ -169,11 +169,12 @@ class FmxjTransformer(Transformer):
 
     @property
     def categories(self):
-        return self.info["categories"]
+        return self.info.get("categories", [])
 
     @property
     def aliases(self):
-        return []
+        return self.info.get("aliases", [])
+
     @property
     def visible(self):
         return True
