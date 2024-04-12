@@ -1,6 +1,7 @@
 """
 Tools for extracting key information out of FME's transformer definition files.
 """
+
 import json
 import os.path
 import re
@@ -24,6 +25,21 @@ class Transformer(ABC):
     @property
     @abstractmethod
     def python_compatibility(self):
+        pass
+
+    @property
+    @abstractmethod
+    def categories(self):
+        pass
+
+    @property
+    @abstractmethod
+    def aliases(self):
+        pass
+
+    @property
+    @abstractmethod
+    def visible(self):
         pass
 
 
@@ -70,6 +86,18 @@ class CustomTransformer(Transformer):
         return self.header.pyver
 
     @property
+    def categories(self):
+        return []
+
+    @property
+    def aliases(self):
+        return []
+
+    @property
+    def visible(self):
+        return True
+
+    @property
     def is_encrypted(self):
         return self.lines[0].strip() == b"FMW0001"
 
@@ -101,6 +129,25 @@ class FmxTransformer(Transformer):
     def python_compatibility(self):
         return self.props.get("PYTHON_COMPATIBILITY")
 
+    def _split_prop(self, property_name, sep=","):
+        return (
+            [p.strip() for p in self.props.get(property_name).split(sep)]
+            if self.props.get(property_name)
+            else []
+        )
+
+    @property
+    def categories(self):
+        return self._split_prop("CATEGORY", ",")
+
+    @property
+    def aliases(self):
+        return self._split_prop("ALIASES", " ")
+
+    @property
+    def visible(self):
+        return self.props.get("VISIBLE", "yes").lower() == "yes"
+
 
 class FmxjTransformer(Transformer):
     def __init__(self, info, version_def):
@@ -120,6 +167,17 @@ class FmxjTransformer(Transformer):
         # FIXME: key typo from tstportConfiguration/testdata/PortConfiguration.fmxj
         return self.json_def.get("pythonCompatability")
 
+    @property
+    def categories(self):
+        return self.info["categories"]
+
+    @property
+    def aliases(self):
+        return []
+    @property
+    def visible(self):
+        return True
+
 
 class TransformerFile(ABC):
     """Represents a transformer file containing one or more transformer versions."""
@@ -127,7 +185,6 @@ class TransformerFile(ABC):
     def __init__(self, file_path):
         self.file_path = file_path
 
-    @property
     @abstractmethod
     def versions(self):
         pass

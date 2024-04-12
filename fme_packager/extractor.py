@@ -1,26 +1,18 @@
 import json
 import os
-from pathlib import Path
 import shutil
 import tempfile
+from pathlib import Path
+from typing import Iterable
 
 import yaml
 
 from fme_packager.context import verbose_flag
 from fme_packager.operations import valid_fpkg_file
-from fme_packager.utils import pipeline, keep_attributes, chdir, split_key_values
+from fme_packager.transformer import load_transformer, TransformerFile, Transformer
+from fme_packager.utils import pipeline, keep_attributes, chdir
 
-_TRANSFORMER_ATTRIBUTES = [
-    "aliases",
-    "categories",
-    "changes",
-    "deprecated",
-    "description",
-    "description_format",
-    "name",
-    "replaced_by",
-    "version",
-]
+_TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
 
 
 def _zip_filename_for_fpkg(directory: str, fpkg_file: str) -> Path:
@@ -69,13 +61,17 @@ def _add_transformer_filenames(transformer: dict) -> dict:
     - 'readme_filename': The filename of the transformer's readme.
     """
     transformer = transformer.copy()
-    for ext, key in [("fmx", "filename"), ("md", "readme_filename")]:
-        transformer[key] = str(Path("transformers") / f"{transformer['name']}.{ext}")
+    for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
+        if 'name' not in transformer:
+            continue
+        potential_filename = str(Path("transformers") / f"{transformer['name']}.{ext}")
+        if os.path.exists(potential_filename):
+            transformer[key] = potential_filename
 
     return transformer
 
 
-def _add_transformer_contents(transformer: dict) -> dict:
+def _load_transformer(transformer: dict) -> dict:
     """
     Parse the transformer files and add the content to the transformer dictionary.
 
@@ -83,48 +79,45 @@ def _add_transformer_contents(transformer: dict) -> dict:
     - 'filename': The filename of the transformer.
 
     Output dict will have the added keys:
-    - The keys parsed from the transformer file.
+    - 'loaded_file': The content of the transformer file, as a TransformerFile object
     """
-    return {**_parse_transformer(open(transformer["filename"]).read()), **transformer}
+    return {"loaded_file": load_transformer(transformer["filename"]), **transformer}
 
 
-def _split_categories(transformer: dict) -> dict:
+def _promote_transformer_data(transformer: dict) -> dict:
     """
-    Split a transformer's categories by comma.
+    Promote the transformer data from the loaded file to the transformer dictionary.
 
     Input dict must have the key:
+    - 'loaded_file': The content of the transformer file, as a TransformerFile object.
+
+    Output dict will have the added keys:
+    - 'name': The name of the transformer.
+    - 'version': The version of the transformer.
     - 'category': The category of the transformer.
-
-    Output dict will have the added key:
-    - 'categories': The categories of the transformer, split by comma.
-    """
-    return split_key_values(transformer, ",", "category", "categories")
-
-
-def _split_aliases(transformer: dict) -> dict:
-    """
-    Split a transformer's aliases by space.
-
-    Input dict must have the key:
     - 'aliases': The aliases of the transformer.
-
-    Output dict will have the added key:
-    - 'aliases': The aliases of the transformer, split by space.
-    """
-    return split_key_values(transformer, " ", "aliases")
-
-
-def _visible_to_deprecated(transformer: dict) -> dict:
-    """
-    Convert the visible yes/no value to deprecated boolean.
-
-    Input dict must have the key:
-    - 'visible': The visibility of the transformer.
-
-    Output dict will have the added key:
+    - 'replaced_by': The transformer that replaced this transformer.
+    - 'changes': The changes made to the transformer.
     - 'deprecated': The deprecated status of the transformer.
     """
-    return {"deprecated": transformer.get("visible", "yes").lower() != "yes", **transformer}
+    loaded_file: TransformerFile = transformer["loaded_file"]
+    versions: list[Transformer] = loaded_file.versions()
+    transformer.update(
+        {
+            "versions": [
+                {
+                    "name": version.name,
+                    "version": version.version,
+                    "categories": version.categories,
+                    "aliases": version.aliases,
+                    "visible": version.visible,
+                }
+                for version in versions
+            ],
+        }
+    )
+
+    return transformer
 
 
 def _add_transformer_description(transformer: dict) -> dict:
@@ -148,75 +141,29 @@ def _add_transformer_description(transformer: dict) -> dict:
     return transformer
 
 
-def _parse_transformer(content: str) -> dict:
-    """
-    Extract the transformer metadata from the transformer file
-    """
-    verbose = verbose_flag.get()
-    detected_keys = set()
-
-    lines = content.split("\n")
-    result = {}
-    change_log_started = False
-    for line in lines:
-        # Split line into code and comment, ignore the comment
-        line, _, _ = line.partition("#")
-        line = line.strip()
-
-        # Ignore everything after TEMPLATE_START
-        if line == "TEMPLATE_START":
-            break
-
-        # Handle CHANGE_LOG block
-        if line == "CHANGE_LOG_START":
-            change_log_started = True
-            result["changes"] = ""
-            continue
-        elif line == "CHANGE_LOG_END":
-            change_log_started = False
-            continue
-        if change_log_started:
-            result["changes"] += line.rstrip() + "\n"
-            continue
-
-        # Parse key-value pairs where key is a single word
-        if (
-            ":" in line
-            and line.split(":", 1)[0].strip().isidentifier()
-            and " " not in line.split(":", 1)[0]
-        ):
-            key, value = line.split(":", 1)
-            key = key.strip().lower()
-            value = value.strip() or None
-            result[key] = value
-            if verbose:
-                detected_keys.add(key)
-
-    if verbose:
-        name = result.get("transformer_name", "<unknown>")
-        print(f"Detected keys in transformer '{name}': {detected_keys}")
-
-    return result
-
-
-def _get_all_categories(transformers: list[dict]) -> set[str]:
+def _get_all_categories(transformers: Iterable[TransformerFile]) -> set[str]:
     """
     Get the union of all the categories from the transformers
     """
     all_categories = set()
     for transformer in transformers:
-        all_categories.update(transformer["categories"])
+        transformer_versions = list(transformer.versions())
+        if transformer_versions:
+            # Find the version with the highest version number
+            highest_version = max(
+                transformer_versions, key=lambda transformer_version: transformer_version.version
+            )
+            if not highest_version.categories:
+                continue
+            all_categories.update(highest_version.categories)
     return all_categories
 
 
 _enhance_transformer_info = pipeline(
     _add_transformer_filenames,
-    _add_transformer_contents,
+    _load_transformer,
+    _promote_transformer_data,
     _add_transformer_description,
-    _split_categories,
-    _split_aliases,
-    _visible_to_deprecated,
-    lambda t: keep_attributes(t, *_TRANSFORMER_ATTRIBUTES),
 )
 
 
@@ -226,9 +173,15 @@ def summarize_fpkg(fpkg_path: str) -> str:
 
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))
-            transformers = list(_enhance_transformer_info(manifest["package_content"]["transformers"]))
+            transformers = list(
+                _enhance_transformer_info(manifest["package_content"]["transformers"])
+            )
 
-            manifest["categories"] = list(_get_all_categories(transformers))
-            manifest["package_content"]["transformers"] = transformers
+            manifest["categories"] = list(
+                _get_all_categories(t["loaded_file"] for t in transformers)
+            )
+            manifest["package_content"]["transformers"] = [
+                keep_attributes(t, *_TRANSFORMER_ATTRIBUTES) for t in transformers
+            ]
 
-        return json.dumps(manifest)
+        return json.dumps(manifest, indent=2 if verbose_flag.get() else None)

@@ -26,17 +26,3 @@ def chdir(path: str | Path) -> None:
 def keep_attributes(mapping: Mapping, *attributes: str) -> dict:
     attributes = set(attributes)
     return {k: v for k, v in mapping.items() if k in attributes}
-
-
-def split_key_values(item: Mapping, separator: str, source_key_name: str, dest_key_name: str = None) -> dict:
-    if not dest_key_name:
-        dest_key_name = source_key_name
-
-    return {
-        dest_key_name: (
-            [value.strip() for value in (item.get(source_key_name)).split(separator)]
-            if item.get(source_key_name)
-            else []
-        ),
-        **{k: v for k, v in item.items() if k != source_key_name},
-    }
