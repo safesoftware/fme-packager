@@ -1,3 +1,4 @@
+import os
 from collections import namedtuple
 
 
@@ -68,3 +69,13 @@ TREE_COPY_IGNORE_GLOBS = [
     "Thumbs.db",
     "desktop.ini",
 ]
+
+
+def valid_fpkg_file(fpkg_file: str) -> str:
+    """
+    Validate that the file has the correct extension and exists
+    """
+    if not fpkg_file.lower().endswith(".fpkg") or not os.path.exists(fpkg_file):
+        raise ValueError("The file must exist and have a .fpkg extension")
+
+    return fpkg_file
