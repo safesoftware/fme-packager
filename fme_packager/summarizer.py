@@ -55,7 +55,7 @@ def _add_transformer_filenames(transformer: dict) -> dict:
     """
     transformer = transformer.copy()
     for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        if 'name' not in transformer:
+        if "name" not in transformer:
             continue
         potential_filename = str(Path("transformers") / f"{transformer['name']}.{ext}")
         if os.path.exists(potential_filename):

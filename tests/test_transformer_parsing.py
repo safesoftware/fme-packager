@@ -71,7 +71,4 @@ def test_fmxj_transformer(valid_package_dir):
     assert item.version == 1
     assert not item.python_compatibility
     assert item.categories == ["Integrations"]
-    assert item.aliases == [
-        "example.my-package.NemoGreeter",
-        "example.my-package.MemoGreeter"
-    ]
+    assert item.aliases == ["example.my-package.NemoGreeter", "example.my-package.MemoGreeter"]
