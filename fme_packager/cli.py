@@ -80,7 +80,7 @@ def pack(path):
 
 
 @cli.command()
-@click.argument("file", type=click.Path(exists=False, file_okay=True))
+@click.argument("file", type=click.Path(exists=False))
 @click.option("--verbose", "-v", is_flag=True, help="Show build steps")
 @click.option("--json", is_flag=True, help="Output result as JSON")
 def verify(file, verbose, json):
@@ -97,7 +97,7 @@ def verify(file, verbose, json):
 
 
 @cli.command()
-@click.argument("file", type=click.Path(exists=False, file_okay=True))
+@click.argument("file", type=click.Path(exists=True, dir_okay=False))
 @click.option("--verbose", "-v", is_flag=True, help="Show extraction steps")
 def summarize(file, verbose):
     """
