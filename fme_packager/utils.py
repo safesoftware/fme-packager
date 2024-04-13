@@ -2,7 +2,7 @@ import os
 from contextlib import contextmanager
 from functools import reduce
 from pathlib import Path
-from typing import Mapping, Iterable
+from typing import Mapping, Iterable, Union
 
 
 def pipeline(*functions: callable) -> callable:
@@ -13,7 +13,7 @@ def pipeline(*functions: callable) -> callable:
 
 
 @contextmanager
-def chdir(path: str | Path) -> None:
+def chdir(path: Union[str, Path]) -> None:
     """Change the current working directory to the given path and revert back on exit."""
     old_dir = os.getcwd()
     os.chdir(path)

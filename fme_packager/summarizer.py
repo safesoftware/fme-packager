@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Set
 
 import yaml
 
@@ -134,7 +134,7 @@ def _add_transformer_description(transformer: dict) -> dict:
     return transformer
 
 
-def _get_all_categories(transformers: Iterable[TransformerFile]) -> set[str]:
+def _get_all_categories(transformers: Iterable[TransformerFile]) -> Set[str]:
     """
     Get the union of all the categories from the transformers
     """
