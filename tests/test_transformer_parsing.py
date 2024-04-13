@@ -24,6 +24,8 @@ def test_custom_transformer(custom_package_dir):
         assert item.name == "example.my-package.customFooBar"
         assert item.version == 1
         assert item.python_compatibility == "37"
+        assert item.categories == ["Attributes"]
+        assert item.aliases == []
 
 
 def test_custom_transformer_encrypted_versioned(custom_package_dir):
@@ -51,6 +53,12 @@ def test_fmx_transformer(valid_package_dir):
     assert item.name == "example.my-package.MyGreeter"
     assert item.version == 1
     assert item.python_compatibility == "36"
+    assert item.categories == ["Integrations"]
+    assert item.aliases == [
+        "example.my-package.HerGreeter",
+        "example.my-package.TheirGreeter",
+        "example.my-package.OurGreeter",
+    ]
 
 
 def test_fmxj_transformer(valid_package_dir):
@@ -62,3 +70,8 @@ def test_fmxj_transformer(valid_package_dir):
     assert item.name == "example.my-package.DemoGreeter"
     assert item.version == 1
     assert not item.python_compatibility
+    assert item.categories == ["Integrations"]
+    assert item.aliases == [
+        "example.my-package.NemoGreeter",
+        "example.my-package.MemoGreeter"
+    ]

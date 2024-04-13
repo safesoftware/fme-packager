@@ -2,8 +2,7 @@ import shutil
 import tempfile
 from json import dumps as json_dumps
 
-from fme_packager.extractor import _zip_filename_for_fpkg
-from fme_packager.operations import valid_fpkg_file
+from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
 from fme_packager.packager import FMEPackager
 
 
@@ -33,7 +32,7 @@ class FMEVerifier:
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             # Change the extension of the file to .zip
-            temp_zip_file = str(_zip_filename_for_fpkg(temp_dir, self.file))
+            temp_zip_file = str(zip_filename_for_fpkg(temp_dir, self.file))
             self._print(f"Creating temporary zip file {temp_zip_file}")
             shutil.copy(self.file, temp_zip_file)
 

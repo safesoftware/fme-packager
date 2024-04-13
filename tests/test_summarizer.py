@@ -5,7 +5,7 @@ import tempfile
 import pytest
 import yaml
 
-from fme_packager import extractor
+from fme_packager import summarizer
 from tests.conftest import mock_transformer, mock_transformer_file
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -58,7 +58,7 @@ def test__add_transformer_filenames(transformer, expected, mocker):
 
     mocker.patch("os.path.exists", side_effect=side_effect)
 
-    result = extractor._add_transformer_filenames(transformer)
+    result = summarizer._add_transformer_filenames(transformer)
     assert result == expected
 
 
@@ -67,9 +67,9 @@ def test__load_transformer(mock_transformer_file, mocker):
     transformer = {"filename": "transformers/MyTransformer.fmx", "extra_key": "extra_value"}
 
     # Mock the load_transformer function to return the mock TransformerFile object
-    mocker.patch("fme_packager.extractor.load_transformer", return_value=mock_transformer_file)
+    mocker.patch("fme_packager.summarizer.load_transformer", return_value=mock_transformer_file)
 
-    result = extractor._load_transformer(transformer)
+    result = summarizer._load_transformer(transformer)
 
     # Check that the 'loaded_file' key in the result is the mock TransformerFile object
     assert result["loaded_file"] == mock_transformer_file
@@ -82,7 +82,7 @@ def test__load_transformer(mock_transformer_file, mocker):
 def test__promote_transformer_data(mock_transformer_file, mock_transformer):
     transformer = {"loaded_file": mock_transformer_file, "extra_key": "extra_value"}
 
-    result = extractor._promote_transformer_data(transformer)
+    result = summarizer._promote_transformer_data(transformer)
 
     assert result["versions"] == [
         {
@@ -123,14 +123,14 @@ def mock_transformer_files(mocker):
 
 
 def test__get_all_categories(mock_transformer_files):
-    result = extractor._get_all_categories(mock_transformer_files)
+    result = summarizer._get_all_categories(mock_transformer_files)
     assert result == {"cat1", "cat2", "cat3", "cat4", "cat5"}
 
 
 def test__add_transformer_description(mocker):
     transformer = {"readme_filename": "MyGreeter.md"}
     mocker.patch("builtins.open", mocker.mock_open(read_data="Test Description"))
-    result = extractor._add_transformer_description(transformer)
+    result = summarizer._add_transformer_description(transformer)
     assert result["description"] == "Test Description"
     assert result["description_format"] == "md"
 
@@ -147,7 +147,7 @@ def test__parsed_manifest():
         yaml.dump(data, temp)
 
     # Call the function with the path of the temporary file
-    result = extractor._parsed_manifest(pathlib.Path(temp.name))
+    result = summarizer._parsed_manifest(pathlib.Path(temp.name))
 
     # Assert that the returned dictionary matches the data we wrote to the file
     assert result == data
@@ -158,5 +158,5 @@ def test_summarize_fpkg():
     expected_output = json.load(
         open(CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json")
     )
-    result = json.loads(extractor.summarize_fpkg(str(fpkg_path)))
+    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
     assert result == expected_output

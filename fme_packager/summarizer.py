@@ -8,18 +8,11 @@ from typing import Iterable
 import yaml
 
 from fme_packager.context import verbose_flag
-from fme_packager.operations import valid_fpkg_file
+from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
 from fme_packager.utils import pipeline, keep_attributes, chdir
 
 _TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
-
-
-def _zip_filename_for_fpkg(directory: str, fpkg_file: str) -> Path:
-    """
-    Generate a zip file path
-    """
-    return Path(directory) / os.path.basename(fpkg_file[:-5] + ".zip")
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -27,7 +20,7 @@ def _unpack_fpkg_file(directory: str, fpkg_file: str):
     Unpack the FME Package file
     """
     valid_fpkg = valid_fpkg_file(fpkg_file)
-    zip_file = _zip_filename_for_fpkg(directory, valid_fpkg)
+    zip_file = zip_filename_for_fpkg(directory, valid_fpkg)
     shutil.copy(valid_fpkg, zip_file)
     shutil.unpack_archive(zip_file, directory)
 

@@ -13,7 +13,7 @@ from cookiecutter.main import cookiecutter
 
 import fme_packager
 from fme_packager.context import set_verbose
-from fme_packager.extractor import summarize_fpkg
+from fme_packager.summarizer import summarize_fpkg
 from fme_packager.packager import FMEPackager
 from fme_packager.verifier import FMEVerifier
 

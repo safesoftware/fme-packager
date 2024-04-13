@@ -87,7 +87,7 @@ class CustomTransformer(Transformer):
 
     @property
     def categories(self):
-        return []
+        return self._split_prop("category", ",")
 
     @property
     def aliases(self):
@@ -100,6 +100,13 @@ class CustomTransformer(Transformer):
     @property
     def is_encrypted(self):
         return self.lines[0].strip() == b"FMW0001"
+
+    def _split_prop(self, property_name, sep=","):
+        return (
+            [p.strip() for p in getattr(self.header, property_name).split(sep)]
+            if getattr(self.header, property_name)
+            else []
+        )
 
 
 class FmxTransformer(Transformer):
