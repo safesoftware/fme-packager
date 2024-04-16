@@ -77,12 +77,8 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     Input dict must have the key:
     - 'name': The name of the transformer.
 
-    Output dict will have the keys:
-    - 'filename': The filename of the transformer.
-    - 'readme_filename': The filename of the transformer's readme.
-
-    :param transformer: The transformer dictionary to be updated.
-    :return: A new dictionary containing the filenames
+    :param transformer_name: The name of the transformer to retrieve filenames for.
+    :return: A tuple containing the filename and readme filename.
     """
     if not transformer_name:
         return TransformerFilenames(filename=None, readme_filename=None)
@@ -112,7 +108,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
         - 'visible': The visibility status of the transformer.
 
     :param loaded_file: The loaded transformer file.
-    :return: The updated transformer dictionary.
+    :return: The updates for the transformer dictionary.
     """
     versions: list[Transformer] = loaded_file.versions()
     return {
@@ -158,7 +154,7 @@ def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
     """
     Get the union of all the categories from the transformers.
 
-    :param transformers: An iterable of dicts
+    :param transformers: An iterable of transformer dicts
     :return: A set of all categories from the transformers.
     """
     all_categories = set()
@@ -177,6 +173,12 @@ def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
 
 
 def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
+    """
+    Enhance the transformer entries in the manifest with additional information.
+
+    :param transformers: An iterable of transformer dicts
+    :return: An iterable of transformer dicts with enhanced information
+    """
     for transformer in transformers:
         filenames = _transformer_filenames(transformer["name"])
         loaded_transformer = load_transformer(filenames.filename)
@@ -187,7 +189,7 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
 
 def _load_output_schema() -> dict:
     """
-    Load the output schema.
+    Load the output schema for the summarizer in jsonschema format.
 
     :return: The output schema.
     """
@@ -199,8 +201,10 @@ def summarize_fpkg(fpkg_path: str) -> str:
     """
     Summarize the FME Package.
 
+    The output conforms to summarizer_spec.json.
+
     :param fpkg_path: The path to the FME Package.
-    :return: A JSON string of the summarized FME Package.
+    :return: A JSON string of the summarized FME Package, or an error message under the key 'error'.
     """
     output_schema = _load_output_schema()
 
