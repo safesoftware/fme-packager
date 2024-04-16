@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import tempfile
+from collections import namedtuple
 from pathlib import Path
 from typing import Iterable, Set
 
@@ -10,7 +11,7 @@ import yaml
 from fme_packager.context import verbose_flag
 from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
-from fme_packager.utils import pipeline, keep_attributes, chdir
+from fme_packager.utils import chdir
 
 _TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
 
@@ -52,29 +53,35 @@ def _parsed_manifest(yaml_file: Path) -> dict:
         return yaml.safe_load(file)
 
 
-def _add_transformer_filenames(transformer: dict) -> dict:
+TransformerFilenames = namedtuple(
+    "TransformerFilenames", ["filename", "readme_filename"], defaults=[None, None]
+)
+
+
+def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     """
-    Add the filenames for the transformer and its readme to the transformer dictionary.
+    Retrieve filenames for the transformer and its readme
 
     Input dict must have the key:
     - 'name': The name of the transformer.
 
-    Output dict will have the added keys:
+    Output dict will have the keys:
     - 'filename': The filename of the transformer.
     - 'readme_filename': The filename of the transformer's readme.
 
     :param transformer: The transformer dictionary to be updated.
-    :return: The updated transformer dictionary.
+    :return: A new dictionary containing the filenames
     """
-    transformer = transformer.copy()
-    for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        if "name" not in transformer:
-            continue
-        potential_filename = str(Path("transformers") / f"{transformer['name']}.{ext}")
-        if os.path.exists(potential_filename):
-            transformer[key] = potential_filename
+    if not transformer_name:
+        return TransformerFilenames(filename=None, readme_filename=None)
 
-    return transformer
+    result = dict()
+    for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
+        potential_filename = str(Path("transformers") / f"{transformer_name}.{ext}")
+        if os.path.exists(potential_filename):
+            result[key] = potential_filename
+
+    return TransformerFilenames(**result)
 
 
 def _load_transformer(transformer: dict) -> dict:
@@ -93,14 +100,11 @@ def _load_transformer(transformer: dict) -> dict:
     return {"loaded_file": load_transformer(transformer["filename"]), **transformer}
 
 
-def _promote_transformer_data(transformer: dict) -> dict:
+def _transformer_data(loaded_file: TransformerFile) -> dict:
     """
-    Promote the transformer data from the loaded file to the transformer dictionary.
+    Get the relevant data from the loaded transformer file.
 
-    Input dict must have the key:
-    - 'loaded_file': The content of the transformer file, as a TransformerFile object.
-
-    Output dict will have the added keys:
+    Output dict will have the following keys:
     - 'versions': A list of dictionaries, each containing:
         - 'name': The name of the transformer.
         - 'version': The version number of the transformer.
@@ -108,80 +112,75 @@ def _promote_transformer_data(transformer: dict) -> dict:
         - 'aliases': The aliases of the transformer.
         - 'visible': The visibility status of the transformer.
 
-    :param transformer: The transformer dictionary to be updated.
+    :param loaded_file: The loaded transformer file.
     :return: The updated transformer dictionary.
     """
-    loaded_file: TransformerFile = transformer["loaded_file"]
     versions: list[Transformer] = loaded_file.versions()
-    transformer.update(
-        {
-            "versions": [
-                {
-                    "name": version.name,
-                    "version": version.version,
-                    "categories": version.categories,
-                    "aliases": version.aliases,
-                    "visible": version.visible,
-                }
-                for version in versions
-            ],
-        }
-    )
-
-    return transformer
+    return {
+        "versions": [
+            {
+                "name": version.name,
+                "version": version.version,
+                "categories": version.categories,
+                "aliases": version.aliases,
+                "visible": version.visible,
+            }
+            for version in versions
+        ],
+    }
 
 
-def _add_transformer_description(transformer: dict) -> dict:
+def _transformer_description(readme_filename: str) -> dict:
     """
-    Add the description to the transformer dictionary.
+    Get the description of the transformer from the readme file.
 
-    Input dict must have the key:
-    - 'readme_filename': The filename of the transformer's readme.
-
-    Output dict will have the added keys:
+    Output dict will have keys:
     - 'description': The description of the transformer.
     - 'description_format': The format of the description either 'md', 'text', or 'html'.
 
-    :param transformer: The transformer dictionary to be updated.
-    :return: The updated transformer dictionary.
+    :param readme_filename: The filename of the readme file.
+    :return: The update for the transformer dictionary.
     """
     try:
-        with open(transformer.get("readme_filename"), "r") as file:
-            transformer["description"] = file.read()
-            transformer["description_format"] = "md"
+        with open(readme_filename, "r") as file:
+            return {
+                "description": file.read(),
+                "description_format": "md",
+            }
     except OSError:
-        pass
+        return {
+            "description": None,
+            "description_format": None,
+        }
 
-    return transformer
 
-
-def _get_all_categories(transformers: Iterable[TransformerFile]) -> Set[str]:
+def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
     """
     Get the union of all the categories from the transformers.
 
-    :param transformers: An iterable of TransformerFile objects.
+    :param transformers: An iterable of dicts
     :return: A set of all categories from the transformers.
     """
     all_categories = set()
     for transformer in transformers:
-        transformer_versions = list(transformer.versions())
-        if transformer_versions:
-            # Find the version with the highest version number
-            highest_version = max(
-                transformer_versions, key=lambda transformer_version: transformer_version.version
-            )
-            if not highest_version.categories:
-                continue
-            all_categories.update(highest_version.categories)
+        if not transformer.get("versions", None):
+            continue
+        highest_version = max(
+            transformer["versions"], key=lambda transformer_version: transformer_version["version"]
+        )
+        if not highest_version["categories"]:
+            continue
+        all_categories.update(highest_version["categories"])
     return all_categories
 
 
-_enhance_transformer_info = pipeline(
-    _add_transformer_filenames,
-    _load_transformer,
-    _promote_transformer_data,
-    _add_transformer_description,
-)
+def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
+    for transformer in transformers:
+        filenames = _transformer_filenames(transformer["name"])
+        loaded_transformer = load_transformer(filenames.filename)
+        transformer.update(_transformer_data(loaded_transformer))
+        transformer.update(_transformer_description(filenames.readme_filename))
+        transformer["latest_version"] = transformer.pop("version")
 
 
 def summarize_fpkg(fpkg_path: str) -> str:
@@ -196,15 +195,9 @@ def summarize_fpkg(fpkg_path: str) -> str:
 
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))
-            transformers = list(
-                _enhance_transformer_info(manifest["package_content"]["transformers"])
-            )
+            transformers = manifest["package_content"]["transformers"]
+            _enhance_transformer_info(transformers)
 
-            manifest["categories"] = list(
-                _get_all_categories(t["loaded_file"] for t in transformers)
-            )
-            manifest["package_content"]["transformers"] = [
-                keep_attributes(t, *_TRANSFORMER_ATTRIBUTES) for t in transformers
-            ]
+            manifest["categories"] = list(_get_all_categories(transformers))
 
         return json.dumps(manifest, indent=2 if verbose_flag.get() else None)

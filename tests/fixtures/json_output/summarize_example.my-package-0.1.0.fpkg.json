@@ -14,6 +14,7 @@
         "transformers": [
             {
                 "name": "MyGreeter",
+                "latest_version": 1,
                 "versions": [
                     {
                         "name": "example.my-package.MyGreeter",
@@ -30,6 +31,7 @@
             },
             {
                 "name": "MyYeller",
+                "latest_version": 2,
                 "versions": [
                     {
                         "name": "example.my-package.MyYeller",

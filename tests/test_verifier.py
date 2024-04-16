@@ -55,7 +55,7 @@ def test_verify_non_fpkg():
     assert "The file must exist and have a .fpkg extension" in result.output
 
 
-def test_verify_non_existant():
+def test_verify_non_existent():
     runner = CliRunner()
     result = runner.invoke(verify, [str(CWD / "fixtures" / "does-not-exist.fpkg")])
     assert "The file must exist and have a .fpkg extension" in result.output

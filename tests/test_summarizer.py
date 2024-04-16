@@ -6,45 +6,44 @@ import pytest
 import yaml
 
 from fme_packager import summarizer
+from fme_packager.summarizer import TransformerFilenames
 from tests.conftest import mock_transformer, mock_transformer_file
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
 
 @pytest.mark.parametrize(
-    "transformer, expected",
+    "transformer_name, expected",
     [
         # Case 1: Transformer files do not exist
         (
-            {"name": "non_existing_transformer"},
-            {"name": "non_existing_transformer"},
+            "non_existing_transformer",
+            TransformerFilenames(filename=None, readme_filename=None),
         ),
-        # Case 2: 'name' key is not present in the transformer dictionary
+        # Case 2: 'name' key is null
         (
-            {},
-            {},
+            None,
+            TransformerFilenames(filename=None, readme_filename=None),
         ),
         # Case 3: Transformer .fmx file exists but .fmxj file does not
         (
-            {"name": "fmx_transformer"},
-            {
-                "name": "fmx_transformer",
-                "filename": "transformers/fmx_transformer.fmx",
-                "readme_filename": "transformers/fmx_transformer.md",
-            },
+            "fmx_transformer",
+            TransformerFilenames(
+                filename="transformers/fmx_transformer.fmx",
+                readme_filename="transformers/fmx_transformer.md",
+            ),
         ),
         # Case 4: Transformer .fmxj file exists but .fmx file does not
         (
-            {"name": "fmxj_transformer"},
-            {
-                "name": "fmxj_transformer",
-                "filename": "transformers/fmxj_transformer.fmxj",
-                "readme_filename": "transformers/fmxj_transformer.md",
-            },
+            "fmxj_transformer",
+            TransformerFilenames(
+                filename="transformers/fmxj_transformer.fmxj",
+                readme_filename="transformers/fmxj_transformer.md",
+            ),
         ),
     ],
 )
-def test__add_transformer_filenames(transformer, expected, mocker):
+def test__transformer_filenames(transformer_name, expected, mocker):
     def side_effect(path):
         if "non_existing_transformer" in path:
             return False
@@ -58,7 +57,7 @@ def test__add_transformer_filenames(transformer, expected, mocker):
 
     mocker.patch("os.path.exists", side_effect=side_effect)
 
-    result = summarizer._add_transformer_filenames(transformer)
+    result = summarizer._transformer_filenames(transformer_name)
     assert result == expected
 
 
@@ -79,10 +78,8 @@ def test__load_transformer(mock_transformer_file, mocker):
         assert result[key] == transformer[key]
 
 
-def test__promote_transformer_data(mock_transformer_file, mock_transformer):
-    transformer = {"loaded_file": mock_transformer_file, "extra_key": "extra_value"}
-
-    result = summarizer._promote_transformer_data(transformer)
+def test__transformer_data(mock_transformer_file, mock_transformer):
+    result = summarizer._transformer_data(mock_transformer_file)
 
     assert result["versions"] == [
         {
@@ -94,13 +91,9 @@ def test__promote_transformer_data(mock_transformer_file, mock_transformer):
         }
     ]
 
-    # Check that the other keys in the result are the same as in the input
-    for key in transformer:
-        assert result[key] == transformer[key]
-
 
 @pytest.fixture
-def mock_transformer_files(mocker):
+def mock_transformers(mocker):
     # Mock the TransformerFile object
     mock_transformer_file1 = mocker.Mock()
     mock_transformer_file1.versions.return_value = [mocker.Mock(categories={"cat1", "cat2"})]
@@ -115,22 +108,27 @@ def mock_transformer_files(mocker):
     mock_transformer_file4.versions.return_value = [mocker.Mock(categories={"cat4", "cat5"})]
 
     return [
-        mock_transformer_file1,
-        mock_transformer_file2,
-        mock_transformer_file3,
-        mock_transformer_file4,
+        {
+            "versions": [
+                {"version": 1, "categories": {"cat6", "cat7"}},
+                {"version": 2, "categories": {"cat1", "cat2"}},
+            ]
+        },
+        {"versions": []},
+        {"versions": [{"version": 1, "categories": {"cat3", "cat4"}}]},
+        {"versions": [{"version": 1, "categories": {"cat4", "cat5"}}]},
     ]
 
 
-def test__get_all_categories(mock_transformer_files):
-    result = summarizer._get_all_categories(mock_transformer_files)
+def test__get_all_categories(mock_transformers):
+    result = summarizer._get_all_categories(mock_transformers)
     assert result == {"cat1", "cat2", "cat3", "cat4", "cat5"}
 
 
 def test__add_transformer_description(mocker):
     transformer = {"readme_filename": "MyGreeter.md"}
     mocker.patch("builtins.open", mocker.mock_open(read_data="Test Description"))
-    result = summarizer._add_transformer_description(transformer)
+    result = summarizer._transformer_description(transformer)
     assert result["description"] == "Test Description"
     assert result["description_format"] == "md"
 
