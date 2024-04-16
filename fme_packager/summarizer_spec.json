@@ -1,0 +1,253 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "title": "FME Package Manifest",
+    "description": "Manifest describing the content of an FME Package",
+    "definitions": {
+        "author": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "format": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "transformer": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "latest_version": {
+                    "type": "integer"
+                },
+                "versions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "version": {
+                                "type": "integer"
+                            },
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "aliases": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "visible": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "version",
+                            "categories",
+                            "aliases",
+                            "visible"
+                        ]
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "description_format": {
+                    "type": "string",
+                    "enum": [
+                        "md",
+                        "text",
+                        "html"
+                    ]
+                }
+            },
+            "required": [
+                "name",
+                "versions"
+            ]
+        },
+        "web_service": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "web_filesystem": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "python_package": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        }
+    },
+    "type": "object",
+    "required": [
+        "fpkg_version",
+        "uid",
+        "publisher_uid",
+        "name",
+        "description",
+        "version",
+        "minimum_fme_build",
+        "author",
+        "package_content",
+        "categories"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "fpkg_version": {
+            "description": "Format version for the package",
+            "type": "integer",
+            "enum": [
+                1
+            ]
+        },
+        "uid": {
+            "description": "Unique identifier for the package",
+            "type": "string",
+            "pattern": "^[a-z0-9](?!.*--)[a-z0-9-]{1,30}[a-z0-9]$"
+        },
+        "publisher_uid": {
+            "description": "Unique identifier for the package publisher",
+            "type": "string",
+            "pattern": "^[a-z0-9](?!.*--)[a-z0-9-]{1,30}[a-z0-9]$"
+        },
+        "name": {
+            "description": "Name of the package",
+            "type": "string"
+        },
+        "description": {
+            "description": "Short description of the package purpose and content",
+            "type": "string"
+        },
+        "version": {
+            "description": "Version of the package, using semantic versioning",
+            "type": "string",
+            "pattern": "^[0-9]{1,9}\\.[0-9]{1,9}\\.[0-9]{1,9}$"
+        },
+        "minimum_fme_build": {
+            "description": "Minimum required FME Build version to use the package",
+            "type": "integer",
+            "minimum": 19000
+        },
+        "author": {
+            "description": "Author of the package",
+            "type": "object",
+            "$ref": "#/definitions/author"
+        },
+        "categories": {
+            "description": "Categories for the package",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "package_content": {
+            "description": "Components included in the package and to be deployed when the package is installed",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "formats": {
+                    "description": "Formats included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/format"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "transformers": {
+                    "description": "Transformers included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/transformer"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "web_services": {
+                    "description": "Web services included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/web_service"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "web_filesystems": {
+                    "description": "Web file systems included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/web_filesystem"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "python_packages": {
+                    "description": "Python packages included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/python_package"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                }
+            }
+        }
+    }
+}

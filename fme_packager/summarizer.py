@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Iterable, Set, Callable, Union
 
 import yaml
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 
 from fme_packager.context import verbose_flag
 from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
@@ -183,6 +185,16 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
         transformer["latest_version"] = transformer.pop("version")
 
 
+def _load_output_schema() -> dict:
+    """
+    Load the output schema.
+
+    :return: The output schema.
+    """
+    with open(Path(__file__).parent / "summarizer_spec.json", "r") as file:
+        return json.load(file)
+
+
 def summarize_fpkg(fpkg_path: str) -> str:
     """
     Summarize the FME Package.
@@ -190,6 +202,8 @@ def summarize_fpkg(fpkg_path: str) -> str:
     :param fpkg_path: The path to the FME Package.
     :return: A JSON string of the summarized FME Package.
     """
+    output_schema = _load_output_schema()
+
     with tempfile.TemporaryDirectory() as temp_dir:
         _unpack_fpkg_file(temp_dir, fpkg_path)
         _log(f"Unpacked {fpkg_path} to {temp_dir}")
@@ -200,5 +214,12 @@ def summarize_fpkg(fpkg_path: str) -> str:
             _enhance_transformer_info(transformers)
 
             manifest["categories"] = list(_get_all_categories(transformers))
+        try:
+            validate(manifest, output_schema)
+        except ValidationError as e:
+            return json.dumps(
+                {"error": f"The generated output did not conform to the schema: {e.message}"},
+                indent=2 if verbose_flag.get() else None,
+            )
 
         return json.dumps(manifest, indent=2 if verbose_flag.get() else None)
