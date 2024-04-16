@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, Set
+from typing import Iterable, Set, Callable, Union
 
 import yaml
 
@@ -14,6 +14,16 @@ from fme_packager.transformer import load_transformer, TransformerFile, Transfor
 from fme_packager.utils import chdir
 
 _TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
+
+
+def _log(message: Union[Callable[[], str], str]):
+    """
+    Log the message if the verbose flag is set.
+
+    :param message: The message to be logged.
+    """
+    if verbose_flag.get():
+        print(message() if callable(message) else message)
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -79,25 +89,12 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
         potential_filename = str(Path("transformers") / f"{transformer_name}.{ext}")
         if os.path.exists(potential_filename):
+            _log(f"Found file: {potential_filename}")
             result[key] = potential_filename
+        else:
+            _log(f"Could not find file: {potential_filename}")
 
     return TransformerFilenames(**result)
-
-
-def _load_transformer(transformer: dict) -> dict:
-    """
-    Load the transformer file into the transformer dictionary, as a TransformerFile object.
-
-    Input dict must have the key:
-    - 'filename': The filename of the transformer.
-
-    Output dict will have the added keys:
-    - 'loaded_file': The content of the transformer file, as a TransformerFile object
-
-    :param transformer: The transformer dictionary to be updated.
-    :return: The updated transformer dictionary.
-    """
-    return {"loaded_file": load_transformer(transformer["filename"]), **transformer}
 
 
 def _transformer_data(loaded_file: TransformerFile) -> dict:
@@ -148,6 +145,7 @@ def _transformer_description(readme_filename: str) -> dict:
                 "description_format": "md",
             }
     except OSError:
+        _log(f"Could not read readme file: {readme_filename}")
         return {
             "description": None,
             "description_format": None,
@@ -164,11 +162,13 @@ def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
     all_categories = set()
     for transformer in transformers:
         if not transformer.get("versions", None):
+            _log(lambda: f"Transformer {transformer['name']} has no versions")
             continue
         highest_version = max(
             transformer["versions"], key=lambda transformer_version: transformer_version["version"]
         )
         if not highest_version["categories"]:
+            _log(lambda: f"{transformer['name']}:{highest_version['version']} has no categories")
             continue
         all_categories.update(highest_version["categories"])
     return all_categories
@@ -192,6 +192,7 @@ def summarize_fpkg(fpkg_path: str) -> str:
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         _unpack_fpkg_file(temp_dir, fpkg_path)
+        _log(f"Unpacked {fpkg_path} to {temp_dir}")
 
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))

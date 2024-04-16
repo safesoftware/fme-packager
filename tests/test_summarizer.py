@@ -61,23 +61,6 @@ def test__transformer_filenames(transformer_name, expected, mocker):
     assert result == expected
 
 
-def test__load_transformer(mock_transformer_file, mocker):
-    # Mock the transformer file
-    transformer = {"filename": "transformers/MyTransformer.fmx", "extra_key": "extra_value"}
-
-    # Mock the load_transformer function to return the mock TransformerFile object
-    mocker.patch("fme_packager.summarizer.load_transformer", return_value=mock_transformer_file)
-
-    result = summarizer._load_transformer(transformer)
-
-    # Check that the 'loaded_file' key in the result is the mock TransformerFile object
-    assert result["loaded_file"] == mock_transformer_file
-
-    # Check that the other keys in the result are the same as in the input
-    for key in transformer:
-        assert result[key] == transformer[key]
-
-
 def test__transformer_data(mock_transformer_file, mock_transformer):
     result = summarizer._transformer_data(mock_transformer_file)
 
