@@ -184,7 +184,7 @@ class FmxjTransformer(Transformer):
 
     @property
     def visible(self):
-        return True
+        return not self.info.get("deprecated", False)
 
 
 class TransformerFile(ABC):
