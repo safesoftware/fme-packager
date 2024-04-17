@@ -1,10 +1,8 @@
-import pathlib
 import shutil
 import tempfile
-import os
 from json import dumps as json_dumps
 
-from fme_packager.operations import build_fpkg_filename
+from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
 from fme_packager.packager import FMEPackager
 
 
@@ -29,15 +27,14 @@ class FMEVerifier:
         return result
 
     def _unzip_and_build(self):
-        if not self.file.lower().endswith(".fpkg") or not os.path.exists(self.file):
-            raise ValueError("The file must exist and have a .fpkg extension")
+        self.file = valid_fpkg_file(self.file)
 
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             # Change the extension of the file to .zip
-            temp_zip_file = str(pathlib.Path(temp_dir) / os.path.basename(self.file[:-5] + ".zip"))
-            shutil.copy(self.file, temp_zip_file)
+            temp_zip_file = str(zip_filename_for_fpkg(temp_dir, self.file))
             self._print(f"Creating temporary zip file {temp_zip_file}")
+            shutil.copy(self.file, temp_zip_file)
 
             # Unpack the zip file
             shutil.unpack_archive(temp_zip_file, temp_dir)

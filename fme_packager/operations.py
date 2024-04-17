@@ -1,4 +1,6 @@
+import os
 from collections import namedtuple
+from pathlib import Path
 
 
 def split_fpkg_filename(filename):
@@ -68,3 +70,20 @@ TREE_COPY_IGNORE_GLOBS = [
     "Thumbs.db",
     "desktop.ini",
 ]
+
+
+def valid_fpkg_file(fpkg_file: str) -> str:
+    """
+    Validate that the file has the correct extension and exists
+    """
+    if not fpkg_file.lower().endswith(".fpkg") or not os.path.exists(fpkg_file):
+        raise ValueError("The file must exist and have a .fpkg extension")
+
+    return fpkg_file
+
+
+def zip_filename_for_fpkg(directory: str, fpkg_file: str) -> Path:
+    """
+    Generate a zip file path
+    """
+    return Path(directory) / os.path.basename(fpkg_file[:-5] + ".zip")

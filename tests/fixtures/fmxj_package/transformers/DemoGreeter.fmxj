@@ -3,6 +3,10 @@
         "categories": [
             "Integrations"
         ],
+        "aliases": [
+            "example.my-package.NemoGreeter",
+            "example.my-package.MemoGreeter"
+        ],
         "name": "example.my-package.DemoGreeter"
     },
     "versions": [

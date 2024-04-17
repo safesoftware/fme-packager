@@ -27,3 +27,25 @@ def custom_package_dir():
 @pytest.fixture
 def incompatible_custom_package_dir():
     return os.path.join(FIXTURES_DIR, "incompatible_custom_package")
+
+
+@pytest.fixture
+def mock_transformer(mocker):
+    mock_transformer = mocker.Mock()
+    mock_transformer.name = "MyTransformer"
+    mock_transformer.version = "1.0.0"
+    mock_transformer.categories = ["Category1", "Category2"]
+    mock_transformer.aliases = ["Alias1", "Alias2"]
+    mock_transformer.visible = True
+    return mock_transformer
+
+
+@pytest.fixture
+def mock_transformer_file(mocker, mock_transformer):
+    # Mock the TransformerFile object
+    mock_transformer_file = mocker.Mock()
+
+    # Mock the versions method to return a list of mock Transformer objects
+    mock_transformer_file.versions.return_value = [mock_transformer]
+
+    return mock_transformer_file

@@ -4,7 +4,7 @@ TRANSFORMER_NAME: example.my-package.MyGreeter
 
 VERSION: 1
 
-ALIASES:
+ALIASES: example.my-package.HerGreeter example.my-package.TheirGreeter example.my-package.OurGreeter
 
 VISIBLE: yes
 
