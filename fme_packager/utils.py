@@ -1,15 +1,7 @@
 import os
 from contextlib import contextmanager
-from functools import reduce
 from pathlib import Path
-from typing import Mapping, Iterable, Union
-
-
-def pipeline(*functions: callable) -> callable:
-    def apply_pipeline(starting_value):
-        return reduce(lambda value, func: map(func, value), functions, starting_value)
-
-    return apply_pipeline
+from typing import Union
 
 
 @contextmanager
@@ -21,8 +13,3 @@ def chdir(path: Union[str, Path]) -> None:
         yield
     finally:
         os.chdir(old_dir)
-
-
-def keep_attributes(mapping: Mapping, *attributes: str) -> dict:
-    attributes = set(attributes)
-    return {k: v for k, v in mapping.items() if k in attributes}
