@@ -4,28 +4,17 @@ import shutil
 import tempfile
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, Set, Callable, Union
+from typing import Iterable, Set
 
 import yaml
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from fme_packager.context import verbose_flag
 from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
 from fme_packager.utils import chdir
 
 _TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
-
-
-def _log(message: Union[Callable[[], str], str]):
-    """
-    Log the message if the verbose flag is set.
-
-    :param message: The message to be logged.
-    """
-    if verbose_flag.get():
-        print(message() if callable(message) else message)
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -87,10 +76,7 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
         potential_filename = str(Path("transformers") / f"{transformer_name}.{ext}")
         if os.path.exists(potential_filename):
-            _log(f"Found file: {potential_filename}")
             result[key] = potential_filename
-        else:
-            _log(f"Could not find file: {potential_filename}")
 
     return TransformerFilenames(**result)
 
@@ -143,7 +129,6 @@ def _transformer_description(readme_filename: str) -> dict:
                 "description_format": "md",
             }
     except OSError:
-        _log(f"Could not read readme file: {readme_filename}")
         return {
             "description": None,
             "description_format": None,
@@ -160,13 +145,11 @@ def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
     all_categories = set()
     for transformer in transformers:
         if not transformer.get("versions", None):
-            _log(lambda: f"Transformer {transformer['name']} has no versions")
             continue
         highest_version = max(
             transformer["versions"], key=lambda transformer_version: transformer_version["version"]
         )
         if not highest_version["categories"]:
-            _log(lambda: f"{transformer['name']}:{highest_version['version']} has no categories")
             continue
         all_categories.update(highest_version["categories"])
     return all_categories
@@ -210,7 +193,6 @@ def summarize_fpkg(fpkg_path: str) -> str:
 
     with tempfile.TemporaryDirectory() as temp_dir:
         _unpack_fpkg_file(temp_dir, fpkg_path)
-        _log(f"Unpacked {fpkg_path} to {temp_dir}")
 
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))
@@ -223,7 +205,7 @@ def summarize_fpkg(fpkg_path: str) -> str:
         except ValidationError as e:
             return json.dumps(
                 {"error": f"The generated output did not conform to the schema: {e.message}"},
-                indent=2 if verbose_flag.get() else None,
+                indent=2,
             )
 
-        return json.dumps(manifest, indent=2 if verbose_flag.get() else None)
+        return json.dumps(manifest, indent=2)

@@ -12,9 +12,8 @@ import click
 from cookiecutter.main import cookiecutter
 
 import fme_packager
-from fme_packager.context import set_verbose
-from fme_packager.summarizer import summarize_fpkg
 from fme_packager.packager import FMEPackager
+from fme_packager.summarizer import summarize_fpkg
 from fme_packager.verifier import FMEVerifier
 
 
@@ -98,15 +97,13 @@ def verify(file, verbose, json):
 
 @cli.command()
 @click.argument("file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-@click.option("--verbose", "-v", is_flag=True, help="Show extraction steps")
 def summarize(file, verbose):
     """
     Extract a JSON representation of an .fpkg file.
 
     FILE -- Path to an FME .fpkg package file.
     """
-    with set_verbose(verbose):
-        result = summarize_fpkg(file)
+    result = summarize_fpkg(file)
     print(result)
 
 
