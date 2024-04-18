@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.7.0
+
+* Add summarize command to show a detailed summary of the contents of an fpkg file.
+
 # 1.6.0
 
 * Update `fme-packager config-env` for path changes in FME 2023.2+.
