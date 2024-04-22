@@ -204,7 +204,10 @@ def summarize_fpkg(fpkg_path: str) -> str:
             validate(manifest, output_schema)
         except ValidationError as e:
             return json.dumps(
-                {"error": f"The generated output did not conform to the schema: {e.message}"},
+                {
+                    "status": "error",
+                    "message": f"The generated output did not conform to the schema: {e.message}",
+                },
                 indent=2,
             )
 
