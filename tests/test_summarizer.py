@@ -147,6 +147,7 @@ def test_summarize_fpkg():
 
 def test_summarize():
     runner = CliRunner()
-    result = runner.invoke(summarize, [str(CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg")])
+    fpkg_path = str(CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg")
+    result = runner.invoke(summarize, [fpkg_path])
     assert result.exit_code == 0
     json.loads(result.output)
