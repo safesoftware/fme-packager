@@ -97,7 +97,7 @@ def verify(file, verbose, json):
 
 @cli.command()
 @click.argument("file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def summarize(file, verbose):
+def summarize(file):
     """
     Extract a JSON representation of an .fpkg file.
 
