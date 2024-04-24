@@ -1,5 +1,13 @@
 # fme-packager changes
 
+# 1.7.2
+
+* Fix bug after removal of verbose option from summarize command
+
+# 1.7.1
+
+* Fix missing spec file for summarize command
+
 # 1.7.0
 
 * Add summarize command to show a detailed summary of the contents of an fpkg file.

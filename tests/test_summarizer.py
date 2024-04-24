@@ -4,8 +4,10 @@ import tempfile
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
 from fme_packager import summarizer
+from fme_packager.cli import summarize
 from fme_packager.summarizer import TransformerFilenames
 from tests.conftest import mock_transformer, mock_transformer_file
 
@@ -141,3 +143,10 @@ def test_summarize_fpkg():
     )
     result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
     assert result == expected_output
+
+
+def test_summarize():
+    runner = CliRunner()
+    result = runner.invoke(summarize, [str(CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg")])
+    assert result.exit_code == 0
+    json.loads(result.output)
