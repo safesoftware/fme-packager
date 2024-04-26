@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.7.3
+
+* Fix bug in summarize command when the package does not contain any transformers
+
 # 1.7.2
 
 * Fix bug after removal of verbose option from summarize command

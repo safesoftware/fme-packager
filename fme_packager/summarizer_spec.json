@@ -207,7 +207,6 @@
                         "type": "object",
                         "$ref": "#/definitions/format"
                     },
-                    "minItems": 1,
                     "uniqueItems": true
                 },
                 "transformers": {
@@ -217,7 +216,6 @@
                         "type": "object",
                         "$ref": "#/definitions/transformer"
                     },
-                    "minItems": 1,
                     "uniqueItems": true
                 },
                 "web_services": {
@@ -227,7 +225,6 @@
                         "type": "object",
                         "$ref": "#/definitions/web_service"
                     },
-                    "minItems": 1,
                     "uniqueItems": true
                 },
                 "web_filesystems": {
@@ -237,7 +234,6 @@
                         "type": "object",
                         "$ref": "#/definitions/web_filesystem"
                     },
-                    "minItems": 1,
                     "uniqueItems": true
                 },
                 "python_packages": {
@@ -247,7 +243,6 @@
                         "type": "object",
                         "$ref": "#/definitions/python_package"
                     },
-                    "minItems": 1,
                     "uniqueItems": true
                 }
             }

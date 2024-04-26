@@ -162,12 +162,17 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
     :param transformers: An iterable of transformer dicts
     :return: An iterable of transformer dicts with enhanced information
     """
+    if not transformers:
+        return []
+
     for transformer in transformers:
         filenames = _transformer_filenames(transformer["name"])
         loaded_transformer = load_transformer(filenames.filename)
         transformer.update(_transformer_data(loaded_transformer))
         transformer.update(_transformer_description(filenames.readme_filename))
         transformer["latest_version"] = transformer.pop("version")
+
+    return transformers
 
 
 def _load_output_schema() -> dict:
@@ -196,9 +201,9 @@ def summarize_fpkg(fpkg_path: str) -> str:
 
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))
-            transformers = manifest["package_content"]["transformers"]
-            _enhance_transformer_info(transformers)
-
+            transformers = manifest.get("package_content", {}).get("transformers", [])
+            manifest["package_content"] = manifest.get("package_content", {})
+            manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
             manifest["categories"] = list(_get_all_categories(transformers))
         try:
             validate(manifest, output_schema)
