@@ -1,6 +1,7 @@
 import json
 import pathlib
 import tempfile
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -140,6 +141,29 @@ def test_summarize_fpkg():
     fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
     expected_output = json.load(
         open(CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json")
+    )
+    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
+    assert result == expected_output
+
+
+def test_summarize_empty_fpkg(monkeypatch):
+    monkeypatch.setattr(
+        summarizer,
+        "_parsed_manifest",
+        lambda x: {
+            "fpkg_version": 1,
+            "uid": "my-package",
+            "publisher_uid": "example",
+            "name": "My FME Package",
+            "description": "A short description of my FME Package.",
+            "version": "0.1.0",
+            "minimum_fme_build": 19238,
+            "author": {"name": "G Raymond", "email": "me@example.com"},
+        },
+    )
+    fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
+    expected_output = json.load(
+        open(CWD / "fixtures" / "json_output" / "summarize_example.empty.json")
     )
     result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
     assert result == expected_output
