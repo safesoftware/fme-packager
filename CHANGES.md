@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.8.0
+
+* Add formats support for summarize command.
+
 # 1.7.3
 
 * Fix bug in summarize command when the package does not contain any transformers

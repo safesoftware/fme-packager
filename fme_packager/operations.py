@@ -37,7 +37,7 @@ FORMATINFO_HDR = "FORMAT_NAME|FORMAT_LONG_NAME|DATASET_TYPE|DIRECTION|AUTOMATED_
 FormatInfo = namedtuple("FormatInfo", FORMATINFO_HDR.replace("|", " "))
 
 
-def parse_formatinfo(line):
+def parse_formatinfo(line) -> FormatInfo:
     """
     Parse format info line with the FORMATINFO_HDR.
 
