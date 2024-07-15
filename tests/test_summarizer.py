@@ -118,7 +118,7 @@ def test__format_data():
     assert result == {
         "visible": True,
         "fds_info": mock_format_line,
-        "categories": ["NON_SPATIAL"],
+        "categories": [],
     }
 
 

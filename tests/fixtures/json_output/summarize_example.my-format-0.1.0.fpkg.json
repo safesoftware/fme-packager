@@ -12,7 +12,7 @@
     "package_content": {
         "formats": [
             {
-                "categories": ["NON_SPATIAL"],
+                "categories": [],
                 "description": "A short description of my FME Package.\n",
                 "description_format": "md",
                 "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format",
@@ -26,7 +26,5 @@
         ],
         "transformers": []
     },
-    "categories": [
-        "NON_SPATIAL"
-    ]
+    "categories": []
 }
