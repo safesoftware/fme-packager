@@ -63,7 +63,9 @@ $ fme-packager pack my-package
 
 If everything went well, the fpkg will be in `my-package/dist/`.
 
-## Development Setup and Testing
+## Development
+
+### Setup and Testing
 
 To set up a development environment, clone this repository and install the dependencies:
 
@@ -75,4 +77,12 @@ To run the tests:
 
 ```
 $ pytest
+```
+
+### Building
+
+To build the distribution, run:
+
+```
+$ python -m build
 ```
