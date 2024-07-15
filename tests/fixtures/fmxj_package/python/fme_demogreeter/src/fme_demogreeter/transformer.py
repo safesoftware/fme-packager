@@ -1,6 +1,7 @@
 """
 example.my-package.DemoGreeter implementation.
 """
+
 from fmeobjects import FMEFeature
 from ._vendor.fmetools.plugins import FMEEnhancedTransformer
 from ._vendor.fmetools.guiparams import GuiParameterParser

@@ -68,16 +68,24 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 @pytest.mark.parametrize(
     "format_name, exists, expected",
     [
-        ("test_format", True, FormatFilenames(
-            filename=str(Path("formats") / "test_format.fmf"),
-            db_filename=str(Path("formats") / "test_format.db"),
-            readme_filename=str(Path("formats") / "test_format.md"),
-        )),
-        ("non_existing_format", False, FormatFilenames(
-            filename=None,
-            db_filename=None,
-            readme_filename=None,
-        )),
+        (
+            "test_format",
+            True,
+            FormatFilenames(
+                filename=str(Path("formats") / "test_format.fmf"),
+                db_filename=str(Path("formats") / "test_format.db"),
+                readme_filename=str(Path("formats") / "test_format.md"),
+            ),
+        ),
+        (
+            "non_existing_format",
+            False,
+            FormatFilenames(
+                filename=None,
+                db_filename=None,
+                readme_filename=None,
+            ),
+        ),
     ],
 )
 def test__format_filenames(format_name, exists, expected):
@@ -101,8 +109,10 @@ def test__transformer_data(mock_transformer_file, mock_transformer):
 
 
 def test__format_data():
-    mock_format_line = ("SAFE.AIRTABLE.AIRTABLE|Airtable|NONE|BOTH|BOTH|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|Airtable|NO"
-                        "|Airtable")
+    mock_format_line = (
+        "SAFE.AIRTABLE.AIRTABLE|Airtable|NONE|BOTH|BOTH|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|Airtable|NO"
+        "|Airtable"
+    )
 
     result = summarizer._format_data(mock_format_line)
     assert result == {

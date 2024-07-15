@@ -125,7 +125,7 @@ def _load_format_line(db_path) -> str:
             return line.rstrip()
 
     if not line:
-        return ''
+        return ""
 
 
 def get_formatinfo(package_metadata, format_metadata, db_path):

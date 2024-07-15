@@ -1,6 +1,7 @@
 """
 fme_packager command line interface.
 """
+
 import inspect
 import os
 import shutil

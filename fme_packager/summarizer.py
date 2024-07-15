@@ -293,7 +293,9 @@ def summarize_fpkg(fpkg_path: str) -> str:
             formats = manifest.get("package_content", {}).get("formats", [])
             manifest["package_content"] = manifest.get("package_content", {})
             manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
-            manifest["package_content"]["formats"] = _enhance_format_info(manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats)
+            manifest["package_content"]["formats"] = _enhance_format_info(
+                manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
+            )
             manifest["categories"] = list(_get_all_categories(transformers, formats))
         try:
             validate(manifest, output_schema)
