@@ -63,6 +63,7 @@ $ fme-packager pack my-package
 
 If everything went well, the fpkg will be in `my-package/dist/`.
 
+
 ## Development
 
 ### Setup and Testing
@@ -73,16 +74,14 @@ To set up a development environment, clone this repository and install the depen
 $ pip install ".[dev]"
 ```
 
+Install the pre-commit hooks:
+
+```
+$ pre-commit install
+```
+
 To run the tests:
 
 ```
 $ pytest
-```
-
-### Building
-
-To build the distribution, run:
-
-```
-$ python -m build
 ```
