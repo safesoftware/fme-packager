@@ -24,10 +24,42 @@
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "short_name": {
+                    "type": "string"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "description_format": {
+                    "type": "string",
+                    "enum": [
+                        "md",
+                        "text",
+                        "html"
+                    ]
+                },
+                "fds_info": {
+                    "type": "string"
+                },
+                "visible": {
+                    "type": "boolean"
                 }
             },
             "required": [
-                "name"
+                "name",
+                "short_name",
+                "categories",
+                "description",
+                "description_format",
+                "fds_info",
+                "visible"
             ]
         },
         "transformer": {

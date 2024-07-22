@@ -10,11 +10,10 @@ import yaml
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
+from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, parse_formatinfo
+from fme_packager.packager import _load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
 from fme_packager.utils import chdir
-
-_TRANSFORMER_ATTRIBUTES = ["name", "versions", "description", "description_format"]
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -58,6 +57,10 @@ TransformerFilenames = namedtuple(
     "TransformerFilenames", ["filename", "readme_filename"], defaults=[None, None]
 )
 
+FormatFilenames = namedtuple(
+    "FormatFilenames", ["filename", "readme_filename", "db_filename"], defaults=[None, None, None]
+)
+
 
 def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     """
@@ -79,6 +82,29 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
             result[key] = potential_filename
 
     return TransformerFilenames(**result)
+
+
+def _format_filenames(format_name: str) -> FormatFilenames:
+    """
+    Retrieve filenames for the format and its readme
+
+    :param format_name: The name of the format to retrieve filenames for.
+    :return: A tuple containing the filename, db filename and readme filename.
+    """
+    if not format_name:
+        return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
+
+    filenames = {
+        "filename": str(Path("formats") / f"{format_name}.fmf"),
+        "db_filename": str(Path("formats") / f"{format_name}.db"),
+        "readme_filename": str(Path("formats") / f"{format_name}.md"),
+    }
+
+    for key, filename in filenames.items():
+        if not os.path.exists(filename):
+            filenames[key] = None
+
+    return FormatFilenames(**filenames)
 
 
 def _transformer_data(loaded_file: TransformerFile) -> dict:
@@ -111,16 +137,16 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
     }
 
 
-def _transformer_description(readme_filename: str) -> dict:
+def _content_description(readme_filename: str) -> dict:
     """
-    Get the description of the transformer from the readme file.
+    Get the description of the transformer or format from the readme file.
 
     Output dict will have keys:
-    - 'description': The description of the transformer.
+    - 'description': The description of the transformer or format.
     - 'description_format': The format of the description either 'md', 'text', or 'html'.
 
     :param readme_filename: The filename of the readme file.
-    :return: The update for the transformer dictionary.
+    :return: The update for the transformer or format dictionary.
     """
     try:
         with open(readme_filename, "r") as file:
@@ -135,7 +161,7 @@ def _transformer_description(readme_filename: str) -> dict:
         }
 
 
-def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
+def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -> Set[str]:
     """
     Get the union of all the categories from the transformers.
 
@@ -152,6 +178,11 @@ def _get_all_categories(transformers: Iterable[dict]) -> Set[str]:
         if not highest_version["categories"]:
             continue
         all_categories.update(highest_version["categories"])
+
+    for format in formats:
+        if not format.get("categories", None):
+            continue
+        all_categories.update(format["categories"])
     return all_categories
 
 
@@ -169,10 +200,68 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
         filenames = _transformer_filenames(transformer["name"])
         loaded_transformer = load_transformer(filenames.filename)
         transformer.update(_transformer_data(loaded_transformer))
-        transformer.update(_transformer_description(filenames.readme_filename))
+        transformer.update(_content_description(filenames.readme_filename))
         transformer["latest_version"] = transformer.pop("version")
 
     return transformers
+
+
+def _to_bool(value: str) -> bool:
+    """
+    Convert a string to a boolean.
+
+    :param value: The value to convert.
+    :return: The boolean value.
+    """
+    return value.upper() == "YES"
+
+
+def _format_data(format_line: str) -> dict:
+    """
+    Get the relevant data from the loaded format file.
+
+    Output dict will have the following keys:
+    - 'visible': The visibility status of the format.
+    - 'fds_info': The FDS info line of the format.
+    - 'categories': The categories of the format.
+
+    :param format_line: The loaded format line.
+    :return: The updates for the format dictionary.
+    """
+
+    format_info = parse_formatinfo(format_line)
+    format_data = {"visible": None, "fds_info": None, "categories": None}
+
+    if format_info:
+        format_data["fds_info"] = format_line
+        format_data["visible"] = _to_bool(format_info.VISIBLE)
+        # TODO: FMEENGINE-82896
+        format_data["categories"] = []
+
+    return format_data
+
+
+def _enhance_format_info(publisher_uid: str, uid: str, formats: Iterable[dict]) -> Iterable[dict]:
+    """
+    Enhance the format entries in the manifest with additional information.
+
+    :param publisher_uid: The publisher UID
+    :param uid: The UID
+    :param formats: An iterable of format dicts
+    :return: An iterable of format dicts with enhanced information
+    """
+    if not formats:
+        return []
+
+    for format in formats:
+        filenames = _format_filenames(format["name"])
+        format_data = _format_data(_load_format_line(filenames.db_filename))
+        format["short_name"] = format["name"]
+        format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
+        format.update(_content_description(filenames.readme_filename))
+        format.update(format_data)
+
+    return formats
 
 
 def _load_output_schema() -> dict:
@@ -202,9 +291,13 @@ def summarize_fpkg(fpkg_path: str) -> str:
         with chdir(temp_dir):
             manifest = _parsed_manifest(_manifest_path(temp_dir))
             transformers = manifest.get("package_content", {}).get("transformers", [])
+            formats = manifest.get("package_content", {}).get("formats", [])
             manifest["package_content"] = manifest.get("package_content", {})
             manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
-            manifest["categories"] = list(_get_all_categories(transformers))
+            manifest["package_content"]["formats"] = _enhance_format_info(
+                manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
+            )
+            manifest["categories"] = list(_get_all_categories(transformers, formats))
         try:
             validate(manifest, output_schema)
         except ValidationError as e:

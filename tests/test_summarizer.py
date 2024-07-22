@@ -6,10 +6,11 @@ from unittest.mock import patch
 import pytest
 import yaml
 from click.testing import CliRunner
+from pathlib import Path
 
 from fme_packager import summarizer
 from fme_packager.cli import summarize
-from fme_packager.summarizer import TransformerFilenames
+from fme_packager.summarizer import TransformerFilenames, FormatFilenames
 from tests.conftest import mock_transformer, mock_transformer_file
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -64,6 +65,35 @@ def test__transformer_filenames(transformer_name, expected, mocker):
     assert result == expected
 
 
+@pytest.mark.parametrize(
+    "format_name, exists, expected",
+    [
+        (
+            "test_format",
+            True,
+            FormatFilenames(
+                filename=str(Path("formats") / "test_format.fmf"),
+                db_filename=str(Path("formats") / "test_format.db"),
+                readme_filename=str(Path("formats") / "test_format.md"),
+            ),
+        ),
+        (
+            "non_existing_format",
+            False,
+            FormatFilenames(
+                filename=None,
+                db_filename=None,
+                readme_filename=None,
+            ),
+        ),
+    ],
+)
+def test__format_filenames(format_name, exists, expected):
+    with patch("os.path.exists", return_value=exists):
+        result = summarizer._format_filenames(format_name)
+        assert result == expected
+
+
 def test__transformer_data(mock_transformer_file, mock_transformer):
     result = summarizer._transformer_data(mock_transformer_file)
 
@@ -76,6 +106,20 @@ def test__transformer_data(mock_transformer_file, mock_transformer):
             "visible": mock_transformer.visible,
         }
     ]
+
+
+def test__format_data():
+    mock_format_line = (
+        "SAFE.AIRTABLE.AIRTABLE|Airtable|NONE|BOTH|BOTH|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|Airtable|NO"
+        "|Airtable"
+    )
+
+    result = summarizer._format_data(mock_format_line)
+    assert result == {
+        "visible": True,
+        "fds_info": mock_format_line,
+        "categories": [],
+    }
 
 
 @pytest.fixture
@@ -106,15 +150,23 @@ def mock_transformers(mocker):
     ]
 
 
-def test__get_all_categories(mock_transformers):
-    result = summarizer._get_all_categories(mock_transformers)
-    assert result == {"cat1", "cat2", "cat3", "cat4", "cat5"}
+@pytest.fixture
+def mock_formats():
+    return [
+        {"categories": {"cat-f1", "cat3"}},
+        {"categories": {"cat-f2", "cat4"}},
+    ]
 
 
-def test__add_transformer_description(mocker):
+def test__get_all_categories(mock_transformers, mock_formats):
+    result = summarizer._get_all_categories(mock_transformers, mock_formats)
+    assert result == {"cat-f1", "cat-f2", "cat1", "cat2", "cat3", "cat4", "cat5"}
+
+
+def test__add_content_description(mocker):
     transformer = {"readme_filename": "MyGreeter.md"}
     mocker.patch("builtins.open", mocker.mock_open(read_data="Test Description"))
-    result = summarizer._transformer_description(transformer)
+    result = summarizer._content_description(transformer["readme_filename"])
     assert result["description"] == "Test Description"
     assert result["description_format"] == "md"
 
@@ -137,11 +189,21 @@ def test__parsed_manifest():
     assert result == data
 
 
-def test_summarize_fpkg():
-    fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
-    expected_output = json.load(
-        open(CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json")
-    )
+@pytest.mark.parametrize(
+    "fpkg_path, expected_output_path",
+    [
+        (
+            CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg",
+            CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json",
+        ),
+        (
+            CWD / "fixtures" / "fpkgs" / "example.my-format-0.1.0.fpkg",
+            CWD / "fixtures" / "json_output" / "summarize_example.my-format-0.1.0.fpkg.json",
+        ),
+    ],
+)
+def test_summarize_fpkg(fpkg_path, expected_output_path):
+    expected_output = json.load(open(expected_output_path))
     result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
     assert result == expected_output
 

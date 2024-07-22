@@ -11,7 +11,8 @@
         "email": "me@example.com"
     },
     "package_content": {
-        "transformers": []
+        "transformers": [],
+        "formats": []
     },
     "categories": []
 }

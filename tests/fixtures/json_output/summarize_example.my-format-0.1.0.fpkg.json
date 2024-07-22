@@ -1,0 +1,30 @@
+{
+    "fpkg_version": 1,
+    "uid": "my-format",
+    "publisher_uid": "example",
+    "name": "My Example Format",
+    "description": "A short description of my FME Package.",
+    "version": "0.1.0",
+    "minimum_fme_build": 21261,
+    "author": {
+        "name": "Safe Software"
+    },
+    "package_content": {
+        "formats": [
+            {
+                "categories": [],
+                "description": "A short description of my FME Package.\n",
+                "description_format": "md",
+                "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format",
+                "name": "example.my-format.format_name",
+                "short_name": "format_name",
+                "visible": true
+            }
+        ],
+        "python_packages": [
+            { "name": "fme_my_format" }
+        ],
+        "transformers": []
+    },
+    "categories": []
+}

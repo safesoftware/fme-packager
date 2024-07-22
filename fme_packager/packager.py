@@ -113,9 +113,24 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
         raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
 
 
+def _load_format_line(db_path) -> str:
+    """
+    Gets the DB info line from the format file.
+    """
+    line = None
+    with open(db_path) as inf:
+        for line in inf:
+            if line.startswith(";"):
+                continue  # comment line.
+            return line.rstrip()
+
+    if not line:
+        return ""
+
+
 def get_formatinfo(package_metadata, format_metadata, db_path):
     """
-    Retrieves formatinfo and checks that it is consistent with the package and format metadata.
+    Retrieves format info and checks that it is consistent with the package and format metadata.
 
     :param package_metadata: The package metadata.
     :param format_metadata: The format metadata.
@@ -125,17 +140,13 @@ def get_formatinfo(package_metadata, format_metadata, db_path):
         package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
     )
 
-    line = None
-    with open(db_path) as inf:
-        for line in inf:
-            if line.startswith(";"):
-                continue  # comment line.
-            formatinfo = parse_formatinfo(line)
-            if formatinfo.FORMAT_NAME == fqname:
-                return formatinfo
-
+    line = _load_format_line(db_path)
     if not line:
         raise ValueError("{} empty".format(db_path))
+
+    format_info = parse_formatinfo(line)
+    if format_info.FORMAT_NAME == fqname:
+        return format_info
 
     raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
 
