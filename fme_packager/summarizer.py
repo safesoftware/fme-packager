@@ -235,8 +235,9 @@ def _format_data(format_line: str) -> dict:
     if format_info:
         format_data["fds_info"] = format_line
         format_data["visible"] = _to_bool(format_info.VISIBLE)
-        # TODO: FMEENGINE-82896
-        format_data["categories"] = []
+        format_data["categories"] = (
+            format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
+        )
 
     return format_data
 
