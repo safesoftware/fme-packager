@@ -34,8 +34,8 @@ def build_fpkg_filename(publisher_uid, package_uid, version):
 
 
 FORMATINFO_HDR = "FORMAT_NAME|FORMAT_LONG_NAME|DATASET_TYPE|DIRECTION|AUTOMATED_TRANSLATION_FLAG|COORDSYS_AWARE|FILTER|FORMAT_TYPE|USE_NATIVE_SPATIAL_INDEX|SOURCE_SETTINGS|DESTINATION_SETTINGS|VISIBLE|MIN_VERSION|MAX_VERSION|FORMAT_FAMILY|HAS_SIDECARS|MARKETING_FAMILY|FORMAT_CATEGORIES"
-FormatInfo = namedtuple("FormatInfo", FORMATINFO_HDR.replace("|", " "))
-
+FormatInfo = namedtuple("FormatInfo", FORMATINFO_HDR.replace("|", " "), defaults=[""])
+OPTIONAL_FORMATINFO_COLUMNS = ["FORMAT_CATEGORIES"]
 
 def parse_formatinfo(line) -> FormatInfo:
     """
@@ -44,12 +44,13 @@ def parse_formatinfo(line) -> FormatInfo:
     :param str line: raw format info.
     :return: Parsed format into a FormatInfo named tuple.
     """
+    num_columns = len(FORMATINFO_HDR.split("|"))
+    num_required_columns = num_columns - len(OPTIONAL_FORMATINFO_COLUMNS)
     parts = line.strip().split("|")
-    if len(parts) != len(FORMATINFO_HDR.split("|")):
-        print(line)
+    if len(parts) not in [num_columns, num_required_columns]:
         raise ValueError(
-            "FormatInfo has {} elements, but expects {}".format(
-                len(parts), len(FORMATINFO_HDR.split("|"))
+            "FormatInfo has {} elements, but expects at least {}".format(
+                len(parts), num_required_columns
             )
         )
     return FormatInfo(*parts)
