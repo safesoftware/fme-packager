@@ -111,14 +111,14 @@ def test__transformer_data(mock_transformer_file, mock_transformer):
 def test__format_data():
     mock_format_line = (
         "SAFE.AIRTABLE.AIRTABLE|Airtable|NONE|BOTH|BOTH|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|Airtable|NO"
-        "|Airtable"
+        "|Airtable|3D,Coordinates"
     )
 
     result = summarizer._format_data(mock_format_line)
     assert result == {
         "visible": True,
         "fds_info": mock_format_line,
-        "categories": [],
+        "categories": ["3D", "Coordinates"],
     }
 
 

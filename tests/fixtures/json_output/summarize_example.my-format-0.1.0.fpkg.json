@@ -12,10 +12,10 @@
     "package_content": {
         "formats": [
             {
-                "categories": [],
+                "categories": ["Database", "Strings"],
                 "description": "A short description of my FME Package.\n",
                 "description_format": "md",
-                "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format",
+                "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format|Database,Strings",
                 "name": "example.my-format.format_name",
                 "short_name": "format_name",
                 "visible": true
@@ -26,5 +26,8 @@
         ],
         "transformers": []
     },
-    "categories": []
+    "categories": [
+        "Database",
+        "Strings"
+    ]
 }
