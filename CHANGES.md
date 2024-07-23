@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.9.0
+
+* Add support for optional FORMAT_CATEGORIES column in format.db (Column introduced in FME b24591).
+
 # 1.8.0
 
 * Add formats support for summarize command.
