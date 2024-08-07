@@ -160,7 +160,7 @@ def mock_formats():
 
 def test__get_all_categories(mock_transformers, mock_formats):
     result = summarizer._get_all_categories(mock_transformers, mock_formats)
-    assert result == {"cat-f1", "cat-f2", "cat1", "cat2", "cat3", "cat4", "cat5"}
+    assert result == ["cat-f1", "cat-f2", "cat1", "cat2", "cat3", "cat4", "cat5"]
 
 
 def test__add_content_description(mocker):
