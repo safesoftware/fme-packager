@@ -208,32 +208,6 @@ def test_summarize_fpkg(fpkg_path, expected_output_path):
     assert result == expected_output
 
 
-def test_summarize_fpkg_multi_categories():
-    # When summarizing an fpkg, the categories are unordered - this is a separate test to ensure multiple categories
-    # show up as expected.
-    expected_output = json.load(
-        open(
-            CWD
-            / "fixtures"
-            / "json_output"
-            / "summarize_example.my-format-multi-categories-0.1.0.fpkg.json"
-        )
-    )
-    result = json.loads(
-        summarizer.summarize_fpkg(
-            str(CWD / "fixtures" / "fpkgs" / "example.my-format-multi-categories-0.1.0.fpkg")
-        )
-    )
-
-    for category in result["categories"]:
-        assert category in expected_output["categories"]
-
-    result_format = result["package_content"]["formats"][0]
-    expected_format = expected_output["package_content"]["formats"][0]
-    for category in result_format["categories"]:
-        assert category in expected_format["categories"]
-
-
 def test_summarize_empty_fpkg(monkeypatch):
     monkeypatch.setattr(
         summarizer,

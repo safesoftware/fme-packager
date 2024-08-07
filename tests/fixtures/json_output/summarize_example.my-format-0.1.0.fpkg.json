@@ -17,9 +17,10 @@
         "description": "A short description of my FME Package.\n",
         "description_format": "md",
         "visible": true,
-        "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format|Database",
+        "fds_info": "EXAMPLE.MY-FORMAT.FORMAT_NAME|Format Name|NONE|BOTH|NONE|NO||NON_SPATIAL|NO|YES|YES|YES|1|1|example.my-format.My Example Format|NO|My Example Format|Database,Strings",
         "categories": [
-          "Database"
+          "Database",
+          "Strings"
         ]
       }
     ],
@@ -31,6 +32,7 @@
     "transformers": []
   },
   "categories": [
+    "Strings",
     "Database"
   ]
 }
