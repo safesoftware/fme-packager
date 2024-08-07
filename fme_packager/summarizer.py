@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, Set
+from typing import Iterable, List
 
 import yaml
 from jsonschema import validate
@@ -161,12 +161,12 @@ def _content_description(readme_filename: str) -> dict:
         }
 
 
-def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -> Set[str]:
+def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -> List[str]:
     """
     Get the union of all the categories from the transformers.
 
     :param transformers: An iterable of transformer dicts
-    :return: A set of all categories from the transformers.
+    :return: An alphabetically sorted list of all categories from the transformers.
     """
     all_categories = set()
     for transformer in transformers:
@@ -183,7 +183,10 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
         if not format.get("categories", None):
             continue
         all_categories.update(format["categories"])
-    return all_categories
+
+    all_categories_list = list(all_categories)
+    all_categories_list.sort()
+    return all_categories_list
 
 
 def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
@@ -298,7 +301,7 @@ def summarize_fpkg(fpkg_path: str) -> str:
             manifest["package_content"]["formats"] = _enhance_format_info(
                 manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
             )
-            manifest["categories"] = list(_get_all_categories(transformers, formats))
+            manifest["categories"] = _get_all_categories(transformers, formats)
         try:
             validate(manifest, output_schema)
         except ValidationError as e:
