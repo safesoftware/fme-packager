@@ -1,3 +1,4 @@
+import xml
 from pathlib import Path
 
 import xmltodict
@@ -8,11 +9,14 @@ def _web_service_path(web_service_file_name: str) -> Path:
 
 
 def _parse_web_service(path: Path) -> dict:
-    with open(path, encoding="utf-8") as web_service:
-        package_xml = xmltodict.parse(web_service.read())
+    try:
+        with open(path, encoding="utf-8") as web_service:
+            package_xml = xmltodict.parse(web_service.read())
 
-    webservice_xml = package_xml.get('ImportExportData', {}).get('webservices', {}).get('webservicexml', '')
-    webservice_content = xmltodict.parse(webservice_xml)
+        webservice_xml = package_xml.get('ImportExportData', {}).get('webservices', {}).get('webservicexml', '')
+        webservice_content = xmltodict.parse(webservice_xml)
+    except xml.parsers.expat.ExpatError:
+        return {}
 
     return webservice_content
 

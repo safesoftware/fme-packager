@@ -21,7 +21,8 @@ def valid_web_service():
                 'service_name': 'My Web Service',
                 'type': 'BASIC',
                 'verify_ssl_certificate_default': 'true',
-                'version': '1'}
+                'version': '1'
+            }
         }
     }
 
@@ -33,6 +34,11 @@ def test__web_service_path():
 def test__parse_web_service(valid_web_service):
     path = CWD / "fixtures" / "valid_package" / "web_services" / "My Web Service.xml"
     assert _parse_web_service(path) == valid_web_service
+
+
+def test__parse_web_service_invalid():
+    path = CWD / "fixtures" / "web_services" / "Invalid Web Service.xml"
+    assert _parse_web_service(path) == {}
 
 
 def test__web_service_description(valid_web_service):
