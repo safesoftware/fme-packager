@@ -14,6 +14,7 @@ from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, pars
 from fme_packager.packager import _load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
 from fme_packager.utils import chdir
+from fme_packager.web_service import _web_service_path, _parse_web_service, _web_service_description
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -209,6 +210,24 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
     return transformers
 
 
+def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
+    """
+    Enhance the web service entries in the manifest with additional information.
+
+    :param web_services: An iterable of web service dicts
+    :return: An iterable of web service dicts with enhanced information
+    """
+    if not web_services:
+        return []
+
+    for web_service in web_services:
+        web_service_path = _web_service_path(web_service["name"])
+        web_service_content = _parse_web_service(web_service_path)
+        web_service["description"] = _web_service_description(web_service_content)
+
+    return web_services
+
+
 def _to_bool(value: str) -> bool:
     """
     Convert a string to a boolean.
@@ -296,11 +315,13 @@ def summarize_fpkg(fpkg_path: str) -> str:
             manifest = _parsed_manifest(_manifest_path(temp_dir))
             transformers = manifest.get("package_content", {}).get("transformers", [])
             formats = manifest.get("package_content", {}).get("formats", [])
+            web_services = manifest.get("package_content", {}).get("web_services", [])
             manifest["package_content"] = manifest.get("package_content", {})
             manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
             manifest["package_content"]["formats"] = _enhance_format_info(
                 manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
             )
+            manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services)
             manifest["categories"] = _get_all_categories(transformers, formats)
         try:
             validate(manifest, output_schema)

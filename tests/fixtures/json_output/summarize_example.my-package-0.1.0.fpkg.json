@@ -47,7 +47,13 @@
                 "description_format": "md"
             }
         ],
-        "formats": []
+        "formats": [],
+        "web_services": [
+            {
+                "name": "My Web Service.xml",
+                "description": "A simple web service"
+            }
+        ]
     },
     "categories": [
         "Integrations"

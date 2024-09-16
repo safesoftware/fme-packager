@@ -12,7 +12,8 @@
     },
     "package_content": {
         "transformers": [],
-        "formats": []
+        "formats": [],
+        "web_services": []
     },
     "categories": []
 }
