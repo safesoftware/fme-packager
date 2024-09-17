@@ -10,18 +10,18 @@ CWD = Path(__file__).parent.resolve()
 @pytest.fixture
 def valid_web_service():
     return {
-        'webservice': {
-            'authentication': {
-                'auth_type': '0',
-                'connection_description': '<p>A basic connection description.</p>',
-                'description': '<p>A simple web service</p>',
-                'help_url': '<a href=https://example.com>my_alias</a>',
-                'markdown_connection_description': 'A basic connection description.',
-                'markdown_description': 'A simple web service',
-                'service_name': 'My Web Service',
-                'type': 'BASIC',
-                'verify_ssl_certificate_default': 'true',
-                'version': '1'
+        "webservice": {
+            "authentication": {
+                "auth_type": "0",
+                "connection_description": "<p>A basic connection description.</p>",
+                "description": "<p>A simple web service</p>",
+                "help_url": "<a href=https://example.com>my_alias</a>",
+                "markdown_connection_description": "A basic connection description.",
+                "markdown_description": "A simple web service",
+                "service_name": "My Web Service",
+                "type": "BASIC",
+                "verify_ssl_certificate_default": "true",
+                "version": "1",
             }
         }
     }
