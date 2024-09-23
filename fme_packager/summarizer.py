@@ -14,7 +14,7 @@ from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, pars
 from fme_packager.packager import _load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
 from fme_packager.utils import chdir
-from fme_packager.web_service import _web_service_path, _parse_web_service, _web_service_description
+from fme_packager.web_service import _web_service_path, _parse_web_service
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -223,7 +223,7 @@ def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
     for web_service in web_services:
         web_service_path = _web_service_path(web_service["name"])
         web_service_content = _parse_web_service(web_service_path)
-        web_service["description"] = _web_service_description(web_service_content)
+        web_service.update(web_service_content)
 
     return web_services
 
