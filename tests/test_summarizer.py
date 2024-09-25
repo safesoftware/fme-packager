@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fme_packager import summarizer
 from fme_packager.cli import summarize
-from fme_packager.summarizer import TransformerFilenames, FormatFilenames
+from fme_packager.summarizer import TransformerFilenames, FormatFilenames, _package_deprecated
 from tests.conftest import mock_transformer, mock_transformer_file
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -153,8 +153,8 @@ def mock_transformers(mocker):
 @pytest.fixture
 def mock_formats():
     return [
-        {"categories": {"cat-f1", "cat3"}},
-        {"categories": {"cat-f2", "cat4"}},
+        {"categories": {"cat-f1", "cat3"}, "deprecated": False},
+        {"categories": {"cat-f2", "cat4"}, "deprecated": False},
     ]
 
 
@@ -187,6 +187,24 @@ def test__parsed_manifest():
 
     # Assert that the returned dictionary matches the data we wrote to the file
     assert result == data
+
+
+def test_package_deprecated(mock_transformers, mock_formats):
+    assert not _package_deprecated(mock_transformers, mock_formats)
+
+    mock_transformers[0]["versions"][1]["visible"] = False
+    assert not _package_deprecated(mock_transformers, mock_formats)
+
+    mock_transformers[0]["versions"][1]["visible"] = False
+    mock_transformers[2]["versions"][0]["visible"] = False
+    mock_transformers[3]["versions"][0]["visible"] = False
+    assert not _package_deprecated(mock_transformers, mock_formats)
+
+    mock_formats[0]["visible"] = False
+    assert not _package_deprecated(mock_transformers, mock_formats)
+
+    mock_formats[1]["visible"] = False
+    assert _package_deprecated(mock_transformers, mock_formats)
 
 
 @pytest.mark.parametrize(

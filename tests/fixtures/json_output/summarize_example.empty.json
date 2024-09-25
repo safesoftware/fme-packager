@@ -4,6 +4,7 @@
     "publisher_uid": "example",
     "name": "My FME Package",
     "description": "A short description of my FME Package.",
+    "deprecated": false,
     "version": "0.1.0",
     "minimum_fme_build": 19238,
     "author": {
