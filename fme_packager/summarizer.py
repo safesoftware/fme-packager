@@ -271,8 +271,8 @@ def _load_output_schema() -> dict:
 def _package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
     """
     Determine if the package is deprecated based on its contents.
-    If the highest version of all transformers are not visible, or if all formats are not visible,
-    then the package is deprecated.
+    If the package contains transformers or formats, and the highest version of all transformers are not visible,
+    and if all formats are not visible, then the package is deprecated.
 
     :param transformers: An iterable of transformer dicts
     :param formats: An iterable of format dicts
