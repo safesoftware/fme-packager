@@ -190,7 +190,6 @@ def test__parsed_manifest():
 
 
 def test_package_transformers_deprecated(mock_transformers, mock_formats):
-
     # Case: All formats are not visible
     mock_formats[0]["visible"] = False
     mock_formats[1]["visible"] = False
@@ -214,7 +213,6 @@ def test_package_transformers_deprecated(mock_transformers, mock_formats):
 
 
 def test_package_formats_deprecated(mock_transformers, mock_formats):
-
     # Case: All transformer versions are not visible
     mock_transformers[0]["versions"][1]["visible"] = False
     mock_transformers[2]["versions"][0]["visible"] = False
