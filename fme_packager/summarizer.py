@@ -232,7 +232,7 @@ def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
             "connection_description",
             "markdown_connection_description",
         ]:
-            web_service[key] = web_service_content.get(key, "")
+            web_service[key] = web_service_content.get(key, "") or ""
 
     return web_services
 
