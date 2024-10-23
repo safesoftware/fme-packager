@@ -192,6 +192,7 @@
         "publisher_uid",
         "name",
         "description",
+        "deprecated",
         "version",
         "minimum_fme_build",
         "author",
@@ -224,6 +225,10 @@
         "description": {
             "description": "Short description of the package purpose and content",
             "type": "string"
+        },
+        "deprecated": {
+            "description": "Indicates if the package is deprecated",
+            "type": "boolean"
         },
         "version": {
             "description": "Version of the package, using semantic versioning",

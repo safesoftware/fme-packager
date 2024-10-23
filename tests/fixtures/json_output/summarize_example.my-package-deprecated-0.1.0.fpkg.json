@@ -1,10 +1,10 @@
 {
     "fpkg_version": 1,
-    "uid": "my-package",
+    "uid": "my-package-deprecated",
     "publisher_uid": "example",
     "name": "My FME Package",
     "description": "A short description of my FME Package.",
-    "deprecated": false,
+    "deprecated": true,
     "version": "0.1.0",
     "minimum_fme_build": 19238,
     "author": {
@@ -18,13 +18,13 @@
                 "latest_version": 1,
                 "versions": [
                     {
-                        "name": "example.my-package.MyGreeter",
+                        "name": "example.my-package-deprecated.MyGreeter",
                         "version": 1,
                         "categories": [
                             "Integrations"
                         ],
                         "aliases": [],
-                        "visible": true
+                        "visible": false
                     }
                 ],
                 "description": "# example.my-package.MyGreeter\n\n_This doc appears when the transformer is selected in the Workbench Quick Add pane._\n\nThe MyGreeter transformer takes a first name as input,\nand outputs a greeting for that person.\n\nThis transformer is part of the\n[example.my-package FME Package](https://hub.fme.co/publishers/example/packages/my-package).\n\n\n## Inputs:\n\n* **First Name**: The first name of who to greet. Default: \"World\".\n\n## Outputs attributes:\n\n* **greeting**: This attribute contains the greeting message.\n  It looks something like \"Hello, [first name]!\".\n",
@@ -35,13 +35,13 @@
                 "latest_version": 2,
                 "versions": [
                     {
-                        "name": "example.my-package.MyYeller",
+                        "name": "example.my-package-deprecated.MyYeller",
                         "version": 2,
                         "categories": [
                             "Integrations"
                         ],
                         "aliases": [],
-                        "visible": true
+                        "visible": false
                     }
                 ],
                 "description": "# example.my-package.MyYeller\n\n_This doc appears when the transformer is selected in the Workbench Quick Add pane._\n\nThe MyYeller transformer takes a first name as input,\nand outputs a greeting for that person.\n\nThis transformer is part of the\n[example.my-package FME Package](https://hub.fme.co/publishers/example/packages/my-package).\n\n\n## Inputs:\n\n* **First Name**: The first name of who to greet. Default: \"World\".\n\n## Outputs attributes:\n\n* **greeting**: This attribute contains the greeting message.\n  It looks something like \"Hello, [first name]!\".\n",
@@ -49,16 +49,7 @@
             }
         ],
         "formats": [],
-        "web_services": [
-            {
-                "connection_description": "<p>A basic connection description.</p>",
-                "description": "<p>A simple web service</p>",
-                "help_url": "<a href=https://example.com>my_alias</a>",
-                "markdown_connection_description": "A basic connection description.",
-                "markdown_description": "A simple web service",
-                "name": "My Web Service"
-            }
-        ]
+        "web_services": []
     },
     "categories": [
         "Integrations"

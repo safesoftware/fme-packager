@@ -265,7 +265,7 @@ def _format_data(format_line: str) -> dict:
 
     if format_info:
         format_data["fds_info"] = format_line
-        format_data["visible"] = _to_bool(format_info.VISIBLE)
+        format_data["visible"] = format_info.VISIBLE.upper() != "NO"
         format_data["categories"] = (
             format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
         )
@@ -306,6 +306,30 @@ def _load_output_schema() -> dict:
         return json.load(file)
 
 
+def _package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
+    """
+    Determine if the package is deprecated based on its contents.
+    If the package contains transformers or formats, and the highest version of all transformers are not visible,
+    and if all formats are not visible, then the package is deprecated.
+
+    :param transformers: An iterable of transformer dicts
+    :param formats: An iterable of format dicts
+    :return: True if the package is deprecated, False otherwise.
+    """
+    if not transformers and not formats:
+        return False
+
+    is_transformer_visible = any(
+        max(transformer["versions"], key=lambda v: v["version"]).get("visible", True)
+        for transformer in transformers
+        if transformer.get("versions")
+    )
+
+    is_format_visible = any(f.get("visible", True) for f in formats)
+
+    return not (is_transformer_visible or is_format_visible)
+
+
 def summarize_fpkg(fpkg_path: str) -> str:
     """
     Summarize the FME Package.
@@ -332,6 +356,9 @@ def summarize_fpkg(fpkg_path: str) -> str:
             )
             manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services)
             manifest["categories"] = _get_all_categories(transformers, formats)
+            manifest["deprecated"] = _package_deprecated(
+                manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
+            )
         try:
             validate(manifest, output_schema)
         except ValidationError as e:
