@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ImportExportData>
+
+  <version>3</version>
+
+  <header>ABxgHrRLqBoyCKyMLiC5tj0upQ8JTAAAAgAAAAEAAAA=</header>
+
+  <webservices>
+    <webservicexml>&lt;?xml version="1.0" encoding="UTF-8" standalone="no" ?&gt;
+&lt;webservice&gt;
+
+  &lt;authentication&gt;
+    &lt;type&gt;BASIC&lt;/type&gt;
+    &lt;service_name&gt;My Web Service&lt;/service_name&gt;
+    &lt;version&gt;1&lt;/version&gt;
+    &lt;help_url&gt;&amp;lt;a href=https://example.com&amp;gt;my_alias&amp;lt;/a&amp;gt;&lt;/help_url&gt;
+    &lt;description&gt;&amp;lt;p&amp;gt;A simple web service&amp;lt;/p&amp;gt;&lt;/description&gt;
+    &lt;markdown_description&gt;A simple web service&lt;/markdown_description&gt;
+    &lt;connection_description&gt;&amp;lt;p&amp;gt;A basic connection description.&amp;lt;/p&amp;gt;&lt;/connection_description&gt;
+    &lt;markdown_connection_description&gt;A basic connection description.&lt;/markdown_connection_description&gt;
+    &lt;verify_ssl_certificate_default&gt;true&lt;/verify_ssl_certificate_default&gt;
+    &lt;auth_type&gt;0&lt;/auth_type&gt;
+  &lt;/authentication&gt;
+
+&lt;/webservice&gt;
+</webservicexml>
+  </webservices>
+
+  <derivedwebservices/>
+
+  <named_connections/>
+
+</ImportExportData>

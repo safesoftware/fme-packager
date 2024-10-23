@@ -48,7 +48,8 @@
                 "description_format": "md"
             }
         ],
-        "formats": []
+        "formats": [],
+        "web_services": []
     },
     "categories": [
         "Integrations"
