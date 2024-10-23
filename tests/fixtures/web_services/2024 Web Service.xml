@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ImportExportData>
+
+  <version>4</version>
+
+  <header>AG3QTGY5kL0s8wGteYt37Qfp6QcJTAAAAgAAAAEAAAA=</header>
+
+  <webservices>
+    <webservice>
+      <authentication>
+        <type>BASIC</type>
+        <service_name>2024 Web Service</service_name>
+        <version>1</version>
+        <help_url>&lt;a href=https://example.com&gt;my_alias&lt;/a&gt;</help_url>
+        <description>&lt;p&gt;A simple web service&lt;/p&gt;</description>
+        <markdown_description>A simple web service</markdown_description>
+        <connection_description>&lt;p&gt;A basic connection description.&lt;/p&gt;</connection_description>
+        <markdown_connection_description>A basic connection description.</markdown_connection_description>
+        <verify_ssl_certificate_default>true</verify_ssl_certificate_default>
+        <auth_type>0</auth_type>
+      </authentication>
+    </webservice>
+  </webservices>
+
+  <derivedwebservices/>
+
+  <named_connections/>
+
+</ImportExportData>

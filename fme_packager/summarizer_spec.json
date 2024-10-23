@@ -134,10 +134,30 @@
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "markdown_description": {
+                    "type": "string"
+                },
+                "connection_description": {
+                    "type": "string"
+                },
+                "markdown_connection_description": {
+                    "type": "string"
+                },
+                "help_url": {
+                    "type": "string"
                 }
             },
             "required": [
-                "name"
+                "name",
+                "description",
+                "markdown_description",
+                "connection_description",
+                "markdown_connection_description",
+                "help_url"
             ]
         },
         "web_filesystem": {

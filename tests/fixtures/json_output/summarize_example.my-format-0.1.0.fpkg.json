@@ -29,7 +29,8 @@
         "name": "fme_my_format"
       }
     ],
-    "transformers": []
+    "transformers": [],
+    "web_services": []
   },
   "categories": [
     "Database",
