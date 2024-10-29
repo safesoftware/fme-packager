@@ -223,8 +223,7 @@ def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
     for web_service in web_services:
         web_service_path = _web_service_path(web_service["name"])
         web_service_content = _parse_web_service(web_service_path)
-
-        web_service["name"] = web_service_content.get("service_name", web_service["name"])
+        web_service["name"] = web_service["name"].rstrip(".xml")
         for key in [
             "help_url",
             "description",
