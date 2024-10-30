@@ -9,7 +9,7 @@
     <webservice>
       <authentication>
         <type>BASIC</type>
-        <service_name>2024 Web Service</service_name>
+        <service_name>example.my-package.2024 Web Service</service_name>
         <version>1</version>
         <help_url>&lt;a href=https://example.com&gt;my_alias&lt;/a&gt;</help_url>
         <description>&lt;p&gt;A simple web service&lt;/p&gt;</description>
