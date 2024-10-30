@@ -11,7 +11,7 @@
 
   &lt;authentication&gt;
     &lt;type&gt;BASIC&lt;/type&gt;
-    &lt;service_name&gt;My Web Service&lt;/service_name&gt;
+    &lt;service_name&gt;example.my-package.My Web Service&lt;/service_name&gt;
     &lt;version&gt;1&lt;/version&gt;
     &lt;help_url&gt;&amp;lt;a href=https://example.com&amp;gt;my_alias&amp;lt;/a&amp;gt;&lt;/help_url&gt;
     &lt;description&gt;&amp;lt;p&amp;gt;A simple web service&amp;lt;/p&amp;gt;&lt;/description&gt;

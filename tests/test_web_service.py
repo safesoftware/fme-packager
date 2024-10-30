@@ -9,7 +9,7 @@ CWD = Path(__file__).parent.resolve()
 
 @pytest.fixture
 def valid_web_service():
-    def web_service(service_name):
+    def web_service(name):
         return {
             "auth_type": "0",
             "connection_description": "<p>A basic connection description.</p>",
@@ -17,7 +17,7 @@ def valid_web_service():
             "help_url": "<a href=https://example.com>my_alias</a>",
             "markdown_connection_description": "A basic connection description.",
             "markdown_description": "A simple web service",
-            "service_name": service_name,
+            "service_name": f"example.my-package.{name}",
             "type": "BASIC",
             "verify_ssl_certificate_default": "true",
             "version": "1",
