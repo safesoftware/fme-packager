@@ -134,6 +134,7 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
         # Format prefix is "rw" even when read-only or write-only
         index[f"rw_{fmt_ident}_index"] = f"/{fmt.name}.htm"
         index[f"rw_{fmt_ident}_feature_rep"] = f"/{fmt.name}_feature_rep.htm"
+        index[f"rw_{fmt_ident}_quickfacts"] = f"/{fmt.name}_quickfacts.htm"
         for direction in directions:
             index[f"param_{fmt_ident}_{direction}"] = f"/{fmt.name}_param_{direction}.htm"
             index[f"ft_{fmt_ident}_param_{direction}"] = f"/{fmt.name}_ft_param_{direction}.htm"
