@@ -42,6 +42,7 @@ def test_get_expected_help_contexts_format():
         "param_example_package_hyphen_demoformat_w": "/demoformat_param_w.htm",
         "rw_example_package_hyphen_demoformat_feature_rep": "/demoformat_feature_rep.htm",
         "rw_example_package_hyphen_demoformat_index": "/demoformat.htm",
+        "rw_example_package_hyphen_demoformat_quickfacts": "/demoformat_quickfacts.htm",
     }
     assert sorted(get_expected_help_index(metadata)) == [
         "ft_example_package_hyphen_demoformat_param_r",
@@ -51,6 +52,7 @@ def test_get_expected_help_contexts_format():
         "param_example_package_hyphen_demoformat_w",
         "rw_example_package_hyphen_demoformat_feature_rep",
         "rw_example_package_hyphen_demoformat_index",
+        "rw_example_package_hyphen_demoformat_quickfacts",
     ]
 
 
@@ -70,6 +72,7 @@ def test_get_expected_help_contexts_format_one_dir():
         "param_example_package_demoformat_r",
         "rw_example_package_demoformat_feature_rep",
         "rw_example_package_demoformat_index",
+        "rw_example_package_demoformat_quickfacts",
     ]
     assert sorted(get_expected_help_index(metadata, write_only)) == [
         "ft_example_package_demoformat_param_w",
@@ -77,6 +80,7 @@ def test_get_expected_help_contexts_format_one_dir():
         "param_example_package_demoformat_w",
         "rw_example_package_demoformat_feature_rep",
         "rw_example_package_demoformat_index",
+        "rw_example_package_demoformat_quickfacts",
     ]
 
 
