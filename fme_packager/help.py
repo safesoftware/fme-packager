@@ -212,7 +212,7 @@ class HelpBuilder:
 
         - All expected help contexts are present, based on package metadata
         - No unrecognized help contexts are present
-        - Referenced files exist and are HTML or MD
+        - Referenced files exist and are HTML or MD, or are valid online URLs
         """
         links = {}
         with (Path(doc_dir) / "package_help.csv").open("r", encoding="utf8", newline="") as f:

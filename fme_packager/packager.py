@@ -251,8 +251,8 @@ class FMEPackager:
                     new_link = link.replace("/Content", "", 1)
                     link = new_link
                 expected_doc_path = os.path.join(dest, link.lstrip("/"))
-                if os.path.exists(expected_doc_path):
-                    self._print("{} exists".format(expected_doc_path))
+                if os.path.exists(expected_doc_path) or link.startswith("http"):
+                    self._print("{} exists or is an online URL".format(expected_doc_path))
                     writer.writerow([name, link])
                     copied_rows += 1
         self._print(
