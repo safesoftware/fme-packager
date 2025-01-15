@@ -222,13 +222,14 @@ class HelpBuilder:
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
         for ctx, doc_path in links.items():
-            if not doc_path.startswith("/"):
-                raise ValueError(f"Path must start with /: {doc_path}")
-            expected_doc = Path(doc_dir) / doc_path.lstrip("/")
-            if not expected_doc.exists():
-                raise FileNotFoundError(f"{expected_doc} does not exist")
-            if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
-                raise ValueError(f"{expected_doc} must be htm(l) or md")
+            if not doc_path.startswith("/") and not re.match(r"https?://", doc_path):
+                raise ValueError(f"Path must start with '/' or be a valid URL: {doc_path}")
+            if doc_path.startswith("/"):
+                expected_doc = Path(doc_dir) / doc_path.lstrip("/")
+                if not expected_doc.exists():
+                    raise FileNotFoundError(f"{expected_doc} does not exist")
+                if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
+                    raise ValueError(f"{expected_doc} must be htm(l), md, or a valid URL")
         expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
         unrecognized = contexts_present - expected
