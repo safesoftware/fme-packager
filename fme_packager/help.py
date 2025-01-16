@@ -11,6 +11,7 @@ import re
 import shutil
 import warnings
 from pathlib import Path
+from urllib.parse import urlparse
 
 from markdown import Markdown
 
@@ -212,24 +213,49 @@ class HelpBuilder:
 
         - All expected help contexts are present, based on package metadata
         - No unrecognized help contexts are present
-        - Referenced files exist and are HTML or MD, or are valid online URLs
+        - Referenced files exist and are HTML or MD, or is an absolute URL
         """
-        links = {}
+        from collections import defaultdict
+
+        links = defaultdict(list)
         with (Path(doc_dir) / "package_help.csv").open("r", encoding="utf8", newline="") as f:
             try:
                 for row in csv.reader(f):
-                    links[row[0]] = row[1]
+                    links[row[0]].append(row[1])  # Append the value to the list for the key
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
-        for ctx, doc_path in links.items():
-            if not doc_path.startswith("/") and not re.match(r"https?://", doc_path):
-                raise ValueError(f"Path must start with '/' or be a valid URL: {doc_path}")
-            if doc_path.startswith("/"):
-                expected_doc = Path(doc_dir) / doc_path.lstrip("/")
-                if not expected_doc.exists():
-                    raise FileNotFoundError(f"{expected_doc} does not exist")
-                if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
-                    raise ValueError(f"{expected_doc} must be htm(l), md, or a valid URL")
+        min_build = self.fpkg_metadata.minimum_fme_build
+        supports_urls = min_build >= 25000
+        for ctx, doc_paths in links.items():  # doc_paths is now a list of values
+            # Validate each doc_path for the current context
+            for doc_path in doc_paths:
+                if not doc_path.startswith("/") and not urlparse(doc_path).scheme in (
+                    "http",
+                    "https",
+                ):
+                    raise ValueError(f"Path must start with '/' or be an absolute URL: {doc_path}")
+
+                # Validate local files
+                if doc_path.startswith("/"):
+                    expected_doc = Path(doc_dir) / doc_path.lstrip("/")
+                    if not expected_doc.exists():
+                        raise FileNotFoundError(f"{expected_doc} does not exist")
+                    if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
+                        raise ValueError(f"{expected_doc} must be htm(l) or md")
+
+                # Validate URLs with fallback if build < 25xxx
+                if urlparse(doc_path).scheme in ("http", "https"):
+                    if not supports_urls:
+                        fallback_exists = any(
+                            other_doc_path.startswith("/")
+                            and (Path(doc_dir) / other_doc_path.lstrip("/")).exists()
+                            for other_doc_path in doc_paths
+                        )
+                        if not fallback_exists:
+                            raise ValueError(
+                                f"Build {min_build} does not support URLs, and no valid local fallback exists for {ctx} ({doc_path})"
+                            )
+
         expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
         unrecognized = contexts_present - expected

@@ -15,6 +15,7 @@ def mock_metadata():
         {
             "uid": "package-hyphen",
             "publisher_uid": "example",
+            "minimum_fme_build": 23224,
             "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
         }
     )
@@ -102,3 +103,47 @@ def test_md(mock_metadata, tmp_path):
     assert index_file.is_file()
     with index_file.open("r") as f:
         assert f.read() == "fmx_example_package-hyphen_Transformer,/Transformer.htm\n"
+
+
+# Test that for unsupported FME builds, URLs in package_help.csv do not cause errors as there is a local fallback
+def test_validate_index_fallback(tmp_path):
+    metadata = FMEPackageMetadata(
+        {
+            "uid": "package-hyphen",
+            "publisher_uid": "example",
+            "minimum_fme_build": 23224,
+            "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
+        }
+    )
+    help_builder = HelpBuilder(metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
+    help_builder.build()
+    # Create a package_help.csv file with various cases
+    csv_file = tmp_path / "package_help.csv"
+    csv_content = """\
+fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
+fmx_example_package-hyphen_Transformer,http://example.com
+"""
+    csv_file.write_text(csv_content)
+    help_builder.validate_index(tmp_path)
+
+
+# Test that for FME version > 25xxx, URLs in package_help.csv do not cause errors
+def test_validate_index_url(tmp_path):
+    metadata = FMEPackageMetadata(
+        {
+            "uid": "package-hyphen",
+            "publisher_uid": "example",
+            "minimum_fme_build": 25000,
+            "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
+        }
+    )
+    help_builder = HelpBuilder(metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
+    help_builder.build()
+
+    csv_file = tmp_path / "package_help.csv"
+    csv_content = """\
+fmx_example_package-hyphen_Transformer,http://example.com
+"""
+    csv_file.write_text(csv_content)
+
+    help_builder.validate_index(tmp_path)
