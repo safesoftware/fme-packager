@@ -219,12 +219,13 @@ class HelpBuilder:
         - No unrecognized help contexts are present
         - Referenced files exist and are HTML or MD, or is an absolute URL
         """
+
+        """links: A mapping of keywords (aka context) to its corresponding doc path.
+        There can be more than one doc path per keyword because keywords can be defined in the csv more than once.
+        """
         links = defaultdict(list)
         with (Path(doc_dir) / "package_help.csv").open("r", encoding="utf8", newline="") as f:
             try:
-                """A mapping of keywords (aka context) to its corresponding doc path.
-                There can be more than one doc path per keyword because keywords can be defined in the csv more than once
-                """
                 for row in csv.reader(f):
                     links[row[0]].append(row[1])
             except IndexError as e:
