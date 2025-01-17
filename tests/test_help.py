@@ -105,45 +105,65 @@ def test_md(mock_metadata, tmp_path):
         assert f.read() == "fmx_example_package-hyphen_Transformer,/Transformer.htm\n"
 
 
-# Test that for unsupported FME builds, URLs in package_help.csv do not cause errors as there is a local fallback
-def test_validate_index_fallback(tmp_path):
-    metadata = FMEPackageMetadata(
-        {
-            "uid": "package-hyphen",
-            "publisher_uid": "example",
-            "minimum_fme_build": 23224,
-            "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
-        }
-    )
-    help_builder = HelpBuilder(metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
-    help_builder.build()
-    # Create a package_help.csv file with various cases
-    csv_file = tmp_path / "package_help.csv"
-    csv_content = """\
+# TODO: Build number should be adjust based on outcome of [FMEFORM-32618]
+@pytest.mark.parametrize(
+    "minimum_build, csv_content, expected_error",
+    [
+        # Case 1: FME build < 25000, fallback required for URLs
+        (
+            23224,
+            """\
+fmx_example_package-hyphen_Transformer,http://example.com
 fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
+""",
+            None,
+        ),
+        # Case 2: FME build >= 25000, URLs allowed without fallback
+        (
+            25000,
+            """\
 fmx_example_package-hyphen_Transformer,http://example.com
-"""
-    csv_file.write_text(csv_content)
-    help_builder.validate_index(tmp_path)
-
-
-# Test that for FME version > 25xxx, URLs in package_help.csv do not cause errors
-def test_validate_index_url(tmp_path):
+""",
+            None,
+        ),
+        # Validation failure: Missing fallback for FME build < 25000
+        (
+            23224,
+            """\
+fmx_example_package-hyphen_Transformer,http://example.com
+""",
+            "Minimum build required for URL support is",
+        ),
+        # Validation failure: Invalid structure in CSV
+        (
+            25000,
+            """\
+fmx_example_package-hyphen_Transformer,http://example.com
+fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
+fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
+""",
+            "Invalid entries for",
+        ),
+    ],
+)
+def test_validate_index(tmp_path, minimum_build, csv_content, expected_error):
     metadata = FMEPackageMetadata(
         {
             "uid": "package-hyphen",
             "publisher_uid": "example",
-            "minimum_fme_build": 25000,
+            "minimum_fme_build": minimum_build,
             "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
         }
     )
     help_builder = HelpBuilder(metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
     help_builder.build()
 
+    # Create the package_help.csv file
     csv_file = tmp_path / "package_help.csv"
-    csv_content = """\
-fmx_example_package-hyphen_Transformer,http://example.com
-"""
     csv_file.write_text(csv_content)
 
-    help_builder.validate_index(tmp_path)
+    if expected_error:
+        with pytest.raises(ValueError, match=expected_error):
+            help_builder.validate_index(tmp_path)
+    else:
+        help_builder.validate_index(tmp_path)

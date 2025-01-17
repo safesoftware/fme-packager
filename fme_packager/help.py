@@ -4,6 +4,7 @@ Logic for preparing help documentation for the FPKG packing process.
 - package_help.csv validation
 - File copy logic for the help folder
 - Markdown to HTML conversion and package_help.csv generation
+
 """
 
 import csv
@@ -11,6 +12,7 @@ import re
 import shutil
 import warnings
 from pathlib import Path
+from collections import defaultdict
 from urllib.parse import urlparse
 
 from markdown import Markdown
@@ -215,46 +217,54 @@ class HelpBuilder:
         - No unrecognized help contexts are present
         - Referenced files exist and are HTML or MD, or is an absolute URL
         """
-        from collections import defaultdict
-
         links = defaultdict(list)
         with (Path(doc_dir) / "package_help.csv").open("r", encoding="utf8", newline="") as f:
             try:
+                """A mapping of keywords (aka context) to its corresponding doc path.
+                There can be more than one doc path per keyword because keywords can be defined in the csv more than once
+                """
                 for row in csv.reader(f):
-                    links[row[0]].append(row[1])  # Append the value to the list for the key
+                    links[row[0]].append(row[1])
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
         min_build = self.fpkg_metadata.minimum_fme_build
-        supports_urls = min_build >= 25000
-        for ctx, doc_paths in links.items():  # doc_paths is now a list of values
-            # Validate each doc_path for the current context
-            for doc_path in doc_paths:
-                if not doc_path.startswith("/") and not urlparse(doc_path).scheme in (
-                    "http",
-                    "https",
-                ):
-                    raise ValueError(f"Path must start with '/' or be an absolute URL: {doc_path}")
+        required_build = 25000  # TODO: Change required build based on outcome of [FMEFORM-32618]
+        supports_urls = min_build >= required_build
 
-                # Validate local files
-                if doc_path.startswith("/"):
-                    expected_doc = Path(doc_dir) / doc_path.lstrip("/")
-                    if not expected_doc.exists():
-                        raise FileNotFoundError(f"{expected_doc} does not exist")
-                    if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
-                        raise ValueError(f"{expected_doc} must be htm(l) or md")
+        def validate_doc_path(doc_path):
+            """Validate a single local path."""
+            if not doc_path.startswith("/"):
+                raise ValueError(f"Path must start with '/' or be an asbolute URL: {doc_path}")
 
-                # Validate URLs with fallback if build < 25xxx
-                if urlparse(doc_path).scheme in ("http", "https"):
+            expected_doc = Path(doc_dir) / doc_path.lstrip("/")
+            if not expected_doc.exists():
+                raise FileNotFoundError(f"{expected_doc} does not exist")
+            if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
+                raise ValueError(f"{expected_doc} must be htm(l) or md")
+
+        for ctx, doc_paths in links.items():
+            if len(doc_paths) == 1:
+                # Single entry: [URL] or [path]
+                if urlparse(doc_paths[0]).scheme in ("http", "https"):
                     if not supports_urls:
-                        fallback_exists = any(
-                            other_doc_path.startswith("/")
-                            and (Path(doc_dir) / other_doc_path.lstrip("/")).exists()
-                            for other_doc_path in doc_paths
+                        raise ValueError(
+                            f"Minimum build required for URL support is {required_build}, and no local fallback found for {ctx} ({doc_paths[0]}). Your build: {min_build}"
                         )
-                        if not fallback_exists:
-                            raise ValueError(
-                                f"Build {min_build} does not support URLs, and no valid local fallback exists for {ctx} ({doc_path})"
-                            )
+                else:
+                    validate_doc_path(doc_paths[0])
+            elif len(doc_paths) == 2:
+                # Two entries: [URL, path]
+                first_path, second_path = doc_paths
+                if urlparse(first_path).scheme not in ("http", "https"):
+                    raise ValueError(
+                        f"The first entry for {ctx} must be a URL, instead got: {first_path}"
+                    )
+
+                validate_doc_path(second_path)
+            else:
+                raise ValueError(
+                    f"Invalid entries for {ctx}: entries must be of order [<URL>], [<local path>], or [<URL>, <local path>], but got {doc_paths}"
+                )
 
         expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
