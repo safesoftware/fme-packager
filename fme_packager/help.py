@@ -4,7 +4,6 @@ Logic for preparing help documentation for the FPKG packing process.
 - package_help.csv validation
 - File copy logic for the help folder
 - Markdown to HTML conversion and package_help.csv generation
-
 """
 
 import csv
@@ -32,6 +31,9 @@ HTML_TPL = """<!DOCTYPE html>
 </body>
 </html>
 """
+
+# TODO: Change required build based on outcome of [FMEFORM-32618]
+MIN_BUILD_WITH_URL_SUPPORT = 25000
 
 
 def add_transformer_classes_to_doc(html):
@@ -228,8 +230,7 @@ class HelpBuilder:
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
         min_build = self.fpkg_metadata.minimum_fme_build
-        required_build = 25000  # TODO: Change required build based on outcome of [FMEFORM-32618]
-        supports_urls = min_build >= required_build
+        supports_urls = min_build >= MIN_BUILD_WITH_URL_SUPPORT
 
         def validate_doc_path(doc_path):
             """Validate a single local path."""
@@ -242,20 +243,24 @@ class HelpBuilder:
             if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
                 raise ValueError(f"{expected_doc} must be htm(l) or md")
 
+        def validate_url(doc_path):
+            """Validate a single URL."""
+            return urlparse(doc_path).scheme in ("http", "https")
+
         for ctx, doc_paths in links.items():
             if len(doc_paths) == 1:
                 # Single entry: [URL] or [path]
-                if urlparse(doc_paths[0]).scheme in ("http", "https"):
+                if validate_url(doc_paths[0]):
                     if not supports_urls:
                         raise ValueError(
-                            f"Minimum build required for URL support is {required_build}, and no local fallback found for {ctx} ({doc_paths[0]}). Your build: {min_build}"
+                            f"Minimum build required for URL support is {MIN_BUILD_WITH_URL_SUPPORT}, and no local fallback found for {ctx} ({doc_paths[0]}). Your build: {min_build}"
                         )
                 else:
                     validate_doc_path(doc_paths[0])
             elif len(doc_paths) == 2:
                 # Two entries: [URL, path]
                 first_path, second_path = doc_paths
-                if urlparse(first_path).scheme not in ("http", "https"):
+                if not validate_url(first_path):
                     raise ValueError(
                         f"The first entry for {ctx} must be a URL, instead got: {first_path}"
                     )

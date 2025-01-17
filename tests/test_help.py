@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from fme_packager.help import HelpBuilder, get_expected_help_index
+from fme_packager.help import HelpBuilder, get_expected_help_index, MIN_BUILD_WITH_URL_SUPPORT
 from fme_packager.metadata import FMEPackageMetadata
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -105,11 +105,10 @@ def test_md(mock_metadata, tmp_path):
         assert f.read() == "fmx_example_package-hyphen_Transformer,/Transformer.htm\n"
 
 
-# TODO: Build number should be adjust based on outcome of [FMEFORM-32618]
 @pytest.mark.parametrize(
     "minimum_build, csv_content, expected_error",
     [
-        # Case 1: FME build < 25000, fallback required for URLs
+        # Case 1: FME build < MIN_BUILD_WITH_URL_SUPPORT, fallback required for URLs
         (
             23224,
             """\
@@ -118,15 +117,23 @@ fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
 """,
             None,
         ),
-        # Case 2: FME build >= 25000, URLs allowed without fallback
+        # Case 2: FME build >= MIN_BUILD_WITH_URL_SUPPORT, URLs allowed without fallback
         (
-            25000,
+            MIN_BUILD_WITH_URL_SUPPORT,
             """\
 fmx_example_package-hyphen_Transformer,http://example.com
 """,
             None,
         ),
-        # Validation failure: Missing fallback for FME build < 25000
+        # Case 3: FME build <= MIN_BUILD_WITH_URL_SUPPORT, single local path allowed
+        (
+            23224,
+            """\
+fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
+""",
+            None,
+        ),
+        # Validation failure: Missing fallback for FME build < MIN_BUILD_WITH_URL_SUPPORT
         (
             23224,
             """\
@@ -136,7 +143,7 @@ fmx_example_package-hyphen_Transformer,http://example.com
         ),
         # Validation failure: Invalid structure in CSV
         (
-            25000,
+            MIN_BUILD_WITH_URL_SUPPORT,
             """\
 fmx_example_package-hyphen_Transformer,http://example.com
 fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
