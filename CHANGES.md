@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.12.0
+
+* Prepare for external doc support in FME 2025 (FMEENGINE-84990)
+
 # 1.9.0
 
 * Add support for optional FORMAT_CATEGORIES column in format.db (Column introduced in FME b24591).
