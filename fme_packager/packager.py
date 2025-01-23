@@ -183,19 +183,27 @@ def enforce_metadata_unique_names(metadata):
     :raises ValueError: If a duplicate item name (case-insensitive) is found.
     """
 
-    def validate_unique_names(content_items, content_type):
+    def validate_unique_names(content_items):
         seen_names = set()
         for item in content_items:
             name = item.name.lower()
             if name in seen_names:
-                raise ValueError(f"Duplicate {content_type} name found: {item.name}")
+                return name
             seen_names.add(name)
+        return None
 
-    validate_unique_names(metadata.transformers, "transformer")
-    validate_unique_names(metadata.formats, "format")
-    validate_unique_names(metadata.web_services, "web_service")
-    validate_unique_names(metadata.web_filesystems, "web_filesystem")
-    validate_unique_names(metadata.python_packages, "python_package")
+    content_types = {
+        "transformers": metadata.transformers,
+        "formats": metadata.formats,
+        "web_services": metadata.web_services,
+        "web_filesystems": metadata.web_filesystems,
+        "python_packages": metadata.python_packages,
+    }
+
+    for content_type, content_values in content_types.items():
+        duplicate_name = validate_unique_names(content_values)
+        if duplicate_name:
+            raise ValueError(f"{duplicate_name} is defined in {content_type} more than once.")
 
 
 class FMEPackager:

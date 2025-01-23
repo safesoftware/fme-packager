@@ -187,7 +187,7 @@ def test_duplicate_names_in_metadata(tmp_path):
         """uid: test_pkg
 publisher_uid: test_pub
 version: 1
-minimum_fme_build: 2020
+minimum_fme_build: 25000
 package_content:
   transformers:
     - name: MyTransformer
