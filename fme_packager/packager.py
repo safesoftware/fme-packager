@@ -173,6 +173,39 @@ def get_format_visibility(formatinfo):
         )
 
 
+# Enforce unique package_content item names [FMEENGINE-85295]
+def enforce_metadata_unique_names(metadata):
+    """
+    Ensure there are no duplicate item names (case-insensitive)
+    within each package_content's items in the given metadata.
+
+    :param metadata: the package metadata.
+    :raises ValueError: If a duplicate item name (case-insensitive) is found.
+    """
+
+    def validate_unique_names(content_items):
+        seen_names = set()
+        for item in content_items:
+            name = item.name.lower()
+            if name in seen_names:
+                return name
+            seen_names.add(name)
+        return None
+
+    content_types = {
+        "transformers": metadata.transformers,
+        "formats": metadata.formats,
+        "web_services": metadata.web_services,
+        "web_filesystems": metadata.web_filesystems,
+        "python_packages": metadata.python_packages,
+    }
+
+    for content_type, content_values in content_types.items():
+        duplicate_name = validate_unique_names(content_values)
+        if duplicate_name:
+            raise ValueError(f"{duplicate_name} is defined in {content_type} more than once.")
+
+
 class FMEPackager:
     def __init__(self, src_dir, verbose=True):
         """
@@ -190,6 +223,7 @@ class FMEPackager:
         self.fmt_visible_directions = {}
 
         validate(self.metadata.dict, load_metadata_json_schema())
+        enforce_metadata_unique_names(self.metadata)
 
     def apply_help(self, help_src):
         """

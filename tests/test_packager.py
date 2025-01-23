@@ -17,8 +17,9 @@ from fme_packager.packager import (
     is_valid_python_compatibility,
     get_formatinfo,
     get_format_visibility,
+    enforce_metadata_unique_names,
 )
-
+from fme_packager.metadata import load_fpkg_metadata
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
@@ -177,3 +178,32 @@ def test_pack(package_name):
     fpkg_name = os.listdir(dist_dir)[0]
     with ZipFile(dist_dir / fpkg_name) as z:
         assert "package.yml" in z.namelist()
+
+
+# [FMEENGINE-85295]
+def test_duplicate_names_in_metadata(tmp_path):
+    package_yml = tmp_path / "package.yml"
+    package_yml.write_text(
+        """uid: test_pkg
+publisher_uid: test_pub
+version: 1
+minimum_fme_build: 25000
+package_content:
+  transformers:
+    - name: MyTransformer
+      version: 1
+    - name: MyTransformer
+      version: 1
+  formats:
+    - name: MyFormat
+    - name: MyFormat
+  web_services:
+    - name: MyWebService.xml
+    - name: MyWebService.xml
+  web_filesystems: []
+  python_packages: []
+"""
+    )
+    metadata = load_fpkg_metadata(str(tmp_path))
+    with pytest.raises(ValueError):
+        enforce_metadata_unique_names(metadata)
