@@ -1,12 +1,12 @@
 # fme-packager changes
 
+# 1.14.0
+
+* Add support for optional contexts in package_help.csv (FMEENGINE-85240)
+
 # 1.13.0
 
 * Validate that package.yml contains unique names for content items for each type (FMEENGINE-85295)
-
-# 1.12.0
-
-* Prepare for external doc support in FME 2025 (FMEENGINE-84990)
 
 # 1.9.0
 

@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from fme_packager.help import HelpBuilder, get_expected_help_index, MIN_BUILD_WITH_URL_SUPPORT
+from fme_packager.help import HelpBuilder, get_expected_help_index
 from fme_packager.metadata import FMEPackageMetadata
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -22,7 +22,7 @@ def mock_metadata():
 
 
 def test_get_expected_help_contexts_transformer(mock_metadata):
-    assert get_expected_help_index(mock_metadata) == {
+    assert get_expected_help_index(mock_metadata)[0] == {
         "fmx_example_package-hyphen_Transformer": "/Transformer.htm"
     }
 
@@ -35,7 +35,7 @@ def test_get_expected_help_contexts_format():
             "package_content": {"formats": [{"name": "demoformat"}]},
         }
     )
-    assert get_expected_help_index(metadata) == {
+    assert get_expected_help_index(metadata)[0] == {
         "ft_example_package_hyphen_demoformat_param_r": "/demoformat_ft_param_r.htm",
         "ft_example_package_hyphen_demoformat_param_w": "/demoformat_ft_param_w.htm",
         "ft_example_package_hyphen_demoformat_user_attr": "/demoformat_ft_user_attr.htm",
@@ -43,9 +43,11 @@ def test_get_expected_help_contexts_format():
         "param_example_package_hyphen_demoformat_w": "/demoformat_param_w.htm",
         "rw_example_package_hyphen_demoformat_feature_rep": "/demoformat_feature_rep.htm",
         "rw_example_package_hyphen_demoformat_index": "/demoformat.htm",
+    }
+    assert get_expected_help_index(metadata)[1] == {
         "rw_example_package_hyphen_demoformat_quickfacts": "/demoformat_quickfacts.htm",
     }
-    assert sorted(get_expected_help_index(metadata)) == [
+    assert sorted(get_expected_help_index(metadata)[0]) == [
         "ft_example_package_hyphen_demoformat_param_r",
         "ft_example_package_hyphen_demoformat_param_w",
         "ft_example_package_hyphen_demoformat_user_attr",
@@ -53,6 +55,8 @@ def test_get_expected_help_contexts_format():
         "param_example_package_hyphen_demoformat_w",
         "rw_example_package_hyphen_demoformat_feature_rep",
         "rw_example_package_hyphen_demoformat_index",
+    ]
+    assert sorted(get_expected_help_index(metadata)[1]) == [
         "rw_example_package_hyphen_demoformat_quickfacts",
     ]
 
@@ -67,20 +71,21 @@ def test_get_expected_help_contexts_format_one_dir():
     )
     read_only = {"demoformat": "r"}
     write_only = {"demoformat": "w"}
-    assert sorted(get_expected_help_index(metadata, read_only)) == [
+    assert sorted(get_expected_help_index(metadata, read_only)[0]) == [
         "ft_example_package_demoformat_param_r",
         "ft_example_package_demoformat_user_attr",
         "param_example_package_demoformat_r",
         "rw_example_package_demoformat_feature_rep",
         "rw_example_package_demoformat_index",
-        "rw_example_package_demoformat_quickfacts",
     ]
-    assert sorted(get_expected_help_index(metadata, write_only)) == [
+    assert sorted(get_expected_help_index(metadata, write_only)[0]) == [
         "ft_example_package_demoformat_param_w",
         "ft_example_package_demoformat_user_attr",
         "param_example_package_demoformat_w",
         "rw_example_package_demoformat_feature_rep",
         "rw_example_package_demoformat_index",
+    ]
+    assert sorted(get_expected_help_index(metadata, read_only)[1]) == [
         "rw_example_package_demoformat_quickfacts",
     ]
 
@@ -107,74 +112,3 @@ def test_md(mock_metadata, tmp_path):
     assert index_file.is_file()
     with index_file.open("r") as f:
         assert f.read() == "fmx_example_package-hyphen_Transformer,/Transformer.htm\n"
-
-
-@pytest.mark.parametrize(
-    "minimum_build, csv_content, expected_error",
-    [
-        # Case 1: FME build < MIN_BUILD_WITH_URL_SUPPORT, fallback required for URLs
-        (
-            23224,
-            """\
-fmx_example_package-hyphen_Transformer,http://example.com
-fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
-""",
-            None,
-        ),
-        # Case 2: FME build >= MIN_BUILD_WITH_URL_SUPPORT, URLs allowed without fallback
-        (
-            MIN_BUILD_WITH_URL_SUPPORT,
-            """\
-fmx_example_package-hyphen_Transformer,http://example.com
-""",
-            None,
-        ),
-        # Case 3: FME build <= MIN_BUILD_WITH_URL_SUPPORT, single local path allowed
-        (
-            23224,
-            """\
-fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
-""",
-            None,
-        ),
-        # Validation failure: Missing fallback for FME build < MIN_BUILD_WITH_URL_SUPPORT
-        (
-            23224,
-            """\
-fmx_example_package-hyphen_Transformer,http://example.com
-""",
-            "Minimum build required for URL support is",
-        ),
-        # Validation failure: Invalid structure in CSV
-        (
-            MIN_BUILD_WITH_URL_SUPPORT,
-            """\
-fmx_example_package-hyphen_Transformer,http://example.com
-fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
-fmx_example_package-hyphen_Transformer,/Transformers/Transformer-pkg.htm
-""",
-            "Invalid entries for",
-        ),
-    ],
-)
-def test_validate_index(tmp_path, minimum_build, csv_content, expected_error):
-    metadata = FMEPackageMetadata(
-        {
-            "uid": "package-hyphen",
-            "publisher_uid": "example",
-            "minimum_fme_build": minimum_build,
-            "package_content": {"transformers": [{"name": "Transformer", "version": 1}]},
-        }
-    )
-    help_builder = HelpBuilder(metadata, HELP_FIXTURES_DIR / "htm", tmp_path, {})
-    help_builder.build()
-
-    # Create the package_help.csv file
-    csv_file = tmp_path / "package_help.csv"
-    csv_file.write_text(csv_content)
-
-    if expected_error:
-        with pytest.raises(ValueError, match=expected_error):
-            help_builder.validate_index(tmp_path)
-    else:
-        help_builder.validate_index(tmp_path)

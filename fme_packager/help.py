@@ -11,8 +11,6 @@ import re
 import shutil
 import warnings
 from pathlib import Path
-from collections import defaultdict
-from urllib.parse import urlparse
 
 from markdown import Markdown
 
@@ -31,9 +29,6 @@ HTML_TPL = """<!DOCTYPE html>
 </body>
 </html>
 """
-
-# TODO: Change required build based on outcome of [FMEFORM-32618]
-MIN_BUILD_WITH_URL_SUPPORT = 25000
 
 
 def add_transformer_classes_to_doc(html):
@@ -114,8 +109,8 @@ class DocCopier:
 
 def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions=None):
     """
-    Returns a mapping of the expected help contexts
-    to the name of its corresponding HTML doc file,
+    Returns a mapping of the expected help contexts, and a mapping of optional help contexts,
+    to the name of their corresponding HTML doc files,
     based on the formats and transformers in the given package metadata.
 
     Help contexts are keys used by FME Workbench to map help buttons in the UI
@@ -124,6 +119,8 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
     """
     # /foundation/ui/core/include/ui/core/helpkeywords.h
     index = {}
+    # Optional help contexts
+    opt = {}
     if not format_directions:
         format_directions = {}
     fpkg_ident = f"{fpkg_metadata.publisher_uid}_{fpkg_metadata.uid}"
@@ -139,12 +136,13 @@ def get_expected_help_index(fpkg_metadata: FMEPackageMetadata, format_directions
         # Format prefix is "rw" even when read-only or write-only
         index[f"rw_{fmt_ident}_index"] = f"/{fmt.name}.htm"
         index[f"rw_{fmt_ident}_feature_rep"] = f"/{fmt.name}_feature_rep.htm"
-        index[f"rw_{fmt_ident}_quickfacts"] = f"/{fmt.name}_quickfacts.htm"
         for direction in directions:
             index[f"param_{fmt_ident}_{direction}"] = f"/{fmt.name}_param_{direction}.htm"
             index[f"ft_{fmt_ident}_param_{direction}"] = f"/{fmt.name}_ft_param_{direction}.htm"
         index[f"ft_{fmt_ident}_user_attr"] = f"/{fmt.name}_ft_user_attr.htm"
-    return index
+        # Optional help contexts
+        opt[f"rw_{fmt_ident}_quickfacts"] = f"/{fmt.name}_quickfacts.htm"
+    return index, opt
 
 
 class HelpBuilder:
@@ -199,7 +197,7 @@ class HelpBuilder:
         Help contexts missing a doc file results in a warning,
         and its row omitted from the output.
         """
-        expected = get_expected_help_index(self.fpkg_metadata, self.format_directions)
+        expected, optional = get_expected_help_index(self.fpkg_metadata, self.format_directions)
 
         path = Path(doc_dir) / "package_help.csv"
         with path.open("w", encoding="utf8", newline="") as f:
@@ -210,74 +208,46 @@ class HelpBuilder:
                     warnings.warn(f"Missing doc {expected_doc} ({context})")
                     continue
                 writer.writerow([context, expected[context]])
+            for context in sorted(optional.keys()):
+                possible_doc = Path(doc_dir) / optional[context].lstrip("/")
+                if possible_doc.is_file():
+                    writer.writerow([context, optional[context]])
+
         return path
 
     def validate_index(self, doc_dir):
         """
-        Read package_help.csv and validates its contents. Checks that:
 
+        Read package_help.csv and validates its contents. Checks that:
         - All expected help contexts are present, based on package metadata
         - No unrecognized help contexts are present
-        - Referenced files exist and are HTML or MD, or is an absolute URL
+        - Referenced files exist and are HTML or MD
+
         """
 
-        """links: A mapping of keywords (aka context) to its corresponding doc path.
-        There can be more than one doc path per keyword because keywords can be defined in the csv more than once.
-        """
-        links = defaultdict(list)
+        links = {}
         with (Path(doc_dir) / "package_help.csv").open("r", encoding="utf8", newline="") as f:
             try:
                 for row in csv.reader(f):
-                    links[row[0]].append(row[1])
+                    links[row[0]] = row[1]
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
-        min_build = self.fpkg_metadata.minimum_fme_build
-        supports_urls = min_build >= MIN_BUILD_WITH_URL_SUPPORT
-
-        def validate_doc_path(doc_path):
-            """Validate a single local path."""
+        for ctx, doc_path in links.items():
             if not doc_path.startswith("/"):
-                raise ValueError(f"Path must start with '/' or be an asbolute URL: {doc_path}")
-
+                raise ValueError(f"Path must start with /: {doc_path}")
             expected_doc = Path(doc_dir) / doc_path.lstrip("/")
             if not expected_doc.exists():
                 raise FileNotFoundError(f"{expected_doc} does not exist")
             if expected_doc.suffix[1:].lower() not in ("htm", "html", "md"):
                 raise ValueError(f"{expected_doc} must be htm(l) or md")
 
-        def validate_url(doc_path):
-            """Validate a single URL."""
-            return urlparse(doc_path).scheme in ("http", "https")
+        required, optional = get_expected_help_index(self.fpkg_metadata, self.format_directions)
+        all_expected = set(required.keys()) | set(optional.keys())
 
-        for ctx, doc_paths in links.items():
-            if len(doc_paths) == 1:
-                # Single entry: [URL] or [path]
-                if validate_url(doc_paths[0]):
-                    if not supports_urls:
-                        raise ValueError(
-                            f"Minimum build required for URL support is {MIN_BUILD_WITH_URL_SUPPORT}, and no local fallback found for {ctx} ({doc_paths[0]}). Your build: {min_build}"
-                        )
-                else:
-                    validate_doc_path(doc_paths[0])
-            elif len(doc_paths) == 2:
-                # Two entries: [URL, path]
-                first_path, second_path = doc_paths
-                if not validate_url(first_path):
-                    raise ValueError(
-                        f"The first entry for {ctx} must be a URL, instead got: {first_path}"
-                    )
-
-                validate_doc_path(second_path)
-            else:
-                raise ValueError(
-                    f"Invalid entries for {ctx}: entries must be of order [<URL>], [<local path>], or [<URL>, <local path>], but got {doc_paths}"
-                )
-
-        expected = set(get_expected_help_index(self.fpkg_metadata, self.format_directions).keys())
         contexts_present = set(links.keys())
-        unrecognized = contexts_present - expected
+        unrecognized = contexts_present - all_expected
         if unrecognized:
             raise ValueError(f"Unrecognized help: {', '.join(unrecognized)}")
-        missing = expected - contexts_present
+        missing = set(required.keys()) - contexts_present
         if missing:
             raise ValueError(f"Missing help: {', '.join(missing)}")
