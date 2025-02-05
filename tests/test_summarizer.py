@@ -11,7 +11,6 @@ from pathlib import Path
 from fme_packager import summarizer
 from fme_packager.cli import summarize
 from fme_packager.summarizer import TransformerFilenames, FormatFilenames, _package_deprecated
-from tests.conftest import mock_transformer, mock_transformer_file
 
 CWD = pathlib.Path(__file__).parent.resolve()
 

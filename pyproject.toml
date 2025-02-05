@@ -7,6 +7,9 @@ build-backend = "setuptools.build_meta"
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.lint]
+ignore = ["E741"]
+
 [tool.coverage.run]
 source = [
     "fme_packager",
