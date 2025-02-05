@@ -76,9 +76,9 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     if not transformer_name:
         return TransformerFilenames(filename=None, readme_filename=None)
 
-    result = dict()
+    result = {}
     for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        potential_filename = str(Path("transformers") / f"{transformer_name}.{ext}")
+        potential_filename = (Path("transformers") / f"{transformer_name}.{ext}").as_posix()
         if os.path.exists(potential_filename):
             result[key] = potential_filename
 
