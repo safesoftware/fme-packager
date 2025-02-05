@@ -505,8 +505,10 @@ class FMEPackager:
         if not self.src_python_dir.exists():
             return
 
+        files = ("pyproject.toml", "setup.cfg", "setup.py")
         for path in self.src_python_dir.iterdir():
-            if (path / "setup.py").is_file() or (path / "setup.cfg").is_file():
+            # If any of the expected files are present, build the wheel.
+            if any((path / file).is_file() for file in files):
                 self._print(f"\nBuilding Python wheel: {path}")
                 os.chdir(path)
                 if os.path.exists("build"):
