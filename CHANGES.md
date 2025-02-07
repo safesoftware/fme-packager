@@ -1,5 +1,10 @@
 # fme-packager changes
 
+# 1.15.0
+
+* Require Python >= 3.9.
+* Allow wheel builds for packages that use pyproject.toml exclusively.
+
 # 1.14.0
 
 * Add support for optional contexts in package_help.csv (FMEENGINE-85240)
