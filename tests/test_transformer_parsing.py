@@ -26,6 +26,7 @@ def test_custom_transformer(custom_package_dir):
         assert item.python_compatibility == "37"
         assert item.categories == ["Attributes"]
         assert item.aliases == []
+        assert item.visible
 
 
 def test_custom_transformer_encrypted_versioned(custom_package_dir):
@@ -42,6 +43,7 @@ def test_custom_transformer_encrypted_versioned(custom_package_dir):
         assert item.version == len(defs) - i
         assert item.python_compatibility == "310"
         assert item.is_encrypted == (i == 0)  # Latest version is encrypted
+        assert item.visible
 
 
 def test_fmx_transformer(valid_package_dir):
