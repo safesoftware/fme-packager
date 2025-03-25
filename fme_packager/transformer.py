@@ -95,7 +95,7 @@ class CustomTransformer(Transformer):
 
     @property
     def visible(self):
-        return True
+        return self.header.deprecated.lower() == "no"
 
     @property
     def is_encrypted(self):

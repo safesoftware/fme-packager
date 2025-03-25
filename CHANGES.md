@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.15.1
+
+* Fix bug where deprecated custom transformers did not set the deprecation status of the package
+
 # 1.15.0
 
 * Require Python >= 3.9.
