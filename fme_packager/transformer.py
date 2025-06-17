@@ -178,10 +178,38 @@ class FmxTransformer(Transformer):
 
     @property
     def data_processing_types(self):
-        data_type = self.props.get("DATA_PROCESSING_TYPE")
-        if data_type:
-            return [data_type.strip()]
-        return []
+        data_processing_type = self.props.get("DATA_PROCESSING_TYPE")
+        if not data_processing_type:
+            return []
+        
+        data_processing_type = data_processing_type.strip()
+        
+        try:
+            data_processing_type = json.loads(data_processing_type)
+            
+            if isinstance(data_processing_type, dict):
+                types = set()
+                
+                if_conditions = data_processing_type.get("if", [])
+                for condition in if_conditions:
+                    then_value = condition.get("then")
+                    if then_value:
+                        types.add(then_value)
+                
+                default_value = data_processing_type.get("default")
+                if default_value:
+                    types.add(default_value)
+                
+                return sorted(list(types))
+            
+            elif isinstance(data_processing_type, str):
+                return [data_processing_type]
+                
+        except json.JSONDecodeError:
+            pass
+        
+        # Handle simple string case
+        return [data_processing_type]
 
 
 class FmxjTransformer(Transformer):
@@ -216,7 +244,32 @@ class FmxjTransformer(Transformer):
 
     @property
     def data_processing_types(self):
-        # TODO-AI: Implement conditional dataProcessingType parsing for complex cases
+        data_processing_type = self.json_def.get("dataProcessingType")
+        if not data_processing_type:
+            return []
+        
+        # Handle simple string case
+        if isinstance(data_processing_type, str):
+            return [data_processing_type]
+        
+        # Handle conditional logic case
+        if isinstance(data_processing_type, dict):
+            types = set()
+            
+            # Extract all "then" values from conditional statements
+            if_conditions = data_processing_type.get("if", [])
+            for condition in if_conditions:
+                then_value = condition.get("then")
+                if then_value:
+                    types.add(then_value)
+            
+            # Add default value if present
+            default_value = data_processing_type.get("default")
+            if default_value:
+                types.add(default_value)
+            
+            return sorted(list(types))
+        
         return []
 
 

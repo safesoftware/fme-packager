@@ -18,3 +18,5 @@ package_content:
       version: 1
     - name: HTTPCaller
       version: 1
+    - name: BoxConnector
+      version: 1

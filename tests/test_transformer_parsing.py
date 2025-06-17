@@ -109,8 +109,8 @@ def test_fmxj_transformer_data_processing_types(data_processing_types_package_di
     
     for item in defs:
         assert hasattr(item, 'data_processing_types')
-        # TODO-AI: Implement conditional dataProcessingType parsing
-        assert item.data_processing_types == []
+        # HTTPCaller has conditional logic with both "source" and "destination" values
+        assert item.data_processing_types == ["destination", "source"]
 
 
 def test_custom_transformer_data_processing_types(data_processing_types_package_dir):
@@ -123,3 +123,15 @@ def test_custom_transformer_data_processing_types(data_processing_types_package_
     item = defs[0]
     assert hasattr(item, 'data_processing_types')
     assert item.data_processing_types == ["both"]
+
+
+def test_fmx_transformer_conditional_data_processing_types(data_processing_types_package_dir):
+    """Test that FMX transformers correctly parse conditional dataProcessingType logic stored as JSON."""
+    fmx = load_transformer(Path(data_processing_types_package_dir) / "transformers" / "BoxConnector.fmx")
+    assert isinstance(fmx, FmxFile)
+    defs = list(fmx.versions())
+    assert len(defs) == 3
+    
+    for item in defs:
+        assert hasattr(item, 'data_processing_types')
+        assert sorted(item.data_processing_types) == ["destination", "source"]
