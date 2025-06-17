@@ -1,0 +1,20 @@
+fpkg_version: 1
+uid: data-processing-types
+publisher_uid: example
+name: Data Processing Types
+version: 0.1.0
+description: Test package for data processing type metadata in transformers.
+minimum_fme_build: 19238
+author:
+  name: G Raymond
+  email: me@example.com
+package_content:
+  transformers:
+    - name: AttributeFileReader
+      version: 1
+    - name: AttributeFileWriter
+      version: 1
+    - name: bothLinked
+      version: 1
+    - name: HTTPCaller
+      version: 1
