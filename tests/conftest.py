@@ -25,8 +25,18 @@ def custom_package_dir():
 
 
 @pytest.fixture
+def fmxj_package_dir():
+    return os.path.join(FIXTURES_DIR, "fmxj_package")
+
+
+@pytest.fixture
 def incompatible_custom_package_dir():
     return os.path.join(FIXTURES_DIR, "incompatible_custom_package")
+
+
+@pytest.fixture
+def data_processing_types_package_dir():
+    return os.path.join(FIXTURES_DIR, "data_processing_types")
 
 
 @pytest.fixture

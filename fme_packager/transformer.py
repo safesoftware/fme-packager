@@ -7,6 +7,7 @@ import os.path
 import re
 from abc import ABC, abstractmethod
 from collections import namedtuple
+from typing import Optional
 
 
 class Transformer(ABC):
@@ -42,10 +43,15 @@ class Transformer(ABC):
     def visible(self):
         pass
 
+    @property
+    @abstractmethod
+    def data_processing_types(self):
+        pass
+
 
 NamedTransformerHeader = namedtuple(
     "NamedTransformerHeader",
-    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver",
+    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver preserve_group_attr replaced_by data_processing_type",
 )
 
 
@@ -57,14 +63,25 @@ def parse_custom_transformer_header(line):
     :return: Parsed header
     """
     fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
-    header = NamedTransformerHeader(*fields[: len(NamedTransformerHeader._fields)])
-    return header._replace(version=int(header.version), build_num=int(header.build_num))
+
+    num_fields_expected = len(NamedTransformerHeader._fields)
+    while len(fields) < num_fields_expected:
+        fields.append("")
+
+    header = NamedTransformerHeader(*fields[:num_fields_expected])
+    data_processing_type = [] if not header.data_processing_type else [header.data_processing_type]
+
+    return header._replace(
+        version=int(header.version),
+        build_num=int(header.build_num),
+        data_processing_type=data_processing_type,
+    )
 
 
 class CustomTransformer(Transformer):
     def __init__(self, lines):
         super().__init__()
-        self.header: NamedTransformerHeader = None
+        self.header: NamedTransformerHeader
         self.lines = lines
         for line in lines:
             if line.startswith(b"# TRANSFORMER_BEGIN"):
@@ -98,6 +115,10 @@ class CustomTransformer(Transformer):
         return self.header.deprecated.lower() == "no"
 
     @property
+    def data_processing_types(self):
+        return self.header.data_processing_type
+
+    @property
     def is_encrypted(self):
         return self.lines[0].strip() == b"FMW0001"
 
@@ -121,7 +142,7 @@ class FmxTransformer(Transformer):
                 if name.startswith("PARAMETER_"):
                     continue
                 self.props[name] = match.group(2).strip()
-        if not self.name or not self.version:
+        if self.name is None or self.version is None:
             raise ValueError("TRANSFORMER_NAME or VERSION not found")
 
     @property
@@ -155,6 +176,13 @@ class FmxTransformer(Transformer):
     def visible(self):
         return self.props.get("VISIBLE", "yes").lower() == "yes"
 
+    @property
+    def data_processing_types(self):
+        data_type = self.props.get("DATA_PROCESSING_TYPE")
+        if data_type:
+            return [data_type.strip()]
+        return []
+
 
 class FmxjTransformer(Transformer):
     def __init__(self, info, version_def):
@@ -185,6 +213,11 @@ class FmxjTransformer(Transformer):
     @property
     def visible(self):
         return not self.info.get("deprecated", False)
+
+    @property
+    def data_processing_types(self):
+        # TODO-AI: Implement conditional dataProcessingType parsing for complex cases
+        return []
 
 
 class TransformerFile(ABC):
