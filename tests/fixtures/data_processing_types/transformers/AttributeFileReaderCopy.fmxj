@@ -1,6 +1,6 @@
 {
   "info" : {
-    "name" : "AttributeFileReader",
+    "name" : "example.data-processing-types.AttributeFileReaderCopy",
     "categories" : [
       "Format Specific",
       "Workflows",
@@ -10,7 +10,7 @@
   },
   "versions" : [
     {
-      "version" : 5,
+      "version" : 6,
       "changeLog" : [ "Added Bulk Mode support. Note: Feature order may change in relation to other output ports. Feature order per port is maintained." ],
       "form" : {
         "parameters" : [
@@ -123,7 +123,7 @@
       }
     },
     {
-      "version" : 4,
+      "version" : 5,
       "changeLog" : [ "Added Rejected output port." ],
       "form" : {
         "parameters" : [
@@ -240,7 +240,7 @@
       }
     },
     {
-      "version" : 3,
+      "version" : 4,
       "changeLog" : [ "Enhanced to allow commas in file names." ],
       "form" : {
         "parameters" : [
@@ -326,7 +326,7 @@
       }
     },
     {
-      "version" : 2,
+      "version" : 3,
       "changeLog" : [ "Enhanced to work with international and special character sets. Special characters can include punctuation and many different types of symbols." ],
       "form" : {
         "parameters" : [
@@ -412,7 +412,7 @@
       }
     },
     {
-      "version" : 1,
+      "version" : 2,
       "changeLog" : [ "Added 'Source File Character Encoding' parameter" ],
       "form" : {
         "parameters" : [
@@ -498,7 +498,7 @@
       }
     },
     {
-      "version" : 0,
+      "version" : 1,
       "changeLog" : [ "Initial version" ],
       "form" : {
         "parameters" : [

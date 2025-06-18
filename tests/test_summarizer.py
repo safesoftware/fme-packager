@@ -103,6 +103,7 @@ def test__transformer_data(mock_transformer_file, mock_transformer):
             "categories": mock_transformer.categories,
             "aliases": mock_transformer.aliases,
             "visible": mock_transformer.visible,
+            "data_processing_types": mock_transformer.data_processing_types,
         }
     ]
 
@@ -253,6 +254,10 @@ def test_package_all_visible(mock_transformers, mock_formats):
             / "fixtures"
             / "json_output"
             / "summarize_example.my-package-deprecated-0.1.0.fpkg.json",
+        ),
+        (
+            CWD / "fixtures" / "fpkgs" / "example.data-processing-types-0.1.0.fpkg",
+            CWD / "fixtures" / "json_output" / "summarize_example.data-processing-types-0.1.0.fpkg.json",
         ),
     ],
 )

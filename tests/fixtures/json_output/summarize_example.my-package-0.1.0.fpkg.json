@@ -24,7 +24,8 @@
                             "Integrations"
                         ],
                         "aliases": [],
-                        "visible": true
+                        "visible": true,
+                        "data_processing_types": []
                     }
                 ],
                 "description": "# example.my-package.MyGreeter\n\n_This doc appears when the transformer is selected in the Workbench Quick Add pane._\n\nThe MyGreeter transformer takes a first name as input,\nand outputs a greeting for that person.\n\nThis transformer is part of the\n[example.my-package FME Package](https://hub.fme.co/publishers/example/packages/my-package).\n\n\n## Inputs:\n\n* **First Name**: The first name of who to greet. Default: \"World\".\n\n## Outputs attributes:\n\n* **greeting**: This attribute contains the greeting message.\n  It looks something like \"Hello, [first name]!\".\n",
@@ -41,7 +42,8 @@
                             "Integrations"
                         ],
                         "aliases": [],
-                        "visible": true
+                        "visible": true,
+                        "data_processing_types": []
                     }
                 ],
                 "description": "# example.my-package.MyYeller\n\n_This doc appears when the transformer is selected in the Workbench Quick Add pane._\n\nThe MyYeller transformer takes a first name as input,\nand outputs a greeting for that person.\n\nThis transformer is part of the\n[example.my-package FME Package](https://hub.fme.co/publishers/example/packages/my-package).\n\n\n## Inputs:\n\n* **First Name**: The first name of who to greet. Default: \"World\".\n\n## Outputs attributes:\n\n* **greeting**: This attribute contains the greeting message.\n  It looks something like \"Hello, [first name]!\".\n",

@@ -119,6 +119,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
         - 'categories': The categories of the transformer.
         - 'aliases': The aliases of the transformer.
         - 'visible': The visibility status of the transformer.
+        - 'data_processing_types': The data processing types of the transformer.
 
     :param loaded_file: The loaded transformer file.
     :return: The updates for the transformer dictionary.
@@ -132,6 +133,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
                 "categories": version.categories,
                 "aliases": version.aliases,
                 "visible": version.visible,
+                "data_processing_types": version.data_processing_types,
             }
             for version in versions
         ],

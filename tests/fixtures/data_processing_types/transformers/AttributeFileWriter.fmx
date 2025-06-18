@@ -1,8 +1,8 @@
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 5
+VERSION: 6
 
 CATEGORY: Format Specific,Workflows,Attributes
 
@@ -77,9 +77,9 @@ TEMPLATE_END
 
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 4
+VERSION: 5
  
 CATEGORY: Format Specific,Workflows,Attributes
 
@@ -169,9 +169,9 @@ TEMPLATE_END
 
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 3
+VERSION: 4
  
 CATEGORY: Format Specific,Workflows
 
@@ -245,9 +245,9 @@ TEMPLATE_END
 
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 2
+VERSION: 3
  
 CATEGORY: Format Specific,Workflows
 
@@ -323,9 +323,9 @@ TEMPLATE_END
 
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 1
+VERSION: 2
  
 CATEGORY: Format Specific,Workflows
 
@@ -394,9 +394,9 @@ TEMPLATE_END
 
 # =========================================================================
 
-TRANSFORMER_NAME: AttributeFileWriter
+TRANSFORMER_NAME: example.data-processing-types.AttributeFileWriter
  
-VERSION: 0
+VERSION: 1
  
 CATEGORY: Format Specific,Workflows
 

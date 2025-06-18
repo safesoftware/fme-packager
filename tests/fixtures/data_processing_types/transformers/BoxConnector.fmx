@@ -1,8 +1,8 @@
-TRANSFORMER_NAME: BoxConnector
+TRANSFORMER_NAME: example.data-processing-types.BoxConnector
 
 ALIASES:
 
-VERSION: 2
+VERSION: 3
 
 CATEGORY: Integrations,Web,Workflows
 
@@ -76,11 +76,11 @@ TEMPLATE_END
 
 # ===================================================
 
-TRANSFORMER_NAME: BoxConnector
+TRANSFORMER_NAME: example.data-processing-types.BoxConnector
 
 ALIASES:
 
-VERSION: 1
+VERSION: 2
 
 CATEGORY: Integrations,Web,Workflows
 
@@ -162,11 +162,11 @@ TEMPLATE_END
 
 # ===================================================
 
-TRANSFORMER_NAME: BoxConnector
+TRANSFORMER_NAME: example.data-processing-types.BoxConnector
 
 ALIASES:
 
-VERSION: 0
+VERSION: 1
 
 CATEGORY: Integrations,Web,Workflows
 

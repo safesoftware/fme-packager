@@ -1,6 +1,6 @@
 {
   "info" : {
-    "name" : "HTTPCaller",
+    "name" : "example.data-processing-types.HTTPCaller",
     "categories" : [
       "Web",
       "Workflows"],
@@ -27,7 +27,7 @@
   },
   "versions" : [
     {
-      "version" : 7,
+      "version" : 8,
       "changeLog" : [ "Fixed incorrect option in the \"Upload Data\" selection menu" ],
       "form" : {
         "parameters" : [
@@ -2720,7 +2720,7 @@
       }
     },
     {
-      "version" : 6,
+      "version" : 7,
       "changeLog" : [
         "Enhanced parameter Status Code Attribute to work with both international and special character sets. Special characters can include punctuation and many different types of symbols.",
         "Added support for HTTPS client certificates",
@@ -5428,7 +5428,7 @@
       }
     },
     {
-      "version" : 5,
+      "version" : 6,
       "changeLog" : [
         "Added option to split multipart responses into multiple features",
         "Added option to allow less secure encryption algorithms",
@@ -7888,7 +7888,7 @@
       }
     },
     {
-      "version" : 4,
+      "version" : 5,
       "changeLog" : [
         "Added rate limiting options",
         "Added automatic retry of failed requests"],
@@ -10011,7 +10011,7 @@
       }
     },
     {
-      "version" : 3,
+      "version" : 4,
       "changeLog" : [
         "Added option for asynchronous processing of HTTP requests",
         "Added option to allow/restrict the use of HTTP/2"],
@@ -11951,7 +11951,7 @@
       }
     },
     {
-      "version" : 2,
+      "version" : 3,
       "changeLog" : [ "Expand options for redirect following" ],
       "form" : {
         "parameters" : [
@@ -13831,7 +13831,7 @@
       }
     },
     {
-      "version" : 1,
+      "version" : 2,
       "changeLog" : [
         "Added \"File Extension\" parameter, to be used when creating a new file for each HTTP response",
         "Allow upload body on DELETE requests"],
@@ -15688,7 +15688,7 @@
       }
     },
     {
-      "version" : 0,
+      "version" : 1,
       "changeLog" : [ "Initial version" ],
       "form" : {
         "parameters" : [
