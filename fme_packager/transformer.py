@@ -12,24 +12,24 @@ from collections import namedtuple
 def parse_data_processing_type(data_processing_type: dict):
     """
     Parse data processing type from conditional logic dictionary.
-    
+
     :param data_processing_type: The data processing type dict with conditional logic
     :return: List of data processing types
     """
     types = set()
-    
+
     # Extract all "then" values from conditional statements
     if_conditions = data_processing_type.get("if", [])
     for condition in if_conditions:
         then_value = condition.get("then")
         if then_value:
             types.add(then_value)
-    
+
     # Add default value if present
     default_value = data_processing_type.get("default")
     if default_value:
         types.add(default_value)
-    
+
     return sorted(list(types))
 
 
@@ -204,16 +204,16 @@ class FmxTransformer(Transformer):
         data_processing_type = self.props.get("DATA_PROCESSING_TYPE")
         if not data_processing_type:
             return []
-        
+
         data_processing_type = data_processing_type.strip()
-        
+
         # Try to parse as JSON first
         try:
             parsed_data = json.loads(data_processing_type)
             return parse_data_processing_type(parsed_data)
         except json.JSONDecodeError:
             pass
-        
+
         # If JSON parsing fails, treat as simple string
         return [data_processing_type]
 
@@ -253,15 +253,15 @@ class FmxjTransformer(Transformer):
         data_processing_type = self.json_def.get("dataProcessingType")
         if not data_processing_type:
             return []
-        
+
         # Handle simple string case
         if isinstance(data_processing_type, str):
             return [data_processing_type]
-        
+
         # Handle conditional logic case
         if isinstance(data_processing_type, dict):
             return parse_data_processing_type(data_processing_type)
-        
+
         return []
 
 

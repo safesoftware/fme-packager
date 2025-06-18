@@ -257,7 +257,10 @@ def test_package_all_visible(mock_transformers, mock_formats):
         ),
         (
             CWD / "fixtures" / "fpkgs" / "example.data-processing-types-0.1.0.fpkg",
-            CWD / "fixtures" / "json_output" / "summarize_example.data-processing-types-0.1.0.fpkg.json",
+            CWD
+            / "fixtures"
+            / "json_output"
+            / "summarize_example.data-processing-types-0.1.0.fpkg.json",
         ),
     ],
 )
