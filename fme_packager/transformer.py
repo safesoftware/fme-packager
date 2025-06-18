@@ -7,7 +7,30 @@ import os.path
 import re
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from typing import Optional
+
+
+def parse_data_processing_type(data_processing_type: dict):
+    """
+    Parse data processing type from conditional logic dictionary.
+    
+    :param data_processing_type: The data processing type dict with conditional logic
+    :return: List of data processing types
+    """
+    types = set()
+    
+    # Extract all "then" values from conditional statements
+    if_conditions = data_processing_type.get("if", [])
+    for condition in if_conditions:
+        then_value = condition.get("then")
+        if then_value:
+            types.add(then_value)
+    
+    # Add default value if present
+    default_value = data_processing_type.get("default")
+    if default_value:
+        types.add(default_value)
+    
+    return sorted(list(types))
 
 
 class Transformer(ABC):
@@ -184,31 +207,14 @@ class FmxTransformer(Transformer):
         
         data_processing_type = data_processing_type.strip()
         
+        # Try to parse as JSON first
         try:
-            data_processing_type = json.loads(data_processing_type)
-            
-            if isinstance(data_processing_type, dict):
-                types = set()
-                
-                if_conditions = data_processing_type.get("if", [])
-                for condition in if_conditions:
-                    then_value = condition.get("then")
-                    if then_value:
-                        types.add(then_value)
-                
-                default_value = data_processing_type.get("default")
-                if default_value:
-                    types.add(default_value)
-                
-                return sorted(list(types))
-            
-            elif isinstance(data_processing_type, str):
-                return [data_processing_type]
-                
+            parsed_data = json.loads(data_processing_type)
+            return parse_data_processing_type(parsed_data)
         except json.JSONDecodeError:
             pass
         
-        # Handle simple string case
+        # If JSON parsing fails, treat as simple string
         return [data_processing_type]
 
 
@@ -254,21 +260,7 @@ class FmxjTransformer(Transformer):
         
         # Handle conditional logic case
         if isinstance(data_processing_type, dict):
-            types = set()
-            
-            # Extract all "then" values from conditional statements
-            if_conditions = data_processing_type.get("if", [])
-            for condition in if_conditions:
-                then_value = condition.get("then")
-                if then_value:
-                    types.add(then_value)
-            
-            # Add default value if present
-            default_value = data_processing_type.get("default")
-            if default_value:
-                types.add(default_value)
-            
-            return sorted(list(types))
+            return parse_data_processing_type(data_processing_type)
         
         return []
 
