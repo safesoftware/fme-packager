@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.16.0
+
+* Add support for data processing types (FMEHUBDEV-1661)
+
 # 1.15.1
 
 * Fix bug where deprecated custom transformers did not set the deprecation status of the package
