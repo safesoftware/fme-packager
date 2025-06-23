@@ -1,0 +1,542 @@
+{
+  "fpkg_version": 1,
+  "uid": "data-processing-types",
+  "publisher_uid": "example",
+  "name": "Data Processing Types",
+  "version": "0.1.0",
+  "description": "Test package for data processing type metadata in transformers.",
+  "minimum_fme_build": 23146,
+  "author": {
+    "name": "G Raymond",
+    "email": "me@example.com"
+  },
+  "package_content": {
+    "transformers": [
+      {
+        "name": "AttributeFileReader",
+        "versions": [
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 6,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 5,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 4,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 3,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 2,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReader",
+            "version": 1,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          }
+        ],
+        "description": "# example.data-processing-types.AttributeFileReader\n\nA source transformer for reading attribute files.\n",
+        "description_format": "md",
+        "latest_version": 6
+      },
+      {
+        "name": "AttributeFileReaderCopy",
+        "versions": [
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 6,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 5,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 4,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 3,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 2,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileReaderCopy",
+            "version": 1,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "source"
+            ]
+          }
+        ],
+        "description": "# example.data-processing-types.AttributeFileReaderCopy\n\nA copy of the source transformer for reading attribute files (FMXJ version).\n",
+        "description_format": "md",
+        "latest_version": 6
+      },
+      {
+        "name": "AttributeFileWriter",
+        "versions": [
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 6,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 5,
+            "categories": [
+              "Format Specific",
+              "Workflows",
+              "Attributes"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 4,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 3,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 2,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.AttributeFileWriter",
+            "version": 1,
+            "categories": [
+              "Format Specific",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination"
+            ]
+          }
+        ],
+        "description": "# example.data-processing-types.AttributeFileWriter\n\nA destination transformer for writing attribute files.\n",
+        "description_format": "md",
+        "latest_version": 6
+      },
+      {
+        "name": "bothLinked",
+        "versions": [
+          {
+            "name": "example.data-processing-types.bothLinked",
+            "version": 1,
+            "categories": [],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "both"
+            ]
+          }
+        ],
+        "description": "# example.data-processing-types.bothLinked\n\nA customer transformer with both source and destination designation.\n",
+        "description_format": "md",
+        "latest_version": 1
+      },
+      {
+        "name": "HTTPCaller",
+        "versions": [
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 8,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 7,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 6,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 5,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 4,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 3,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 2,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.HTTPCaller",
+            "version": 1,
+            "categories": [
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [
+              "HTTPDeleter",
+              "HTTPFetcher",
+              "HTTPFileUploader",
+              "HTTPHeader",
+              "HTTPMultipartUploader",
+              "HTTPUploader"
+            ],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          }
+        ],
+        "description": "# example.data-processing-types.HTTPCaller\n\nAn FMXJ format transformer with a conditional designation.\n",
+        "description_format": "md",
+        "latest_version": 8
+      },
+      {
+        "name": "BoxConnector",
+        "versions": [
+          {
+            "name": "example.data-processing-types.BoxConnector",
+            "version": 3,
+            "categories": [
+              "Integrations",
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.BoxConnector",
+            "version": 2,
+            "categories": [
+              "Integrations",
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          },
+          {
+            "name": "example.data-processing-types.BoxConnector",
+            "version": 1,
+            "categories": [
+              "Integrations",
+              "Web",
+              "Workflows"
+            ],
+            "aliases": [],
+            "visible": true,
+            "data_processing_types": [
+              "destination",
+              "source"
+            ]
+          }
+        ],
+        "description": "# BoxConnector\n\nThe BoxConnector transformer connects to Box cloud storage services.\n\n## Usage\n\nUse this transformer to integrate with Box cloud storage in your FME workflows.\n\n## Parameters\n\nThis transformer provides various configuration options for connecting to Box services.\n",
+        "description_format": "md",
+        "latest_version": 3
+      }
+    ],
+    "formats": [],
+    "web_services": []
+  },
+  "categories": [
+    "Attributes",
+    "Format Specific",
+    "Integrations",
+    "Web",
+    "Workflows"
+  ],
+  "deprecated": false
+}

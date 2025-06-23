@@ -1,0 +1,571 @@
+{
+  "info" : {
+    "name" : "example.data-processing-types.AttributeFileReaderCopy",
+    "categories" : [
+      "Format Specific",
+      "Workflows",
+      "Attributes"],
+    "comments" : [ "" ],
+    "decorationName" : "decoration_xformer_reader"
+  },
+  "versions" : [
+    {
+      "version" : 6,
+      "changeLog" : [ "Added Bulk Mode support. Note: Feature order may change in relation to other output ports. Feature order per port is maintained." ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "General",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename",
+                "valueType" : "stringEncoded",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true,
+                "filters" : [
+                  {
+                    "description" : "All Files",
+                    "filter" : [ "*" ]
+                  }
+                ]
+              },
+              {
+                "name" : "CHAR_ENCODING",
+                "prompt" : "Source File Character Encoding:",
+                "valueType" : "string",
+                "defaultValue" : "fme-binary",
+                "choiceSettings" : {
+                  "choiceSet" : "encodings"
+                },
+                "type" : "dropdown"
+              }
+            ]
+          },
+          {
+            "name" : "OAN_GROUP",
+            "prompt" : "Output Attribute Name",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "File Contents:",
+                "valueType" : "stringEncoded",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF {*} ExecuteFunctionFactory",
+        "   FACTORY_NAME { $(XFORMER_NAME) }",
+        "   $(INPUT_LINES)",
+        "   FUNCTION_DEFINITION { @File(REJECTABLE,ENCODED_PARAMS,DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\",$(CHAR_ENCODING)) }",
+        "   OUTPUT { COMPLETE FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "      $(OUTPUT_OUTPUT_FUNCS) }",
+        "   OUTPUT { REJECTED FEATURE_TYPE $(OUTPUT_<REJECTED>_FTYPE)",
+        "      $(OUTPUT_<REJECTED>_FUNCS) }",
+        ""],
+      "comments" : [ "" ],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        },
+        {
+          "name" : "<REJECTED>",
+          "attributesAdded" : [
+            {
+              "name" : "fme_rejection_code",
+              "type" : "buffer"
+            },
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    },
+    {
+      "version" : 5,
+      "changeLog" : [ "Added Rejected output port." ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "Parameters",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "Destination Attribute:",
+                "valueType" : "stringEncoded",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              },
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename:",
+                "valueType" : "stringEncoded",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true,
+                "filters" : [
+                  {
+                    "description" : "All Files",
+                    "filter" : [ "*" ]
+                  }
+                ]
+              },
+              {
+                "name" : "CHAR_ENCODING",
+                "prompt" : "Source File Character Encoding:",
+                "valueType" : "string",
+                "defaultValue" : "fme-binary",
+                "choiceSettings" : {
+                  "choiceSet" : "encodings"
+                },
+                "type" : "dropdown"
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)_AttributeFileReaderInput",
+        "   $(INPUT_LINES)",
+        "   OUTPUT FEATURE_TYPE ___TOATTRIBUTEFILEREADER___",
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)",
+        "   INPUT FEATURE_TYPE ___TOATTRIBUTEFILEREADER___",
+        "        @RenameAttributes(FME_STRICT,___fme_rejection_code___,fme_rejection_code)",
+        "   OUTPUT FEATURE_TYPE ___TOREJECTOR___",
+        "        @File(REJECTABLE,ENCODED_PARAMS,DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\",$(CHAR_ENCODING))",
+        "",
+        "FACTORY_DEF * TestFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)_Rejector",
+        "   INPUT FEATURE_TYPE ___TOREJECTOR___",
+        "   TEST @Value(fme_rejection_code) != \"\"",
+        "   OUTPUT PASSED FEATURE_TYPE $(OUTPUT_<REJECTED>_FTYPE)",
+        "      @RemoveAttributes(___fme_rejection_code___)",
+        "      $(OUTPUT_<REJECTED>_FUNCS)",
+        "   OUTPUT FAILED FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "      @RenameAttributes(FME_STRICT,fme_rejection_code,___fme_rejection_code___)",
+        "      $(OUTPUT_OUTPUT_FUNCS)",
+        ""],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        },
+        {
+          "name" : "<REJECTED>",
+          "attributesAdded" : [
+            {
+              "name" : "fme_rejection_code",
+              "type" : "buffer"
+            },
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    },
+    {
+      "version" : 4,
+      "changeLog" : [ "Enhanced to allow commas in file names." ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "Parameters",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "Destination Attribute:",
+                "valueType" : "stringEncoded",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              },
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename:",
+                "valueType" : "stringEncoded",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true,
+                "filters" : [
+                  {
+                    "description" : "All Files",
+                    "filter" : [ "*" ]
+                  }
+                ]
+              },
+              {
+                "name" : "CHAR_ENCODING",
+                "prompt" : "Source File Character Encoding:",
+                "valueType" : "string",
+                "defaultValue" : "fme-binary",
+                "choiceSettings" : {
+                  "choiceSet" : "encodings"
+                },
+                "type" : "dropdown"
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)",
+        "   $(INPUT_LINES)",
+        "   OUTPUT FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "        @File(ENCODED_PARAMS,DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\",$(CHAR_ENCODING))",
+        "        $(OUTPUT_OUTPUT_FUNCS)",
+        ""],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    },
+    {
+      "version" : 3,
+      "changeLog" : [ "Enhanced to work with international and special character sets. Special characters can include punctuation and many different types of symbols." ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "Parameters",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "Destination Attribute:",
+                "valueType" : "stringEncoded",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              },
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename:",
+                "valueType" : "string",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true,
+                "filters" : [
+                  {
+                    "description" : "All Files",
+                    "filter" : [ "*" ]
+                  }
+                ]
+              },
+              {
+                "name" : "CHAR_ENCODING",
+                "prompt" : "Source File Character Encoding:",
+                "valueType" : "string",
+                "defaultValue" : "fme-binary",
+                "choiceSettings" : {
+                  "choiceSet" : "encodings"
+                },
+                "type" : "dropdown"
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)",
+        "   $(INPUT_LINES)",
+        "   OUTPUT FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "        @File(ENCODED_ATTR,DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\",$(CHAR_ENCODING))",
+        "        $(OUTPUT_OUTPUT_FUNCS)",
+        ""],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    },
+    {
+      "version" : 2,
+      "changeLog" : [ "Added 'Source File Character Encoding' parameter" ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "Parameters",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "Destination Attribute:",
+                "valueType" : "string",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              },
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename:",
+                "valueType" : "string",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true,
+                "filters" : [
+                  {
+                    "description" : "All Files",
+                    "filter" : [ "*" ]
+                  }
+                ]
+              },
+              {
+                "name" : "CHAR_ENCODING",
+                "prompt" : "Source File Character Encoding:",
+                "valueType" : "string",
+                "defaultValue" : "fme-binary",
+                "choiceSettings" : {
+                  "choiceSet" : "encodings"
+                },
+                "type" : "dropdown"
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)",
+        "   $(INPUT_LINES)",
+        "   OUTPUT FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "        @File(DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\",$(CHAR_ENCODING))",
+        "        $(OUTPUT_OUTPUT_FUNCS)",
+        ""],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    },
+    {
+      "version" : 1,
+      "changeLog" : [ "Initial version" ],
+      "form" : {
+        "parameters" : [
+          {
+            "name" : "PARAMETERS_GROUP",
+            "prompt" : "Parameters",
+            "valueType" : "string",
+            "required" : false,
+            "type" : "group",
+            "parameters" : [
+              {
+                "name" : "DEST_ATTR",
+                "prompt" : "Destination Attribute:",
+                "valueType" : "string",
+                "defaultValue" : "_file_contents",
+                "type" : "text",
+                "editor" : "plaintext",
+                "trimWhitespace" : true,
+                "showEditButton" : false
+              },
+              {
+                "name" : "FILE_NAME",
+                "prompt" : "Source Filename:",
+                "valueType" : "string",
+                "supportedValueTypes" : [ "expression", "globalParameter" ],
+                "type" : "file",
+                "selectMultiple" : false,
+                "itemsToSelect" : "files",
+                "accessMode" : "read",
+                "validateExistence" : true
+              }
+            ]
+          }
+        ]
+      },
+      "executionTemplate" : [
+        "",
+        "FACTORY_DEF * TeeFactory",
+        "   FACTORY_NAME $(XFORMER_NAME)",
+        "   $(INPUT_LINES)",
+        "   OUTPUT FEATURE_TYPE $(OUTPUT_OUTPUT_FTYPE)",
+        "        @File(DestReadSrcWrite,$(DEST_ATTR),\"$(FILE_NAME)\")",
+        "        $(OUTPUT_OUTPUT_FUNCS)",
+        ""],
+      "inputPorts" : [
+        {
+          "name" : ""
+        }
+      ],
+      "outputPorts" : [
+        {
+          "name" : "OUTPUT",
+          "attributesAdded" : [
+            {
+              "name" : {
+                "parameter" : "DEST_ATTR"
+              },
+              "type" : "buffer"
+            }
+          ]
+        }
+      ],
+      "runInitiation" : "automatic",
+      "dataProcessingType" : "source",
+      "internalOnly" : {
+        "canvasProperties" : [ "OPEN_FOLDER;PATH,FILE_NAME" ]
+      }
+    }
+  ]
+}

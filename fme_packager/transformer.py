@@ -9,6 +9,30 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 
 
+def parse_data_processing_type(data_processing_type: dict):
+    """
+    Parse data processing type from conditional logic dictionary.
+
+    :param data_processing_type: The data processing type dict with conditional logic
+    :return: List of data processing types
+    """
+    types = set()
+
+    # Extract all "then" values from conditional statements
+    if_conditions = data_processing_type.get("if", [])
+    for condition in if_conditions:
+        then_value = condition.get("then")
+        if then_value:
+            types.add(then_value)
+
+    # Add default value if present
+    default_value = data_processing_type.get("default")
+    if default_value:
+        types.add(default_value)
+
+    return sorted(list(types))
+
+
 class Transformer(ABC):
     """Represents one version of a transformer."""
 
@@ -42,10 +66,15 @@ class Transformer(ABC):
     def visible(self):
         pass
 
+    @property
+    @abstractmethod
+    def data_processing_types(self):
+        pass
+
 
 NamedTransformerHeader = namedtuple(
     "NamedTransformerHeader",
-    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver",
+    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver preserve_group_attr replaced_by data_processing_type",
 )
 
 
@@ -57,14 +86,25 @@ def parse_custom_transformer_header(line):
     :return: Parsed header
     """
     fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
-    header = NamedTransformerHeader(*fields[: len(NamedTransformerHeader._fields)])
-    return header._replace(version=int(header.version), build_num=int(header.build_num))
+
+    num_fields_expected = len(NamedTransformerHeader._fields)
+    while len(fields) < num_fields_expected:
+        fields.append("")
+
+    header = NamedTransformerHeader(*fields[:num_fields_expected])
+    data_processing_type = [] if not header.data_processing_type else [header.data_processing_type]
+
+    return header._replace(
+        version=int(header.version),
+        build_num=int(header.build_num),
+        data_processing_type=data_processing_type,
+    )
 
 
 class CustomTransformer(Transformer):
     def __init__(self, lines):
         super().__init__()
-        self.header: NamedTransformerHeader = None
+        self.header: NamedTransformerHeader
         self.lines = lines
         for line in lines:
             if line.startswith(b"# TRANSFORMER_BEGIN"):
@@ -98,6 +138,10 @@ class CustomTransformer(Transformer):
         return self.header.deprecated.lower() == "no"
 
     @property
+    def data_processing_types(self):
+        return self.header.data_processing_type
+
+    @property
     def is_encrypted(self):
         return self.lines[0].strip() == b"FMW0001"
 
@@ -121,7 +165,7 @@ class FmxTransformer(Transformer):
                 if name.startswith("PARAMETER_"):
                     continue
                 self.props[name] = match.group(2).strip()
-        if not self.name or not self.version:
+        if self.name is None or self.version is None:
             raise ValueError("TRANSFORMER_NAME or VERSION not found")
 
     @property
@@ -155,6 +199,24 @@ class FmxTransformer(Transformer):
     def visible(self):
         return self.props.get("VISIBLE", "yes").lower() == "yes"
 
+    @property
+    def data_processing_types(self):
+        data_processing_type = self.props.get("DATA_PROCESSING_TYPE")
+        if not data_processing_type:
+            return []
+
+        data_processing_type = data_processing_type.strip()
+
+        # Try to parse as JSON first
+        try:
+            parsed_data = json.loads(data_processing_type)
+            return parse_data_processing_type(parsed_data)
+        except json.JSONDecodeError:
+            pass
+
+        # If JSON parsing fails, treat as simple string
+        return [data_processing_type]
+
 
 class FmxjTransformer(Transformer):
     def __init__(self, info, version_def):
@@ -185,6 +247,22 @@ class FmxjTransformer(Transformer):
     @property
     def visible(self):
         return not self.info.get("deprecated", False)
+
+    @property
+    def data_processing_types(self):
+        data_processing_type = self.json_def.get("dataProcessingType")
+        if not data_processing_type:
+            return []
+
+        # Handle simple string case
+        if isinstance(data_processing_type, str):
+            return [data_processing_type]
+
+        # Handle conditional logic case
+        if isinstance(data_processing_type, dict):
+            return parse_data_processing_type(data_processing_type)
+
+        return []
 
 
 class TransformerFile(ABC):

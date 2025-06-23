@@ -97,6 +97,13 @@
                             },
                             "visible": {
                                 "type": "boolean"
+                            },
+                            "data_processing_types": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": ["both", "neither", "source", "destination"]
+                                }
                             }
                         },
                         "required": [
