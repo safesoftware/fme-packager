@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.16.1
+
+* Require the `PYTHON_COMPATIBILITY` keyword only for packages where minimum build is before FME 2022. (FMEENGINE-86130)
+
 # 1.16.0
 
 * Add support for data processing types (FMEHUBDEV-1661)
