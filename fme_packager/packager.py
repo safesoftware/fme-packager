@@ -407,8 +407,9 @@ class FMEPackager:
         latest = transformer_versions[0]  # First definition in file
         if latest.version != expected_metadata.version:
             raise ValueError(f"Missing version {expected_metadata.version}")
-        if not latest.python_compatibility and self.metadata.minimum_fme_build < 23000:
-            raise ValueError("Python Compatibility setting required when minimum_fme_build < 23000")
+        if not latest.python_compatibility and self.metadata.minimum_fme_build < 22000:
+            # we only care about PYTHON_COMPATIBILITY before Python 2 support was removed (b22000)
+            raise ValueError("Python Compatibility setting required when minimum_fme_build < 22000")
         elif latest.python_compatibility and not is_valid_python_compatibility(
             latest.python_compatibility
         ):
