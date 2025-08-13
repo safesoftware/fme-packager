@@ -114,7 +114,7 @@ def summarize(file):
     prompt=True,
     default=lambda: os.environ.get("FME_HOME"),
     show_default="FME_HOME environment variable",
-    type=click.Path(exists=True, file_okay=False, writable=True),
+    type=click.Path(exists=True, file_okay=False, writable=False),
     required=True,
     help="Path to FME installation",
 )

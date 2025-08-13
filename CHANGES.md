@@ -1,5 +1,10 @@
 # fme-packager changes
 
+# dev
+
+* Print output of wheel build result.
+* `config-env`: don't require write access to FME_HOME folder.
+
 # 1.16.1
 
 * Require the `PYTHON_COMPATIBILITY` keyword only for packages where minimum build is before FME 2022. (FMEENGINE-86130)
