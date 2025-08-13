@@ -519,7 +519,8 @@ class FMEPackager:
                 if os.path.exists("dist"):
                     shutil.rmtree("dist")
                 try:
-                    ProjectBuilder(".").build("wheel", "dist")
+                    result = ProjectBuilder(".").build("wheel", "dist")
+                    print(f"Built {result}")
                 finally:
                     os.chdir(original_cwd)
 
@@ -552,7 +553,9 @@ class FMEPackager:
                 wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace("-", "_"))
                 for wheel_name in wheel_names
             ):
-                raise ValueError(f"Python library '{lib_name}' is in metadata, but was not found")
+                raise ValueError(
+                    f"Python library '{lib_name}' is in metadata but not in {', '.join(wheel_names)}"
+                )
 
         if not wheels_path.is_dir():
             return
