@@ -10,6 +10,7 @@ import sysconfig
 from pathlib import Path
 
 import click
+from click import BadParameter
 from cookiecutter.main import cookiecutter
 
 import fme_packager
@@ -131,28 +132,40 @@ def config_env(fme_home, site_packages_dir):
     Configure a Python environment for access to fmeobjects
     and the Python libraries included with FME.
     """
+    fme_home = Path(fme_home)
+    if not (fme_home / "fme").is_file() and not (fme_home / "fme.exe").is_file():
+        raise BadParameter(f"'{fme_home}' does not contain an FME executable")
+
     leaf_dir = "python%s%s" % (sys.version_info.major, sys.version_info.minor)
     paths_to_add = [
-        "#" + fme_home,
-        os.path.join(fme_home, "python"),
-        os.path.join(
-            fme_home,
-            "python",
-            f"fme-plugins-py{sys.version_info.major}{sys.version_info.minor}.zip",
-        ),
-        os.path.join(fme_home, "python", leaf_dir),
-        os.path.join(fme_home, "fmeobjects", leaf_dir),
+        "#" + fme_home.as_posix(),  # fme_env.py reads this line
+        (fme_home / "python").as_posix(),  # fmeobjects API and third-party libraries
+        (fme_home / "python" / leaf_dir).as_posix(),  # third-party binary libraries
     ]
 
-    dst_pth = os.path.join(site_packages_dir, "fme_env.pth")
-    print("Writing " + dst_pth)
-    with open(dst_pth, "w") as f:
+    # Internal libraries bundle on Windows since FME 2023.2 (FMEENGINE-78545)
+    # Mac/Linux since FME 2025.1 (FOUNDATION-22)
+    internal_libs_zip = (
+        fme_home / "python" / f"fme-plugins-py{sys.version_info.major}{sys.version_info.minor}.zip"
+    )
+    if internal_libs_zip.is_file():
+        paths_to_add.append(internal_libs_zip.as_posix())
+
+    # Location of fmeobjects before FME 2023.2 (FMEENGINE-78545)
+    legacy_fmeobjects_path = fme_home / "fmeobjects" / leaf_dir
+    if legacy_fmeobjects_path.is_dir():
+        paths_to_add.append(legacy_fmeobjects_path.as_posix())
+
+    site_packages_dir = Path(site_packages_dir)
+    dst_pth = site_packages_dir / "fme_env.pth"
+    print(f"Writing {dst_pth}")
+    with dst_pth.open("w") as f:
         for path in paths_to_add:
             f.write(path + "\n")
         f.write("import fme_env\n")
 
-    dst_py = os.path.join(site_packages_dir, "fme_env.py")
-    print("Writing " + dst_py)
+    dst_py = site_packages_dir / "fme_env.py"
+    print(f"Writing {dst_py}")
     src = Path(inspect.getfile(fme_packager)).parent / "fme_env.py"
     shutil.copy(src, dst_py)
 
