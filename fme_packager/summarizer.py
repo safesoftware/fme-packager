@@ -62,7 +62,7 @@ class Summarizer:
         Retrieve filenames for the format and its readme
 
         :param format_name: The name of the format to retrieve filenames for.
-        :return: A tuple containing the filename, db filename and readme filename.
+        :return: A tuple containing the filename, db filename, and readme filename.
         """
         if not format_name:
             return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
@@ -227,24 +227,14 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
             continue
         all_categories.update(highest_version["categories"])
 
-    for format in formats:
-        if not format.get("categories", None):
+    for fmt in formats:
+        if not fmt.get("categories", None):
             continue
-        all_categories.update(format["categories"])
+        all_categories.update(fmt["categories"])
 
     all_categories_list = list(all_categories)
     all_categories_list.sort()
     return all_categories_list
-
-
-def _to_bool(value: str) -> bool:
-    """
-    Convert a string to a boolean.
-
-    :param value: The value to convert.
-    :return: The boolean value.
-    """
-    return value.upper() == "YES"
 
 
 def _format_data(format_line: str) -> dict:
@@ -259,18 +249,16 @@ def _format_data(format_line: str) -> dict:
     :param format_line: The loaded format line.
     :return: The updates for the format dictionary.
     """
+    if format_info := parse_formatinfo(format_line):
+        return {
+            "fds_info": format_line,
+            "visible": format_info.VISIBLE.upper() != "NO",
+            "categories": (
+                format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
+            ),
+        }
 
-    format_info = parse_formatinfo(format_line)
-    format_data = {"visible": None, "fds_info": None, "categories": None}
-
-    if format_info:
-        format_data["fds_info"] = format_line
-        format_data["visible"] = format_info.VISIBLE.upper() != "NO"
-        format_data["categories"] = (
-            format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
-        )
-
-    return format_data
+    return {"visible": None, "fds_info": None, "categories": None}
 
 
 def _load_output_schema() -> dict:
