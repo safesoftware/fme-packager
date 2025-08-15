@@ -25,6 +25,7 @@ from fme_packager.operations import (
     TREE_COPY_IGNORE_GLOBS,
     load_format_line,
 )
+from fme_packager.summarizer import summarize_fpkg
 from fme_packager.transformer import load_transformer, CustomTransformer
 
 
@@ -114,21 +115,6 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
         raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
 
 
-def _load_format_line(db_path) -> str:
-    """
-    Gets the DB info line from the format file.
-    """
-    line = None
-    with open(db_path) as inf:
-        for line in inf:
-            if line.startswith(";"):
-                continue  # comment line.
-            return line.rstrip()
-
-    if not line:
-        return ""
-
-
 def get_formatinfo(package_metadata, format_metadata, db_path):
     """
     Retrieves format info and checks that it is consistent with the package and format metadata.
@@ -141,7 +127,7 @@ def get_formatinfo(package_metadata, format_metadata, db_path):
         package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
     )
 
-    line = _load_format_line(db_path)
+    line = load_format_line(db_path)
     if not line:
         raise ValueError("{} empty".format(db_path))
 
@@ -343,6 +329,11 @@ class FMEPackager:
         self._build_wheels()
         self._copy_wheels()
         self._check_wheels()
+
+        # FMEENGINE-87677: Ensure a valid summary can be generated.
+        summary = summarize_fpkg(self.build_dir)
+        if summary.get("status") == "error":
+            raise ValueError(f"Package summary error: {summary.get('message')}")
 
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
