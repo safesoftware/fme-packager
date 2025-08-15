@@ -260,8 +260,8 @@ def test_package_all_visible(mock_transformers, mock_formats):
     ],
 )
 def test_summarize_fpkg(fpkg_path, expected_output_path):
-    expected_output = json.load(open(expected_output_path))
-    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
+    expected_output = json.loads(expected_output_path.read_text())
+    result = summarizer.summarize_fpkg(fpkg_path)
     assert result == expected_output
 
 
@@ -287,7 +287,7 @@ def test_summarize_empty_fpkg(monkeypatch, tmp_path):
     expected_output = json.load(
         open(CWD / "fixtures" / "json_output" / "summarize_example.empty.json")
     )
-    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
+    result = summarizer.summarize_fpkg(fpkg_path)
     assert result == expected_output
 
 
@@ -308,7 +308,7 @@ def test_summarize_fpkg_from_directory(tmp_path):
     extract_fpkg(fpkg_path, tmp_path)
 
     # Call summarize_fpkg on the directory
-    result = json.loads(summarizer.summarize_fpkg(tmp_path))
+    result = summarizer.summarize_fpkg(tmp_path)
     expected_output = json.load(open(expected_output_path))
 
     assert result == expected_output

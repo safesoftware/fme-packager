@@ -3,6 +3,7 @@ fme_packager command line interface.
 """
 
 import inspect
+import json as json_lib
 import os
 import shutil
 import sys
@@ -98,7 +99,7 @@ def verify(file, verbose, json):
 
 
 @cli.command()
-@click.argument("file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.argument("file", type=click.Path(exists=True))
 def summarize(file):
     """
     Extract a JSON representation of an .fpkg file.
@@ -106,7 +107,7 @@ def summarize(file):
     FILE -- Path to an FME .fpkg package file.
     """
     result = summarize_fpkg(file)
-    print(result)
+    print(json_lib.dumps(result, indent=2))
 
 
 @cli.command()

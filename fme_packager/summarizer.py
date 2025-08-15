@@ -6,6 +6,7 @@ The output is for FME Hub's use, and conforms to summarizer_spec.json.
 """
 
 import json
+import os
 import tempfile
 from collections import namedtuple
 from importlib.resources import open_text
@@ -295,14 +296,14 @@ def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) ->
     return not (is_transformer_visible or is_format_visible)
 
 
-def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
+def summarize_fpkg(fpkg_path: Union[str, os.PathLike]) -> dict:
     """
     Summarize the FME Package.
 
     The output conforms to summarizer_spec.json.
 
     :param fpkg_path: The path to the FME Package file (.fpkg) or an already extracted package directory.
-    :return: A JSON string of the summarized FME Package, or an error message under the key 'error'.
+    :return: A dict summary of the FME Package, or an error dict with keys 'status' and 'message'.
     """
     input_path = Path(fpkg_path)
 
@@ -340,12 +341,9 @@ def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
     try:
         validate(manifest, _load_output_schema())
     except ValidationError as e:
-        return json.dumps(
-            {
-                "status": "error",
-                "message": f"The generated output did not conform to the schema: {e.message}",
-            },
-            indent=2,
-        )
+        return {
+            "status": "error",
+            "message": f"The generated output did not conform to the schema: {e.message}",
+        }
 
-    return json.dumps(manifest, indent=2)
+    return manifest

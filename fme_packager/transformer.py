@@ -7,6 +7,7 @@ import os.path
 import re
 from abc import ABC, abstractmethod
 from collections import namedtuple
+from typing import Iterable
 
 
 def parse_data_processing_type(data_processing_type: dict):
@@ -272,7 +273,7 @@ class TransformerFile(ABC):
         self.file_path = file_path
 
     @abstractmethod
-    def versions(self):
+    def versions(self) -> Iterable[Transformer]:
         pass
 
 
