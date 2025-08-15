@@ -8,6 +8,7 @@ The output is for FME Hub's use, and conforms to summarizer_spec.json.
 import json
 import tempfile
 from collections import namedtuple
+from importlib.resources import open_text
 from pathlib import Path
 from typing import Iterable, List, Union
 
@@ -267,8 +268,8 @@ def _load_output_schema() -> dict:
 
     :return: The output schema.
     """
-    with open(Path(__file__).parent / "summarizer_spec.json", "r") as file:
-        return json.load(file)
+    with open_text("fme_packager", "summarizer_spec.json") as f:
+        return json.load(f)
 
 
 def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:

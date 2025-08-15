@@ -1,3 +1,4 @@
+from importlib.resources import open_text
 import json
 import os
 from pathlib import Path
@@ -17,13 +18,11 @@ def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
         return FMEPackageMetadata(YAML(typ="safe").load(f))
 
 
-def load_metadata_json_schema():
+def load_metadata_json_schema() -> dict:
     """
     Load in package metadata specification and requirements.
-
-    :rtype: dict
     """
-    with open(os.path.join(os.path.dirname(__file__), "spec.json")) as f:
+    with open_text("fme_packager", "spec.json") as f:
         return json.load(f)
 
 
