@@ -23,6 +23,7 @@ from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
     TREE_COPY_IGNORE_GLOBS,
+    load_format_line,
 )
 from fme_packager.transformer import load_transformer, CustomTransformer
 

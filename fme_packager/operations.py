@@ -82,3 +82,14 @@ def extract_fpkg(
     Extract .fpkg file to a directory.
     """
     shutil.unpack_archive(fpkg_file_path, dest_dir, "zip")
+
+
+def load_format_line(db_path: str) -> str:
+    """Get the DB info line from the format file."""
+    with open(db_path) as inf:
+        for line in inf:
+            if line.startswith(";"):
+                continue  # comment line
+            return line.rstrip()
+
+    return ""

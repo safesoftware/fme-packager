@@ -15,8 +15,7 @@ from typing import Iterable, List, Union
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from fme_packager.operations import parse_formatinfo, extract_fpkg
-from fme_packager.packager import _load_format_line
+from fme_packager.operations import parse_formatinfo, extract_fpkg, load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
 from fme_packager.metadata import (
@@ -143,7 +142,7 @@ class Summarizer:
         for fm in formats:
             short_name = fm.name
             filenames = self.format_filenames(short_name)
-            format_data = _format_data(_load_format_line(filenames.db_filename))
+            format_data = _format_data(load_format_line(filenames.db_filename))
             entry: dict = {
                 "short_name": short_name,
                 "name": f"{publisher_uid}.{uid}.{short_name}",
