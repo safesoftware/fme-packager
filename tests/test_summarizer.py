@@ -10,7 +10,12 @@ from pathlib import Path
 
 from fme_packager import summarizer
 from fme_packager.cli import summarize
-from fme_packager.summarizer import TransformerFilenames, FormatFilenames, _package_deprecated
+from fme_packager.summarizer import (
+    TransformerFilenames,
+    FormatFilenames,
+    _package_deprecated,
+    SummarizerContext,
+)
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
@@ -32,16 +37,20 @@ CWD = pathlib.Path(__file__).parent.resolve()
         (
             "fmx_transformer",
             TransformerFilenames(
-                filename=str(Path("/base/dir") / "transformers" / "fmx_transformer.fmx"),
-                readme_filename=str(Path("/base/dir") / "transformers" / "fmx_transformer.md"),
+                filename=(Path("/base/dir") / "transformers" / "fmx_transformer.fmx").as_posix(),
+                readme_filename=(
+                    Path("/base/dir") / "transformers" / "fmx_transformer.md"
+                ).as_posix(),
             ),
         ),
         # Case 4: Transformer .fmxj file exists but .fmx file does not
         (
             "fmxj_transformer",
             TransformerFilenames(
-                filename=str(Path("/base/dir") / "transformers" / "fmxj_transformer.fmxj"),
-                readme_filename=str(Path("/base/dir") / "transformers" / "fmxj_transformer.md"),
+                filename=(Path("/base/dir") / "transformers" / "fmxj_transformer.fmxj").as_posix(),
+                readme_filename=(
+                    Path("/base/dir") / "transformers" / "fmxj_transformer.md"
+                ).as_posix(),
             ),
         ),
     ],
@@ -62,7 +71,8 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 
     mocker.patch("pathlib.Path.exists", mock_exists)
 
-    result = summarizer._transformer_filenames(transformer_name, "/base/dir")
+    ctx = SummarizerContext("/base/dir")
+    result = ctx._transformer_filenames(transformer_name)
     assert result == expected
 
 
@@ -73,9 +83,9 @@ def test__transformer_filenames(transformer_name, expected, mocker):
             "test_format",
             True,
             FormatFilenames(
-                filename=str(Path("/base/dir") / "formats" / "test_format.fmf"),
-                db_filename=str(Path("/base/dir") / "formats" / "test_format.db"),
-                readme_filename=str(Path("/base/dir") / "formats" / "test_format.md"),
+                filename=(Path("/base/dir") / "formats" / "test_format.fmf").as_posix(),
+                db_filename=(Path("/base/dir") / "formats" / "test_format.db").as_posix(),
+                readme_filename=(Path("/base/dir") / "formats" / "test_format.md").as_posix(),
             ),
         ),
         (
@@ -91,7 +101,8 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 )
 def test__format_filenames(format_name, exists, expected):
     with patch("pathlib.Path.exists", return_value=exists):
-        result = summarizer._format_filenames(format_name, "/base/dir")
+        ctx = SummarizerContext("/base/dir")
+        result = ctx._format_filenames(format_name)
         assert result == expected
 
 
@@ -301,3 +312,156 @@ def test_summarize():
     result = runner.invoke(summarize, [fpkg_path])
     assert result.exit_code == 0
     json.loads(result.output)
+
+
+def test__enhance_transformer_info(mocker):
+    # Create mock data for the test
+    transformers = [
+        {"name": "transformer1", "version": "1.0"},
+        {"name": "transformer2", "version": "2.0"},
+    ]
+    base_dir = "/test/dir"
+
+    ctx = SummarizerContext(base_dir)
+
+    # Mock the necessary functions
+    transformer_filenames_mock = mocker.patch.object(
+        ctx,
+        "_transformer_filenames",
+        return_value=TransformerFilenames(filename="test_filename", readme_filename="test_readme"),
+    )
+    mocker.patch("fme_packager.summarizer.load_transformer")
+    mocker.patch.object(
+        summarizer,
+        "_transformer_data",
+        return_value={"versions": [{"name": "test", "version": "1.0"}]},
+    )
+    mocker.patch.object(
+        summarizer,
+        "_content_description",
+        return_value={"description": "test description", "description_format": "md"},
+    )
+
+    # Call the method
+    result = ctx._enhance_transformer_info(transformers)
+
+    # Verify the calls to other functions with the correct parameters
+    assert transformer_filenames_mock.call_count == 2
+    transformer_filenames_mock.assert_any_call("transformer1")
+    transformer_filenames_mock.assert_any_call("transformer2")
+
+    # Verify the function returns the expected result
+    assert len(result) == 2
+    assert "latest_version" in result[0]
+    assert "latest_version" in result[1]
+    assert result[0]["latest_version"] == "1.0"
+    assert result[1]["latest_version"] == "2.0"
+
+
+def test__enhance_web_service_info(mocker):
+    # Create mock data for the test
+    web_services = [
+        {"name": "service1.xml"},
+        {"name": "service2"},
+    ]
+    base_dir = "/test/dir"
+
+    ctx = SummarizerContext(base_dir)
+
+    # Mock the necessary functions
+    web_service_path_mock = mocker.patch(
+        "fme_packager.summarizer._web_service_path", return_value="web_services/test_path"
+    )
+    parse_web_service_mock = mocker.patch(
+        "fme_packager.summarizer._parse_web_service",
+        return_value={
+            "help_url": "http://example.com",
+            "description": "Test description",
+            "markdown_description": "# Test",
+            "connection_description": "Connection info",
+            "markdown_connection_description": "# Connection",
+        },
+    )
+
+    # Call the method
+    result = ctx._enhance_web_service_info(web_services)
+
+    # Verify the web_service_path was called correctly
+    web_service_path_mock.assert_any_call("service1.xml")
+    web_service_path_mock.assert_any_call("service2")
+
+    # Verify parse_web_service was called with correct paths including base_dir
+    expected_path1 = Path(base_dir) / "web_services/test_path"
+    parse_web_service_mock.assert_any_call(expected_path1)
+
+    # Verify XML extension was removed
+    assert result[0]["name"] == "service1"
+    assert result[1]["name"] == "service2"
+
+    # Verify all expected fields were populated
+    for service in result:
+        assert service["help_url"] == "http://example.com"
+        assert service["description"] == "Test description"
+        assert service["markdown_description"] == "# Test"
+        assert service["connection_description"] == "Connection info"
+        assert service["markdown_connection_description"] == "# Connection"
+
+
+def test__enhance_format_info(mocker):
+    # Create mock data for the test
+    formats = [
+        {"name": "format1"},
+        {"name": "format2"},
+    ]
+    publisher_uid = "test_publisher"
+    uid = "test_uid"
+    base_dir = "/test/dir"
+
+    ctx = SummarizerContext(base_dir)
+
+    # Mock the necessary functions
+    format_filenames_mock = mocker.patch.object(
+        ctx,
+        "_format_filenames",
+        return_value=FormatFilenames(
+            filename="test_format.fmf",
+            readme_filename="test_readme.md",
+            db_filename="test_format.db",
+        ),
+    )
+    mocker.patch("fme_packager.summarizer._load_format_line", return_value="format_line_content")
+    mocker.patch.object(
+        summarizer,
+        "_format_data",
+        return_value={
+            "visible": True,
+            "fds_info": "format_info",
+            "categories": ["category1", "category2"],
+        },
+    )
+    mocker.patch.object(
+        summarizer,
+        "_content_description",
+        return_value={"description": "format description", "description_format": "md"},
+    )
+
+    # Call the method
+    result = ctx._enhance_format_info(publisher_uid, uid, formats)
+
+    # Verify the format_filenames was called correctly with base_dir
+    format_filenames_mock.assert_any_call("format1")
+    format_filenames_mock.assert_any_call("format2")
+
+    # Verify the short_name and name transformations
+    assert result[0]["short_name"] == "format1"
+    assert result[0]["name"] == "test_publisher.test_uid.format1"
+    assert result[1]["short_name"] == "format2"
+    assert result[1]["name"] == "test_publisher.test_uid.format2"
+
+    # Verify data was added from _format_data and _content_description
+    for format_item in result:
+        assert format_item["visible"] is True
+        assert format_item["fds_info"] == "format_info"
+        assert format_item["categories"] == ["category1", "category2"]
+        assert format_item["description"] == "format description"
+        assert format_item["description_format"] == "md"

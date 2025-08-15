@@ -1,5 +1,4 @@
 import json
-import os
 import shutil
 import tempfile
 from collections import namedtuple
@@ -62,51 +61,119 @@ FormatFilenames = namedtuple(
 )
 
 
-def _transformer_filenames(transformer_name: str, base_dir: str) -> TransformerFilenames:
-    """
-    Retrieve filenames for the transformer and its readme
+class SummarizerContext:
+    def __init__(self, base_dir: Path | str):
+        self.base_dir: Path = Path(base_dir)
 
-    Input dict must have the key:
-    - 'name': The name of the transformer.
+    def _transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
+        """
+        Retrieve filenames for the transformer and its readme
 
-    :param transformer_name: The name of the transformer to retrieve filenames for.
-    :param base_dir: The base directory containing the transformer files.
-    :return: A tuple containing the filename and readme filename.
-    """
-    if not transformer_name:
-        return TransformerFilenames(filename=None, readme_filename=None)
+        :param transformer_name: The name of the transformer to retrieve filenames for.
+        :return: A tuple containing the filename and readme filename.
+        """
+        if not transformer_name:
+            return TransformerFilenames(filename=None, readme_filename=None)
 
-    result = {}
-    for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        potential_path = Path(base_dir) / "transformers" / f"{transformer_name}.{ext}"
-        if potential_path.exists():
-            result[key] = str(potential_path)
+        result: dict = {}
+        for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
+            potential_path = self.base_dir / "transformers" / f"{transformer_name}.{ext}"
+            if potential_path.exists():
+                result[key] = potential_path.as_posix()
 
-    return TransformerFilenames(**result)
+        return TransformerFilenames(**result)
 
+    def _format_filenames(self, format_name: str) -> FormatFilenames:
+        """
+        Retrieve filenames for the format and its readme
 
-def _format_filenames(format_name: str, base_dir: str) -> FormatFilenames:
-    """
-    Retrieve filenames for the format and its readme
+        :param format_name: The name of the format to retrieve filenames for.
+        :return: A tuple containing the filename, db filename and readme filename.
+        """
+        if not format_name:
+            return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
 
-    :param format_name: The name of the format to retrieve filenames for.
-    :param base_dir: The base directory containing the format files.
-    :return: A tuple containing the filename, db filename and readme filename.
-    """
-    if not format_name:
-        return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
+        filenames = {
+            "filename": (self.base_dir / "formats" / f"{format_name}.fmf").as_posix(),
+            "db_filename": (self.base_dir / "formats" / f"{format_name}.db").as_posix(),
+            "readme_filename": (self.base_dir / "formats" / f"{format_name}.md").as_posix(),
+        }
 
-    filenames = {
-        "filename": str(Path(base_dir) / "formats" / f"{format_name}.fmf"),
-        "db_filename": str(Path(base_dir) / "formats" / f"{format_name}.db"),
-        "readme_filename": str(Path(base_dir) / "formats" / f"{format_name}.md"),
-    }
+        for key, filename in filenames.items():
+            if not Path(filename).exists():
+                filenames[key] = None
 
-    for key, filename in filenames.items():
-        if not Path(filename).exists():
-            filenames[key] = None
+        return FormatFilenames(**filenames)
 
-    return FormatFilenames(**filenames)
+    def _enhance_transformer_info(self, transformers: Iterable[dict]) -> Iterable[dict]:
+        """
+        Enhance the transformer entries in the manifest with additional information.
+
+        :param transformers: An iterable of transformer dicts
+        :return: An iterable of transformer dicts with enhanced information
+        """
+        if not transformers:
+            return []
+
+        for transformer in transformers:
+            filenames = self._transformer_filenames(transformer.get("name"))
+            loaded_transformer = load_transformer(filenames.filename)
+            transformer.update(_transformer_data(loaded_transformer))
+            transformer.update(_content_description(filenames.readme_filename))
+            transformer["latest_version"] = transformer.pop("version")
+
+        return transformers
+
+    def _enhance_web_service_info(self, web_services: Iterable[dict]) -> Iterable[dict]:
+        """
+        Enhance the web service entries in the manifest with additional information.
+
+        :param web_services: An iterable of web service dicts
+        :return: An iterable of web service dicts with enhanced information
+        """
+        if not web_services:
+            return []
+
+        for web_service in web_services:
+            web_service_path = self.base_dir / _web_service_path(web_service["name"])
+            web_service_content = _parse_web_service(web_service_path)
+            if web_service["name"].endswith(".xml"):
+                web_service["name"] = web_service["name"][:-4]
+
+            for key in [
+                "help_url",
+                "description",
+                "markdown_description",
+                "connection_description",
+                "markdown_connection_description",
+            ]:
+                web_service[key] = web_service_content.get(key, "") or ""
+
+        return web_services
+
+    def _enhance_format_info(
+        self, publisher_uid: str, uid: str, formats: Iterable[dict]
+    ) -> Iterable[dict]:
+        """
+        Enhance the format entries in the manifest with additional information.
+
+        :param publisher_uid: The publisher UID
+        :param uid: The UID
+        :param formats: An iterable of format dicts
+        :return: An iterable of format dicts with enhanced information
+        """
+        if not formats:
+            return []
+
+        for format in formats:
+            filenames = self._format_filenames(format.get("name"))
+            format_data = _format_data(_load_format_line(filenames.db_filename))
+            format["short_name"] = format["name"]
+            format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
+            format.update(_content_description(filenames.readme_filename))
+            format.update(format_data)
+
+        return formats
 
 
 def _transformer_data(loaded_file: TransformerFile) -> dict:
@@ -195,52 +262,25 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
 
 def _enhance_transformer_info(transformers: Iterable[dict], base_dir: str) -> Iterable[dict]:
     """
-    Enhance the transformer entries in the manifest with additional information.
-
-    :param transformers: An iterable of transformer dicts
-    :param base_dir: The base directory containing the transformer files
-    :return: An iterable of transformer dicts with enhanced information
+    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_transformer_info.
     """
-    if not transformers:
-        return []
-
-    for transformer in transformers:
-        filenames = _transformer_filenames(transformer["name"], base_dir)
-        loaded_transformer = load_transformer(filenames.filename)
-        transformer.update(_transformer_data(loaded_transformer))
-        transformer.update(_content_description(filenames.readme_filename))
-        transformer["latest_version"] = transformer.pop("version")
-
-    return transformers
+    return SummarizerContext(base_dir)._enhance_transformer_info(transformers)
 
 
 def _enhance_web_service_info(web_services: Iterable[dict], base_dir: str) -> Iterable[dict]:
     """
-    Enhance the web service entries in the manifest with additional information.
-
-    :param web_services: An iterable of web service dicts
-    :param base_dir: The base directory containing the web service files
-    :return: An iterable of web service dicts with enhanced information
+    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_web_service_info.
     """
-    if not web_services:
-        return []
+    return SummarizerContext(base_dir)._enhance_web_service_info(web_services)
 
-    for web_service in web_services:
-        web_service_path = Path(base_dir) / _web_service_path(web_service["name"])
-        web_service_content = _parse_web_service(str(web_service_path))
-        if web_service["name"].endswith(".xml"):
-            web_service["name"] = web_service["name"][:-4]
 
-        for key in [
-            "help_url",
-            "description",
-            "markdown_description",
-            "connection_description",
-            "markdown_connection_description",
-        ]:
-            web_service[key] = web_service_content.get(key, "") or ""
-
-    return web_services
+def _enhance_format_info(
+    publisher_uid: str, uid: str, formats: Iterable[dict], base_dir: str
+) -> Iterable[dict]:
+    """
+    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_format_info.
+    """
+    return SummarizerContext(base_dir)._enhance_format_info(publisher_uid, uid, formats)
 
 
 def _to_bool(value: str) -> bool:
@@ -277,30 +317,6 @@ def _format_data(format_line: str) -> dict:
         )
 
     return format_data
-
-
-def _enhance_format_info(publisher_uid: str, uid: str, formats: Iterable[dict], base_dir: str) -> Iterable[dict]:
-    """
-    Enhance the format entries in the manifest with additional information.
-
-    :param publisher_uid: The publisher UID
-    :param uid: The UID
-    :param formats: An iterable of format dicts
-    :param base_dir: The base directory containing the format files
-    :return: An iterable of format dicts with enhanced information
-    """
-    if not formats:
-        return []
-
-    for format in formats:
-        filenames = _format_filenames(format["name"], base_dir)
-        format_data = _format_data(_load_format_line(filenames.db_filename))
-        format["short_name"] = format["name"]
-        format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
-        format.update(_content_description(filenames.readme_filename))
-        format.update(format_data)
-
-    return formats
 
 
 def _load_output_schema() -> dict:
@@ -355,12 +371,15 @@ def summarize_fpkg(fpkg_path: str) -> str:
         transformers = manifest.get("package_content", {}).get("transformers", [])
         formats = manifest.get("package_content", {}).get("formats", [])
         web_services = manifest.get("package_content", {}).get("web_services", [])
+
+        ctx = SummarizerContext(temp_dir)
+
         manifest["package_content"] = manifest.get("package_content", {})
-        manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers, temp_dir)
-        manifest["package_content"]["formats"] = _enhance_format_info(
-            manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats, temp_dir
+        manifest["package_content"]["transformers"] = ctx._enhance_transformer_info(transformers)
+        manifest["package_content"]["formats"] = ctx._enhance_format_info(
+            manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
         )
-        manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services, temp_dir)
+        manifest["package_content"]["web_services"] = ctx._enhance_web_service_info(web_services)
         manifest["categories"] = _get_all_categories(transformers, formats)
         manifest["deprecated"] = _package_deprecated(
             manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
