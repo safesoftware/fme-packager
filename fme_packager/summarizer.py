@@ -192,7 +192,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
     :param loaded_file: The loaded transformer file.
     :return: The updates for the transformer dictionary.
     """
-    versions: list[Transformer] = loaded_file.versions()
+    versions: List[Transformer] = loaded_file.versions()
     return {
         "versions": [
             {
@@ -330,26 +330,43 @@ def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) ->
     return not (is_transformer_visible or is_format_visible)
 
 
-def summarize_fpkg(fpkg_path: str) -> str:
+def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
     """
     Summarize the FME Package.
 
     The output conforms to summarizer_spec.json.
 
-    :param fpkg_path: The path to the FME Package.
+    :param fpkg_path: The path to the FME Package file (.fpkg) or an already extracted package directory.
     :return: A JSON string of the summarized FME Package, or an error message under the key 'error'.
     """
-    output_schema = _load_output_schema()
+    input_path = Path(fpkg_path)
 
+    # Always create a temp directory to simplify logic; only used when input is an .fpkg file
     with tempfile.TemporaryDirectory() as temp_dir:
-        _unpack_fpkg_file(temp_dir, fpkg_path)
+        temp_dir = Path(temp_dir)
 
-        manifest = _parsed_manifest(_manifest_path(temp_dir))
+        if input_path.is_dir():
+            working_dir = input_path
+        else:
+            _unpack_fpkg_file(temp_dir.as_posix(), input_path.as_posix())
+            working_dir = temp_dir
+
+        manifest_path = _manifest_path(working_dir.as_posix())
+        if not manifest_path.exists():
+            return json.dumps(
+                {
+                    "status": "error",
+                    "message": f"Manifest not found at {manifest_path.as_posix()}",
+                },
+                indent=2,
+            )
+
+        manifest = _parsed_manifest(manifest_path)
         transformers = manifest.get("package_content", {}).get("transformers", [])
         formats = manifest.get("package_content", {}).get("formats", [])
         web_services = manifest.get("package_content", {}).get("web_services", [])
 
-        ctx = SummarizerContext(temp_dir)
+        ctx = SummarizerContext(working_dir)
 
         manifest["package_content"] = manifest.get("package_content", {})
         manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(transformers)
@@ -361,15 +378,16 @@ def summarize_fpkg(fpkg_path: str) -> str:
         manifest["deprecated"] = package_deprecated(
             manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
         )
-        try:
-            validate(manifest, output_schema)
-        except ValidationError as e:
-            return json.dumps(
-                {
-                    "status": "error",
-                    "message": f"The generated output did not conform to the schema: {e.message}",
-                },
-                indent=2,
-            )
 
-        return json.dumps(manifest, indent=2)
+    try:
+        validate(manifest, _load_output_schema())
+    except ValidationError as e:
+        return json.dumps(
+            {
+                "status": "error",
+                "message": f"The generated output did not conform to the schema: {e.message}",
+            },
+            indent=2,
+        )
+
+    return json.dumps(manifest, indent=2)

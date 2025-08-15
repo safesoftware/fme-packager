@@ -312,3 +312,19 @@ def test_summarize():
     result = runner.invoke(summarize, [fpkg_path])
     assert result.exit_code == 0
     json.loads(result.output)
+
+
+def test_summarize_fpkg_from_directory(tmp_path):
+    fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
+    expected_output_path = (
+        CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json"
+    )
+
+    # Unpack into a temp dir using the internal helper
+    summarizer._unpack_fpkg_file(tmp_path.as_posix(), fpkg_path.as_posix())
+
+    # Call summarize_fpkg on the directory
+    result = json.loads(summarizer.summarize_fpkg(tmp_path))
+    expected_output = json.load(open(expected_output_path))
+
+    assert result == expected_output
