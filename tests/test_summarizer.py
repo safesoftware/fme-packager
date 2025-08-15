@@ -1,15 +1,14 @@
 import json
 import pathlib
-import tempfile
 from unittest.mock import patch
 
 import pytest
-import yaml
 from click.testing import CliRunner
 from pathlib import Path
 
 from fme_packager import summarizer
 from fme_packager.cli import summarize
+from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.summarizer import (
     TransformerFilenames,
     FormatFilenames,
@@ -184,24 +183,6 @@ def test__add_content_description(mocker):
     assert result["description_format"] == "md"
 
 
-def test__parsed_manifest():
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yml") as temp:
-        # Write some data to the file
-        data = {
-            "key1": "value1",
-            "key2": "value2",
-            "key3": "value3",
-        }
-        yaml.dump(data, temp)
-
-    # Call the function with the path of the temporary file
-    result = summarizer._parsed_manifest(pathlib.Path(temp.name))
-
-    # Assert that the returned dictionary matches the data we wrote to the file
-    assert result == data
-
-
 def test_package_transformers_deprecated(mock_transformers, mock_formats):
     # Case: All formats are not visible
     mock_formats[0]["visible"] = False
@@ -283,11 +264,9 @@ def test_summarize_fpkg(fpkg_path, expected_output_path):
     assert result == expected_output
 
 
-def test_summarize_empty_fpkg(monkeypatch):
-    monkeypatch.setattr(
-        summarizer,
-        "_parsed_manifest",
-        lambda x: {
+def test_summarize_empty_fpkg(monkeypatch, tmp_path):
+    mock_metadata = FMEPackageMetadata(
+        {
             "fpkg_version": 1,
             "uid": "my-package",
             "publisher_uid": "example",
@@ -296,7 +275,12 @@ def test_summarize_empty_fpkg(monkeypatch):
             "version": "0.1.0",
             "minimum_fme_build": 19238,
             "author": {"name": "G Raymond", "email": "me@example.com"},
-        },
+        }
+    )
+    monkeypatch.setattr(
+        summarizer,
+        "load_fpkg_metadata",
+        lambda x: mock_metadata,
     )
     fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
     expected_output = json.load(

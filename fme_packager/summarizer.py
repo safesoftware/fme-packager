@@ -5,14 +5,19 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Iterable, List, Union
 
-import yaml
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, parse_formatinfo
 from fme_packager.packager import _load_format_line
-from fme_packager.transformer import load_transformer, TransformerFile, Transformer
+from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
+from fme_packager.metadata import (
+    FormatMetadata,
+    WebServiceMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
 
 
 def _unpack_fpkg_file(directory: str, fpkg_file: str):
@@ -29,27 +34,6 @@ def _unpack_fpkg_file(directory: str, fpkg_file: str):
     shutil.unpack_archive(zip_file, directory)
 
     return directory
-
-
-def _manifest_path(fpkg_dir: str) -> Path:
-    """
-    Return the manifest file.
-
-    :param fpkg_dir: The directory where the FME Package file was unpacked.
-    :return: The path to the manifest file.
-    """
-    return Path(fpkg_dir) / "package.yml"
-
-
-def _parsed_manifest(yaml_file: Path) -> dict:
-    """
-    Parse the manifest file.
-
-    :param yaml_file: The path to the manifest yaml file.
-    :return: A dictionary of the parsed YAML.
-    """
-    with open(yaml_file, "r") as file:
-        return yaml.safe_load(file)
 
 
 TransformerFilenames = namedtuple(
@@ -105,41 +89,45 @@ class SummarizerContext:
 
         return FormatFilenames(**filenames)
 
-    def enhance_transformer_info(self, transformers: Iterable[dict]) -> Iterable[dict]:
+    def enhance_transformer_info(
+        self, transformers: Iterable[TransformerMetadata]
+    ) -> Iterable[dict]:
         """
         Enhance the transformer entries in the manifest with additional information.
 
-        :param transformers: An iterable of transformer dicts
         :return: An iterable of transformer dicts with enhanced information
         """
-        if not transformers:
-            return []
-
-        for transformer in transformers:
-            filenames = self.transformer_filenames(transformer.get("name"))
+        result = []
+        for tm in transformers:
+            filenames = self.transformer_filenames(tm.name)
             loaded_transformer = load_transformer(filenames.filename)
-            transformer.update(_transformer_data(loaded_transformer))
-            transformer.update(_content_description(filenames.readme_filename))
-            transformer["latest_version"] = transformer.pop("version")
+            entry = {
+                "name": tm.name,
+                "latest_version": tm.version,
+            }
+            entry.update(_transformer_data(loaded_transformer))
+            entry.update(_content_description(filenames.readme_filename))
+            result.append(entry)
 
-        return transformers
+        return result
 
-    def enhance_web_service_info(self, web_services: Iterable[dict]) -> Iterable[dict]:
+    def enhance_web_service_info(
+        self, web_services: Iterable[WebServiceMetadata]
+    ) -> Iterable[dict]:
         """
         Enhance the web service entries in the manifest with additional information.
 
-        :param web_services: An iterable of web service dicts
         :return: An iterable of web service dicts with enhanced information
         """
-        if not web_services:
-            return []
-
-        for web_service in web_services:
-            web_service_path = self.base_dir / _web_service_path(web_service["name"])
+        result = []
+        for ws in web_services:
+            ws_name = ws.name
+            web_service_path = self.base_dir / _web_service_path(ws_name)
             web_service_content = _parse_web_service(web_service_path)
-            if web_service["name"].endswith(".xml"):
-                web_service["name"] = web_service["name"][:-4]
+            # Normalize name without .xml suffix
+            normalized_name = ws_name[:-4] if ws_name.endswith(".xml") else ws_name
 
+            entry = {"name": normalized_name}
             for key in [
                 "help_url",
                 "description",
@@ -147,33 +135,33 @@ class SummarizerContext:
                 "connection_description",
                 "markdown_connection_description",
             ]:
-                web_service[key] = web_service_content.get(key, "") or ""
+                entry[key] = web_service_content.get(key, "") or ""
+            result.append(entry)
 
-        return web_services
+        return result
 
     def enhance_format_info(
-        self, publisher_uid: str, uid: str, formats: Iterable[dict]
+        self, publisher_uid: str, uid: str, formats: Iterable[FormatMetadata]
     ) -> Iterable[dict]:
         """
         Enhance the format entries in the manifest with additional information.
 
-        :param publisher_uid: The publisher UID
-        :param uid: The UID
-        :param formats: An iterable of format dicts
-        :return: An iterable of format dicts with enhanced information
+        :return: iterable of format dicts with enhanced information
         """
-        if not formats:
-            return []
-
-        for format in formats:
-            filenames = self.format_filenames(format.get("name"))
+        result = []
+        for fm in formats:
+            short_name = fm.name
+            filenames = self.format_filenames(short_name)
             format_data = _format_data(_load_format_line(filenames.db_filename))
-            format["short_name"] = format["name"]
-            format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
-            format.update(_content_description(filenames.readme_filename))
-            format.update(format_data)
+            entry: dict = {
+                "short_name": short_name,
+                "name": f"{publisher_uid}.{uid}.{short_name}",
+            }
+            entry.update(_content_description(filenames.readme_filename))
+            entry.update(format_data)
+            result.append(entry)
 
-        return formats
+        return result
 
 
 def _transformer_data(loaded_file: TransformerFile) -> dict:
@@ -192,7 +180,6 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
     :param loaded_file: The loaded transformer file.
     :return: The updates for the transformer dictionary.
     """
-    versions: List[Transformer] = loaded_file.versions()
     return {
         "versions": [
             {
@@ -203,7 +190,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
                 "visible": version.visible,
                 "data_processing_types": version.data_processing_types,
             }
-            for version in versions
+            for version in loaded_file.versions()
         ],
     }
 
@@ -351,30 +338,23 @@ def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
             _unpack_fpkg_file(temp_dir.as_posix(), input_path.as_posix())
             working_dir = temp_dir
 
-        manifest_path = _manifest_path(working_dir.as_posix())
-        if not manifest_path.exists():
-            return json.dumps(
-                {
-                    "status": "error",
-                    "message": f"Manifest not found at {manifest_path.as_posix()}",
-                },
-                indent=2,
-            )
-
-        manifest = _parsed_manifest(manifest_path)
-        transformers = manifest.get("package_content", {}).get("transformers", [])
-        formats = manifest.get("package_content", {}).get("formats", [])
-        web_services = manifest.get("package_content", {}).get("web_services", [])
-
+        metadata = load_fpkg_metadata(working_dir)
+        manifest = metadata.dict.copy()
         ctx = SummarizerContext(working_dir)
 
-        manifest["package_content"] = manifest.get("package_content", {})
-        manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(transformers)
-        manifest["package_content"]["formats"] = ctx.enhance_format_info(
-            manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
+        manifest["package_content"] = metadata.package_content
+        manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(
+            metadata.transformers
         )
-        manifest["package_content"]["web_services"] = ctx.enhance_web_service_info(web_services)
-        manifest["categories"] = _get_all_categories(transformers, formats)
+        manifest["package_content"]["formats"] = ctx.enhance_format_info(
+            metadata.publisher_uid, metadata.uid, metadata.formats
+        )
+        manifest["package_content"]["web_services"] = ctx.enhance_web_service_info(
+            metadata.web_services
+        )
+        manifest["categories"] = _get_all_categories(
+            manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
+        )
         manifest["deprecated"] = package_deprecated(
             manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
         )
