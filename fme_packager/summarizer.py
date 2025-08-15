@@ -65,7 +65,7 @@ class SummarizerContext:
     def __init__(self, base_dir: Union[Path, str]):
         self.base_dir: Path = Path(base_dir)
 
-    def _transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
+    def transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
         """
         Retrieve filenames for the transformer and its readme
 
@@ -83,7 +83,7 @@ class SummarizerContext:
 
         return TransformerFilenames(**result)
 
-    def _format_filenames(self, format_name: str) -> FormatFilenames:
+    def format_filenames(self, format_name: str) -> FormatFilenames:
         """
         Retrieve filenames for the format and its readme
 
@@ -105,7 +105,7 @@ class SummarizerContext:
 
         return FormatFilenames(**filenames)
 
-    def _enhance_transformer_info(self, transformers: Iterable[dict]) -> Iterable[dict]:
+    def enhance_transformer_info(self, transformers: Iterable[dict]) -> Iterable[dict]:
         """
         Enhance the transformer entries in the manifest with additional information.
 
@@ -116,7 +116,7 @@ class SummarizerContext:
             return []
 
         for transformer in transformers:
-            filenames = self._transformer_filenames(transformer.get("name"))
+            filenames = self.transformer_filenames(transformer.get("name"))
             loaded_transformer = load_transformer(filenames.filename)
             transformer.update(_transformer_data(loaded_transformer))
             transformer.update(_content_description(filenames.readme_filename))
@@ -124,7 +124,7 @@ class SummarizerContext:
 
         return transformers
 
-    def _enhance_web_service_info(self, web_services: Iterable[dict]) -> Iterable[dict]:
+    def enhance_web_service_info(self, web_services: Iterable[dict]) -> Iterable[dict]:
         """
         Enhance the web service entries in the manifest with additional information.
 
@@ -151,7 +151,7 @@ class SummarizerContext:
 
         return web_services
 
-    def _enhance_format_info(
+    def enhance_format_info(
         self, publisher_uid: str, uid: str, formats: Iterable[dict]
     ) -> Iterable[dict]:
         """
@@ -166,7 +166,7 @@ class SummarizerContext:
             return []
 
         for format in formats:
-            filenames = self._format_filenames(format.get("name"))
+            filenames = self.format_filenames(format.get("name"))
             format_data = _format_data(_load_format_line(filenames.db_filename))
             format["short_name"] = format["name"]
             format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
@@ -306,7 +306,7 @@ def _load_output_schema() -> dict:
         return json.load(file)
 
 
-def _package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
+def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
     """
     Determine if the package is deprecated based on its contents.
     If the package contains transformers or formats, and the highest version of all transformers are not visible,
@@ -352,13 +352,13 @@ def summarize_fpkg(fpkg_path: str) -> str:
         ctx = SummarizerContext(temp_dir)
 
         manifest["package_content"] = manifest.get("package_content", {})
-        manifest["package_content"]["transformers"] = ctx._enhance_transformer_info(transformers)
-        manifest["package_content"]["formats"] = ctx._enhance_format_info(
+        manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(transformers)
+        manifest["package_content"]["formats"] = ctx.enhance_format_info(
             manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
         )
-        manifest["package_content"]["web_services"] = ctx._enhance_web_service_info(web_services)
+        manifest["package_content"]["web_services"] = ctx.enhance_web_service_info(web_services)
         manifest["categories"] = _get_all_categories(transformers, formats)
-        manifest["deprecated"] = _package_deprecated(
+        manifest["deprecated"] = package_deprecated(
             manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
         )
         try:

@@ -13,7 +13,7 @@ from fme_packager.cli import summarize
 from fme_packager.summarizer import (
     TransformerFilenames,
     FormatFilenames,
-    _package_deprecated,
+    package_deprecated,
     SummarizerContext,
 )
 
@@ -72,7 +72,7 @@ def test__transformer_filenames(transformer_name, expected, mocker):
     mocker.patch("pathlib.Path.exists", mock_exists)
 
     ctx = SummarizerContext("/base/dir")
-    result = ctx._transformer_filenames(transformer_name)
+    result = ctx.transformer_filenames(transformer_name)
     assert result == expected
 
 
@@ -102,7 +102,7 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 def test__format_filenames(format_name, exists, expected):
     with patch("pathlib.Path.exists", return_value=exists):
         ctx = SummarizerContext("/base/dir")
-        result = ctx._format_filenames(format_name)
+        result = ctx.format_filenames(format_name)
         assert result == expected
 
 
@@ -206,23 +206,23 @@ def test_package_transformers_deprecated(mock_transformers, mock_formats):
     # Case: All formats are not visible
     mock_formats[0]["visible"] = False
     mock_formats[1]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: One transformer version is not visible
     mock_transformers[0]["versions"][1]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: Multiple transformer versions are not visible
     mock_transformers[0]["versions"][1]["visible"] = False
     mock_transformers[2]["versions"][0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: All transformer versions are not visible
     mock_transformers[3]["versions"][0]["visible"] = False
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
     mock_transformers[0]["versions"][0]["visible"] = True
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
 
 def test_package_formats_deprecated(mock_transformers, mock_formats):
@@ -230,15 +230,15 @@ def test_package_formats_deprecated(mock_transformers, mock_formats):
     mock_transformers[0]["versions"][1]["visible"] = False
     mock_transformers[2]["versions"][0]["visible"] = False
     mock_transformers[3]["versions"][0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: One format is not visible
     mock_formats[0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: All formats are not visible
     mock_formats[1]["visible"] = False
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
 
 def test_package_all_visible(mock_transformers, mock_formats):
@@ -247,7 +247,7 @@ def test_package_all_visible(mock_transformers, mock_formats):
             version["visible"] = True
     for f in mock_formats:
         f["visible"] = True
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
 
 @pytest.mark.parametrize(
