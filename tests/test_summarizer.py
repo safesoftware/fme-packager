@@ -32,35 +32,37 @@ CWD = pathlib.Path(__file__).parent.resolve()
         (
             "fmx_transformer",
             TransformerFilenames(
-                filename="transformers/fmx_transformer.fmx",
-                readme_filename="transformers/fmx_transformer.md",
+                filename=str(Path("/base/dir") / "transformers" / "fmx_transformer.fmx"),
+                readme_filename=str(Path("/base/dir") / "transformers" / "fmx_transformer.md"),
             ),
         ),
         # Case 4: Transformer .fmxj file exists but .fmx file does not
         (
             "fmxj_transformer",
             TransformerFilenames(
-                filename="transformers/fmxj_transformer.fmxj",
-                readme_filename="transformers/fmxj_transformer.md",
+                filename=str(Path("/base/dir") / "transformers" / "fmxj_transformer.fmxj"),
+                readme_filename=str(Path("/base/dir") / "transformers" / "fmxj_transformer.md"),
             ),
         ),
     ],
 )
 def test__transformer_filenames(transformer_name, expected, mocker):
-    def side_effect(path):
-        if "non_existing_transformer" in path:
+    # Mock Path.exists as an instance method (self is the path object)
+    def mock_exists(self):
+        path_str = str(self)
+        if "non_existing_transformer" in path_str:
             return False
-        if "fmx_transformer" in path and path.endswith(".fmx"):
+        if "fmx_transformer" in path_str and path_str.endswith(".fmx"):
             return True
-        if "fmxj_transformer" in path and path.endswith(".fmxj"):
+        if "fmxj_transformer" in path_str and path_str.endswith(".fmxj"):
             return True
-        if path.endswith(".md"):
+        if path_str.endswith(".md"):
             return True
         return False
 
-    mocker.patch("os.path.exists", side_effect=side_effect)
+    mocker.patch("pathlib.Path.exists", mock_exists)
 
-    result = summarizer._transformer_filenames(transformer_name)
+    result = summarizer._transformer_filenames(transformer_name, "/base/dir")
     assert result == expected
 
 
@@ -71,9 +73,9 @@ def test__transformer_filenames(transformer_name, expected, mocker):
             "test_format",
             True,
             FormatFilenames(
-                filename=str(Path("formats") / "test_format.fmf"),
-                db_filename=str(Path("formats") / "test_format.db"),
-                readme_filename=str(Path("formats") / "test_format.md"),
+                filename=str(Path("/base/dir") / "formats" / "test_format.fmf"),
+                db_filename=str(Path("/base/dir") / "formats" / "test_format.db"),
+                readme_filename=str(Path("/base/dir") / "formats" / "test_format.md"),
             ),
         ),
         (
@@ -88,8 +90,8 @@ def test__transformer_filenames(transformer_name, expected, mocker):
     ],
 )
 def test__format_filenames(format_name, exists, expected):
-    with patch("os.path.exists", return_value=exists):
-        result = summarizer._format_filenames(format_name)
+    with patch("pathlib.Path.exists", return_value=exists):
+        result = summarizer._format_filenames(format_name, "/base/dir")
         assert result == expected
 
 

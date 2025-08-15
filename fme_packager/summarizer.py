@@ -13,7 +13,6 @@ from jsonschema.exceptions import ValidationError
 from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, parse_formatinfo
 from fme_packager.packager import _load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile, Transformer
-from fme_packager.utils import chdir
 from fme_packager.web_service import _web_service_path, _parse_web_service
 
 
@@ -63,7 +62,7 @@ FormatFilenames = namedtuple(
 )
 
 
-def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
+def _transformer_filenames(transformer_name: str, base_dir: str) -> TransformerFilenames:
     """
     Retrieve filenames for the transformer and its readme
 
@@ -71,6 +70,7 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
     - 'name': The name of the transformer.
 
     :param transformer_name: The name of the transformer to retrieve filenames for.
+    :param base_dir: The base directory containing the transformer files.
     :return: A tuple containing the filename and readme filename.
     """
     if not transformer_name:
@@ -78,31 +78,32 @@ def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
 
     result = {}
     for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        potential_filename = (Path("transformers") / f"{transformer_name}.{ext}").as_posix()
-        if os.path.exists(potential_filename):
-            result[key] = potential_filename
+        potential_path = Path(base_dir) / "transformers" / f"{transformer_name}.{ext}"
+        if potential_path.exists():
+            result[key] = str(potential_path)
 
     return TransformerFilenames(**result)
 
 
-def _format_filenames(format_name: str) -> FormatFilenames:
+def _format_filenames(format_name: str, base_dir: str) -> FormatFilenames:
     """
     Retrieve filenames for the format and its readme
 
     :param format_name: The name of the format to retrieve filenames for.
+    :param base_dir: The base directory containing the format files.
     :return: A tuple containing the filename, db filename and readme filename.
     """
     if not format_name:
         return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
 
     filenames = {
-        "filename": str(Path("formats") / f"{format_name}.fmf"),
-        "db_filename": str(Path("formats") / f"{format_name}.db"),
-        "readme_filename": str(Path("formats") / f"{format_name}.md"),
+        "filename": str(Path(base_dir) / "formats" / f"{format_name}.fmf"),
+        "db_filename": str(Path(base_dir) / "formats" / f"{format_name}.db"),
+        "readme_filename": str(Path(base_dir) / "formats" / f"{format_name}.md"),
     }
 
     for key, filename in filenames.items():
-        if not os.path.exists(filename):
+        if not Path(filename).exists():
             filenames[key] = None
 
     return FormatFilenames(**filenames)
@@ -192,18 +193,19 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
     return all_categories_list
 
 
-def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
+def _enhance_transformer_info(transformers: Iterable[dict], base_dir: str) -> Iterable[dict]:
     """
     Enhance the transformer entries in the manifest with additional information.
 
     :param transformers: An iterable of transformer dicts
+    :param base_dir: The base directory containing the transformer files
     :return: An iterable of transformer dicts with enhanced information
     """
     if not transformers:
         return []
 
     for transformer in transformers:
-        filenames = _transformer_filenames(transformer["name"])
+        filenames = _transformer_filenames(transformer["name"], base_dir)
         loaded_transformer = load_transformer(filenames.filename)
         transformer.update(_transformer_data(loaded_transformer))
         transformer.update(_content_description(filenames.readme_filename))
@@ -212,19 +214,20 @@ def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
     return transformers
 
 
-def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
+def _enhance_web_service_info(web_services: Iterable[dict], base_dir: str) -> Iterable[dict]:
     """
     Enhance the web service entries in the manifest with additional information.
 
     :param web_services: An iterable of web service dicts
+    :param base_dir: The base directory containing the web service files
     :return: An iterable of web service dicts with enhanced information
     """
     if not web_services:
         return []
 
     for web_service in web_services:
-        web_service_path = _web_service_path(web_service["name"])
-        web_service_content = _parse_web_service(web_service_path)
+        web_service_path = Path(base_dir) / _web_service_path(web_service["name"])
+        web_service_content = _parse_web_service(str(web_service_path))
         if web_service["name"].endswith(".xml"):
             web_service["name"] = web_service["name"][:-4]
 
@@ -276,20 +279,21 @@ def _format_data(format_line: str) -> dict:
     return format_data
 
 
-def _enhance_format_info(publisher_uid: str, uid: str, formats: Iterable[dict]) -> Iterable[dict]:
+def _enhance_format_info(publisher_uid: str, uid: str, formats: Iterable[dict], base_dir: str) -> Iterable[dict]:
     """
     Enhance the format entries in the manifest with additional information.
 
     :param publisher_uid: The publisher UID
     :param uid: The UID
     :param formats: An iterable of format dicts
+    :param base_dir: The base directory containing the format files
     :return: An iterable of format dicts with enhanced information
     """
     if not formats:
         return []
 
     for format in formats:
-        filenames = _format_filenames(format["name"])
+        filenames = _format_filenames(format["name"], base_dir)
         format_data = _format_data(_load_format_line(filenames.db_filename))
         format["short_name"] = format["name"]
         format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
@@ -347,21 +351,20 @@ def summarize_fpkg(fpkg_path: str) -> str:
     with tempfile.TemporaryDirectory() as temp_dir:
         _unpack_fpkg_file(temp_dir, fpkg_path)
 
-        with chdir(temp_dir):
-            manifest = _parsed_manifest(_manifest_path(temp_dir))
-            transformers = manifest.get("package_content", {}).get("transformers", [])
-            formats = manifest.get("package_content", {}).get("formats", [])
-            web_services = manifest.get("package_content", {}).get("web_services", [])
-            manifest["package_content"] = manifest.get("package_content", {})
-            manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
-            manifest["package_content"]["formats"] = _enhance_format_info(
-                manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
-            )
-            manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services)
-            manifest["categories"] = _get_all_categories(transformers, formats)
-            manifest["deprecated"] = _package_deprecated(
-                manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
-            )
+        manifest = _parsed_manifest(_manifest_path(temp_dir))
+        transformers = manifest.get("package_content", {}).get("transformers", [])
+        formats = manifest.get("package_content", {}).get("formats", [])
+        web_services = manifest.get("package_content", {}).get("web_services", [])
+        manifest["package_content"] = manifest.get("package_content", {})
+        manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers, temp_dir)
+        manifest["package_content"]["formats"] = _enhance_format_info(
+            manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats, temp_dir
+        )
+        manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services, temp_dir)
+        manifest["categories"] = _get_all_categories(transformers, formats)
+        manifest["deprecated"] = _package_deprecated(
+            manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
+        )
         try:
             validate(manifest, output_schema)
         except ValidationError as e:
