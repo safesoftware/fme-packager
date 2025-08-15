@@ -13,7 +13,7 @@ from fme_packager.summarizer import (
     TransformerFilenames,
     FormatFilenames,
     package_deprecated,
-    SummarizerContext,
+    Summarizer,
 )
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -70,7 +70,7 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 
     mocker.patch("pathlib.Path.exists", mock_exists)
 
-    ctx = SummarizerContext("/base/dir")
+    ctx = Summarizer("/base/dir")
     result = ctx.transformer_filenames(transformer_name)
     assert result == expected
 
@@ -100,7 +100,7 @@ def test__transformer_filenames(transformer_name, expected, mocker):
 )
 def test__format_filenames(format_name, exists, expected):
     with patch("pathlib.Path.exists", return_value=exists):
-        ctx = SummarizerContext("/base/dir")
+        ctx = Summarizer("/base/dir")
         result = ctx.format_filenames(format_name)
         assert result == expected
 

@@ -1,3 +1,10 @@
+"""
+Tools for generating a JSON summary of an FME Package's contents.
+The output is an extension of what's in metadata.yml,
+with additional properties surfaced from the package's contents.
+The output is for FME Hub's use, and conforms to summarizer_spec.json.
+"""
+
 import json
 import shutil
 import tempfile
@@ -45,7 +52,7 @@ FormatFilenames = namedtuple(
 )
 
 
-class SummarizerContext:
+class Summarizer:
     def __init__(self, base_dir: Union[Path, str]):
         self.base_dir: Path = Path(base_dir)
 
@@ -340,7 +347,7 @@ def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
 
         metadata = load_fpkg_metadata(working_dir)
         manifest = metadata.dict.copy()
-        ctx = SummarizerContext(working_dir)
+        ctx = Summarizer(working_dir)
 
         manifest["package_content"] = metadata.package_content
         manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(
