@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 import yaml
 from jsonschema import validate
@@ -62,7 +62,7 @@ FormatFilenames = namedtuple(
 
 
 class SummarizerContext:
-    def __init__(self, base_dir: Path | str):
+    def __init__(self, base_dir: Union[Path, str]):
         self.base_dir: Path = Path(base_dir)
 
     def _transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
@@ -258,29 +258,6 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
     all_categories_list = list(all_categories)
     all_categories_list.sort()
     return all_categories_list
-
-
-def _enhance_transformer_info(transformers: Iterable[dict], base_dir: str) -> Iterable[dict]:
-    """
-    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_transformer_info.
-    """
-    return SummarizerContext(base_dir)._enhance_transformer_info(transformers)
-
-
-def _enhance_web_service_info(web_services: Iterable[dict], base_dir: str) -> Iterable[dict]:
-    """
-    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_web_service_info.
-    """
-    return SummarizerContext(base_dir)._enhance_web_service_info(web_services)
-
-
-def _enhance_format_info(
-    publisher_uid: str, uid: str, formats: Iterable[dict], base_dir: str
-) -> Iterable[dict]:
-    """
-    Deprecated free function retained for backward compatibility. Use SummarizerContext._enhance_format_info.
-    """
-    return SummarizerContext(base_dir)._enhance_format_info(publisher_uid, uid, formats)
 
 
 def _to_bool(value: str) -> bool:
