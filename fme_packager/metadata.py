@@ -1,17 +1,19 @@
 import json
 import os
+from pathlib import Path
+from typing import Union
 
 from ruamel.yaml import YAML
 
 
-def load_fpkg_metadata(fpkg_path):
+def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
     """
     Load package.yml as a FMEPackageMetadata object.
 
-    :param str fpkg_path: Path to the directory where package.yml exists.
+    :param fpkg_path: Path to the directory where package.yml exists.
     :rtype: FMEPackageMetadata
     """
-    with open(os.path.join(fpkg_path, "package.yml")) as f:
+    with open(Path(fpkg_path) / "package.yml") as f:
         return FMEPackageMetadata(YAML(typ="safe").load(f))
 
 

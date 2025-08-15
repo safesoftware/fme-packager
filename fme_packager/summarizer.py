@@ -6,7 +6,6 @@ The output is for FME Hub's use, and conforms to summarizer_spec.json.
 """
 
 import json
-import shutil
 import tempfile
 from collections import namedtuple
 from pathlib import Path
@@ -15,7 +14,7 @@ from typing import Iterable, List, Union
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, parse_formatinfo
+from fme_packager.operations import parse_formatinfo, extract_fpkg
 from fme_packager.packager import _load_format_line
 from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
@@ -25,22 +24,6 @@ from fme_packager.metadata import (
     TransformerMetadata,
     load_fpkg_metadata,
 )
-
-
-def _unpack_fpkg_file(directory: str, fpkg_file: str):
-    """
-    Unpack the FME Package file.
-
-    :param directory: The directory where the FME Package file will be unpacked.
-    :param fpkg_file: The FME Package file to be unpacked.
-    :return: The directory where the FME Package file was unpacked.
-    """
-    valid_fpkg = valid_fpkg_file(fpkg_file)
-    zip_file = zip_filename_for_fpkg(directory, valid_fpkg)
-    shutil.copy(valid_fpkg, zip_file)
-    shutil.unpack_archive(zip_file, directory)
-
-    return directory
 
 
 TransformerFilenames = namedtuple(
@@ -342,7 +325,7 @@ def summarize_fpkg(fpkg_path: Union[str, Path]) -> str:
         if input_path.is_dir():
             working_dir = input_path
         else:
-            _unpack_fpkg_file(temp_dir.as_posix(), input_path.as_posix())
+            extract_fpkg(input_path, temp_dir)
             working_dir = temp_dir
 
         metadata = load_fpkg_metadata(working_dir)

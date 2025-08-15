@@ -9,6 +9,7 @@ from pathlib import Path
 from fme_packager import summarizer
 from fme_packager.cli import summarize
 from fme_packager.metadata import FMEPackageMetadata
+from fme_packager.operations import extract_fpkg
 from fme_packager.summarizer import (
     TransformerFilenames,
     FormatFilenames,
@@ -304,8 +305,7 @@ def test_summarize_fpkg_from_directory(tmp_path):
         CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json"
     )
 
-    # Unpack into a temp dir using the internal helper
-    summarizer._unpack_fpkg_file(tmp_path.as_posix(), fpkg_path.as_posix())
+    extract_fpkg(fpkg_path, tmp_path)
 
     # Call summarize_fpkg on the directory
     result = json.loads(summarizer.summarize_fpkg(tmp_path))

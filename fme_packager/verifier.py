@@ -1,14 +1,14 @@
-import shutil
 import tempfile
 from json import dumps as json_dumps
+from pathlib import Path
 
-from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg
+from fme_packager.operations import extract_fpkg
 from fme_packager.packager import FMEPackager
 
 
 class FMEVerifier:
     def __init__(self, file, verbose=False, output_json=False):
-        self.file = file
+        self.file = Path(file)
         self.verbose = verbose
         self.output_json = output_json
 
@@ -27,17 +27,11 @@ class FMEVerifier:
         return result
 
     def _unzip_and_build(self):
-        self.file = valid_fpkg_file(self.file)
+        if not self.file.is_file() or not self.file.suffix.lower() == ".fpkg":
+            raise ValueError("The file must exist and have a .fpkg extension")
 
-        # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Change the extension of the file to .zip
-            temp_zip_file = str(zip_filename_for_fpkg(temp_dir, self.file))
-            self._print(f"Creating temporary zip file {temp_zip_file}")
-            shutil.copy(self.file, temp_zip_file)
-
-            # Unpack the zip file
-            shutil.unpack_archive(temp_zip_file, temp_dir)
+            extract_fpkg(self.file, temp_dir)
 
             # Verify the fpkg files by building the package
             steps = FMEPackager(temp_dir, self.verbose)
