@@ -4,6 +4,7 @@
 
 * Print output of wheel build result.
 * `config-env`: don't require write access to FME_HOME folder.
+* Fix handling of custom transformers that have multiple categories.
 
 # 1.16.1
 

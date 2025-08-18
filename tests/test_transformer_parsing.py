@@ -1,11 +1,14 @@
 from pathlib import Path
 
+import pytest
+
 from fme_packager.transformer import (
     load_transformer,
     CustomTransformerFmxFile,
     CustomTransformer,
     FmxFile,
     FmxjFile,
+    parse_custom_transformer_header,
 )
 
 
@@ -19,7 +22,7 @@ def test_custom_transformer(custom_package_dir):
     assert len(defs) == 1
     for item in defs:
         assert isinstance(item, CustomTransformer)
-        assert item.header.insert_mode == '"Linked Always"'
+        assert item.header.insert_mode == "Linked Always"
         assert item.name == "example.my-package.customFooBar"
         assert item.version == 1
         assert item.python_compatibility == "37"
@@ -36,13 +39,38 @@ def test_custom_transformer_encrypted_versioned(custom_package_dir):
     assert len(defs) == 2
     for i, item in enumerate(defs):
         assert isinstance(item, CustomTransformer)
-        assert item.header.insert_mode == '"Embedded Always"'
+        assert item.header.insert_mode == "Embedded Always"
         assert item.name == "example.my-package.test"
         assert item.version == len(defs) - i
         assert item.python_compatibility == "310"
         assert item.is_encrypted == (i == 0)  # Latest version is encrypted
         assert item.visible
         assert item.data_processing_types == []
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        '# TRANSFORMER_BEGIN example.my-package.customFooBar,1,Attributes,4d874d87-714f-41b4-9dfe-9748ebd8b565,"Linked Always",No,NO_PARALLELISM,,No,19238,YES,No,37',
+        '# TRANSFORMER_BEGIN customCategoriesTest,1,"Attributes,""Format Specific""",92a7f1bd-938a-49db-92c4-48fb37426eb3,"Linked Always",No,NO_PARALLELISM,,No,25741,YES,No,,No,,source',
+        '# TRANSFORMER_BEGIN example.data-processing-types.bothLinked,1,,,"Linked Always",No,NO_PARALLELISM,,No,25560,YES,No,,No,,both',
+    ],
+    ids=["simple", "multi-category", "no-category"],
+)
+def test_parse_custom_transformer_header(line):
+    header = parse_custom_transformer_header(line)
+    assert isinstance(header.version, int)
+    assert isinstance(header.build_num, int)
+    assert isinstance(header.deprecated, bool)
+    assert header.insert_mode == "Linked Always"
+
+    assert header.category != [""]
+    if header.name == "customCategoriesTest":
+        assert header.category == ["Attributes", "Format Specific"]
+
+    assert header.data_processing_type != [""]
+    if header.name == "example.data-processing-types.bothLinked":
+        assert header.data_processing_type == ["both"]
 
 
 def test_fmx_transformer(valid_package_dir):

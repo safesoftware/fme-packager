@@ -386,7 +386,7 @@ class FMEPackager:
             if transformer.name != expected_fqname:
                 raise ValueError(f"Name must be '{expected_fqname}', not '{transformer.name}'")
             if isinstance(transformer, CustomTransformer):
-                if transformer.header.insert_mode != '"Linked Always"':
+                if transformer.header.insert_mode != "Linked Always":
                     raise ValueError(
                         f'Custom transformer Insert Mode must be "Linked Always", not {transformer.header.insert_mode}'
                     )
