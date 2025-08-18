@@ -2,7 +2,11 @@
 Tests for the `fme-packager config-env` command.
 """
 
+import os
+import subprocess
 import sys
+import venv
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -78,3 +82,54 @@ def test_outputs(tmp_path, also_touch):
         assert also_touch.parent.as_posix() in pth  # omit fake pyd
     elif also_touch.suffix == ".zip":
         assert also_touch.as_posix() in pth
+
+
+@pytest.mark.skipif(not os.getenv("FME_HOME"), reason="No FME")
+@pytest.mark.slow
+def test_configured_env(tmp_path):
+    """
+    Test that the `fme-packager config-env` command successfully runs in a clean virtualenv,
+    and that the virtualenv can then import fmeobjects afterwards.
+    """
+    print(f"Creating venv in {tmp_path}")
+    tmp_path = Path(tmp_path)
+    venv.create(tmp_path, with_pip=True)
+
+    if sys.platform == "win32":
+        bin_dir = tmp_path / "Scripts"
+        py_exe = "python.exe"
+    else:
+        bin_dir = tmp_path / "bin"
+        py_exe = "python3"
+    py_exe = (bin_dir / py_exe).as_posix()
+    site_packages_dir = Path(
+        subprocess.run(
+            [
+                py_exe,
+                "-c",
+                "import sysconfig;print(sysconfig.get_paths()['purelib'])",
+            ],
+            check=True,
+            capture_output=True,
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    commands = [
+        [py_exe, "-m", "pip", "install", "-e", "."],
+        [
+            (bin_dir / "fme-packager").as_posix(),
+            "config-env",
+            "--fme-home",
+            os.getenv("FME_HOME"),
+            "--site-packages-dir",
+            site_packages_dir.as_posix(),
+        ],
+        [py_exe, "-c", "import fmeobjects"],
+        [py_exe, "-c", "import pluginbuilder"],
+        [py_exe, "-c", "import fmewebservices"],
+    ]
+    for cmd in commands:
+        print(" ".join(cmd))
+        subprocess.run(cmd, check=True)
