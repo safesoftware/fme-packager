@@ -258,6 +258,7 @@ def test_package_all_visible(mock_transformers, mock_formats):
             / "summarize_example.data-processing-types-0.1.0.fpkg.json",
         ),
     ],
+    ids=["simple", "format", "deprecated", "data_processing_types"],
 )
 def test_summarize_fpkg(fpkg_path, expected_output_path):
     expected_output = json.loads(expected_output_path.read_text())

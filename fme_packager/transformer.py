@@ -8,6 +8,7 @@ import re
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import Iterable
+from typing import Iterable, List
 
 
 def parse_data_processing_type(data_processing_type: dict):
@@ -39,37 +40,37 @@ class Transformer(ABC):
 
     @property
     @abstractmethod
-    def name(self):
+    def name(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def version(self):
+    def version(self) -> int:
         pass
 
     @property
     @abstractmethod
-    def python_compatibility(self):
+    def python_compatibility(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def categories(self):
+    def categories(self) -> List[str]:
         pass
 
     @property
     @abstractmethod
-    def aliases(self):
+    def aliases(self) -> List[str]:
         pass
 
     @property
     @abstractmethod
-    def visible(self):
+    def visible(self) -> bool:
         pass
 
     @property
     @abstractmethod
-    def data_processing_types(self):
+    def data_processing_types(self) -> List[str]:
         pass
 
 
