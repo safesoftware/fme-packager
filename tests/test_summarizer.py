@@ -1,5 +1,8 @@
+from __future__ import division, absolute_import, print_function, unicode_literals
+
 import json
 import pathlib
+import shutil
 from unittest.mock import patch
 
 import pytest
@@ -7,7 +10,7 @@ from click.testing import CliRunner
 from pathlib import Path
 
 from fme_packager import summarizer
-from fme_packager.cli import summarize
+from fme_packager import cli
 from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.operations import extract_fpkg
 from fme_packager.summarizer import (
@@ -295,21 +298,62 @@ def test_summarize_empty_fpkg(monkeypatch, tmp_path):
 def test_summarize():
     runner = CliRunner()
     fpkg_path = str(CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg")
-    result = runner.invoke(summarize, [fpkg_path])
+    result = runner.invoke(cli.summarize, [fpkg_path])
     assert result.exit_code == 0
     json.loads(result.output)
 
 
-def test_summarize_fpkg_from_directory(tmp_path):
+@pytest.fixture
+def fpkg_dir_with_bad_data_processing_type(tmp_path):
+    tmp_path = Path(tmp_path)
     fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
-    expected_output_path = (
-        CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json"
-    )
-
     extract_fpkg(fpkg_path, tmp_path)
 
-    # Call summarize_fpkg on the directory
-    result = summarizer.summarize_fpkg(tmp_path)
-    expected_output = json.load(open(expected_output_path))
+    # Modify the FMX file to have an invalid DATA_PROCESSING_TYPE
+    fmx_path = tmp_path / "transformers" / "MyGreeter.fmx"
+    fmx_txt = fmx_path.read_text()
+    fmx_txt = fmx_txt.replace("ALIASES:", "ALIASES:\nDATA_PROCESSING_TYPE: bad value\n")
+    fmx_path.write_text(fmx_txt)
+    return tmp_path
 
-    assert result == expected_output
+
+def test_summarize_bad_data_processing_type(fpkg_dir_with_bad_data_processing_type):
+    """
+    Test that summarize_fpkg can run against an extracted FPKG,
+    and rejects a bad data_processing_type in the FMX.
+    """
+    result = summarizer.summarize_fpkg(fpkg_dir_with_bad_data_processing_type)
+    assert result["status"] == "error"
+    assert result["message"].startswith(
+        "The generated output did not conform to the schema: 'bad value' is not one of"
+    )
+
+
+@pytest.mark.parametrize(
+    "subcommand", [cli.summarize, cli.verify, cli.pack], ids=lambda func: str(func)
+)
+def test_cli_bad_data_processing_type(fpkg_dir_with_bad_data_processing_type, subcommand):
+    """
+    Test that CLI commands fail with a bad data_processing_type in the FMX.
+    """
+    if subcommand is cli.verify:
+        # Re-zip the extracted package back to .fpkg.
+        # Can't use `fme-packager pack` because it's expected to reject this bad package.
+        dest = str(fpkg_dir_with_bad_data_processing_type / "example.my-package-0.1.0.fpkg")
+        shutil.make_archive(
+            dest,
+            "zip",
+            root_dir=fpkg_dir_with_bad_data_processing_type,
+        )
+        Path(dest + ".zip").rename(dest)
+        args = [dest]
+    else:
+        args = [fpkg_dir_with_bad_data_processing_type.as_posix()]
+
+    result = CliRunner().invoke(subcommand, args)
+    if subcommand is cli.pack:
+        assert "The generated output did not conform to the schema" in str(result)
+        assert result.exit_code != 0
+    else:
+        assert "The generated output did not conform to the schema" in result.output
+        assert result.exit_code == 0
