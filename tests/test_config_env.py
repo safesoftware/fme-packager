@@ -93,7 +93,7 @@ def test_configured_env(tmp_path):
     """
     print(f"Creating venv in {tmp_path}")
     tmp_path = Path(tmp_path)
-    venv.create(tmp_path, with_pip=True)
+    venv.create(tmp_path)
 
     if sys.platform == "win32":
         bin_dir = tmp_path / "Scripts"
@@ -116,20 +116,9 @@ def test_configured_env(tmp_path):
         .strip()
     )
 
-    commands = [
-        [py_exe, "-m", "pip", "install", "-e", "."],
-        [
-            (bin_dir / "fme-packager").as_posix(),
-            "config-env",
-            "--fme-home",
-            os.getenv("FME_HOME"),
-            "--site-packages-dir",
-            site_packages_dir.as_posix(),
-        ],
-        [py_exe, "-c", "import fmeobjects"],
-        [py_exe, "-c", "import pluginbuilder"],
-        [py_exe, "-c", "import fmewebservices"],
-    ]
-    for cmd in commands:
-        print(" ".join(cmd))
-        subprocess.run(cmd, check=True)
+    result = invoke(
+        "--fme-home", os.getenv("FME_HOME"), "--site-packages-dir", site_packages_dir.as_posix()
+    )
+    print(result.output)
+    assert "failed" not in result.output.lower()
+    assert result.exit_code == 0

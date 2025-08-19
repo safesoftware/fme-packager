@@ -6,6 +6,7 @@ import inspect
 import json as json_lib
 import os
 import shutil
+import subprocess
 import sys
 import sysconfig
 from pathlib import Path
@@ -170,8 +171,25 @@ def config_env(fme_home, site_packages_dir):
     src = Path(inspect.getfile(fme_packager)).parent / "fme_env.py"
     shutil.copy(src, dst_py)
 
-    print("\nThis Python environment is now set up for access to FME and fmeobjects.")
-    print("If the FME install location changes, re-run this script to update paths.")
+    print("Verifying access to fmeobjects...")
+    for test_import in [
+        "from fmeobjects import FMEFeature",
+        "import pluginbuilder",
+        "import fmewebservices",
+    ]:
+        try:
+            subprocess.run(
+                [sys.executable, "-c", f"import sys;sys.tracebacklimit=0;{test_import}"],
+                check=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"{test_import}: {e.stderr.decode().strip()}")
+            print("Environment configuration failed.")
+            sys.exit(1)
+    else:
+        print("\nThis Python environment is now set up for access to fmeobjects.")
+        print("If the FME install location changes, re-run this script to update paths.")
 
 
 if __name__ == "__main__":
