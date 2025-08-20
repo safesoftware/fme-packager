@@ -191,6 +191,7 @@ def config_env(fme_home, site_packages_dir):
         except subprocess.CalledProcessError as e:
             print(f"{test_import}: {e.stderr.decode().strip()}")
             print("Environment configuration failed.")
+            print(f"Using Python {sys.version} at {sys.executable}")
             sys.exit(1)
     else:
         print("\nThis Python environment is now set up for access to fmeobjects.")
