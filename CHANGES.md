@@ -6,6 +6,7 @@
 * Fix handling of custom transformers that have multiple categories.
 * `config-env`: don't require write access to the FME installation folder.
 * `config-env`: verify successful configuration by importing fmeobjects.
+* `init`: don't show stack trace for validation errors
 
 # 1.16.1
 
