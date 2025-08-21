@@ -134,7 +134,13 @@ def summarize(file):
     required=True,
     help="Path to Python environment's site-packages",
 )
-def config_env(fme_home, site_packages_dir):
+@click.option(
+    "--verify/--no-verify",
+    is_flag=True,
+    default=True,
+    help="Skip verification of fmeobjects access",
+)
+def config_env(fme_home, site_packages_dir, verify):
     """
     Configure a Python environment for access to fmeobjects
     and the Python libraries included with FME.
@@ -176,26 +182,27 @@ def config_env(fme_home, site_packages_dir):
     src = Path(inspect.getfile(fme_packager)).parent / "fme_env.py"
     shutil.copy(src, dst_py)
 
-    print("Verifying access to fmeobjects...")
-    for test_import in [
-        "from fmeobjects import FMEFeature",
-        "import pluginbuilder",
-        "import fmewebservices",
-    ]:
-        try:
-            subprocess.run(
-                [sys.executable, "-c", f"import sys;sys.tracebacklimit=0;{test_import}"],
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"{test_import}: {e.stderr.decode().strip()}")
-            print("Environment configuration failed.")
-            print(f"Using Python {sys.version} at {sys.executable}")
-            sys.exit(1)
-    else:
-        print("\nThis Python environment is now set up for access to fmeobjects.")
-        print("If the FME install location changes, re-run this script to update paths.")
+    if verify:
+        print("Verifying access to fmeobjects...")
+        for test_import in [
+            "from fmeobjects import FMEFeature",
+            "import pluginbuilder",
+            "import fmewebservices",
+        ]:
+            try:
+                subprocess.run(
+                    [sys.executable, "-c", f"import sys;sys.tracebacklimit=0;{test_import}"],
+                    check=True,
+                    capture_output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"{test_import}: {e.stderr.decode().strip()}")
+                print("Environment configuration failed.")
+                print(f"Using Python {sys.version} at {sys.executable}")
+                return sys.exit(1)
+
+    print("\nThis Python environment is now set up for access to fmeobjects.")
+    print("If the FME install location changes, re-run this script to update paths.")
 
 
 if __name__ == "__main__":

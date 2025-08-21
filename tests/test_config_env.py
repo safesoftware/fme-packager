@@ -64,8 +64,13 @@ def test_outputs(tmp_path, also_touch):
     site_packages = tmp_path / "mock-site-packages"
     site_packages.mkdir(exist_ok=True)
 
+    # This is a mock of an FME installation, so don't try to verify importable fmeobjects
     result = invoke(
-        "--fme-home", fme_home.as_posix(), "--site-packages-dir", site_packages.as_posix()
+        "--fme-home",
+        fme_home.as_posix(),
+        "--site-packages-dir",
+        site_packages.as_posix(),
+        "--no-verify",
     )
     assert result.exit_code == 0
     assert (site_packages / "fme_env.py").is_file()
