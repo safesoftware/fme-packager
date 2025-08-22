@@ -1,6 +1,6 @@
 # fme-packager changes
 
-# dev
+# 0.17.0
 
 * Print output of wheel build result.
 * Fix handling of custom transformers that have multiple categories.
