@@ -1,57 +1,30 @@
+"""
+Tools for generating a JSON summary of an FME Package's contents.
+The output is an extension of what's in metadata.yml,
+with additional properties surfaced from the package's contents.
+The output is for FME Hub's use, and conforms to summarizer_spec.json.
+"""
+
 import json
 import os
-import shutil
 import tempfile
 from collections import namedtuple
+from importlib.resources import open_text
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
-import yaml
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from fme_packager.operations import valid_fpkg_file, zip_filename_for_fpkg, parse_formatinfo
-from fme_packager.packager import _load_format_line
-from fme_packager.transformer import load_transformer, TransformerFile, Transformer
-from fme_packager.utils import chdir
+from fme_packager.operations import parse_formatinfo, extract_fpkg, load_format_line
+from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
-
-
-def _unpack_fpkg_file(directory: str, fpkg_file: str):
-    """
-    Unpack the FME Package file.
-
-    :param directory: The directory where the FME Package file will be unpacked.
-    :param fpkg_file: The FME Package file to be unpacked.
-    :return: The directory where the FME Package file was unpacked.
-    """
-    valid_fpkg = valid_fpkg_file(fpkg_file)
-    zip_file = zip_filename_for_fpkg(directory, valid_fpkg)
-    shutil.copy(valid_fpkg, zip_file)
-    shutil.unpack_archive(zip_file, directory)
-
-    return directory
-
-
-def _manifest_path(fpkg_dir: str) -> Path:
-    """
-    Return the manifest file.
-
-    :param fpkg_dir: The directory where the FME Package file was unpacked.
-    :return: The path to the manifest file.
-    """
-    return Path(fpkg_dir) / "package.yml"
-
-
-def _parsed_manifest(yaml_file: Path) -> dict:
-    """
-    Parse the manifest file.
-
-    :param yaml_file: The path to the manifest yaml file.
-    :return: A dictionary of the parsed YAML.
-    """
-    with open(yaml_file, "r") as file:
-        return yaml.safe_load(file)
+from fme_packager.metadata import (
+    FormatMetadata,
+    WebServiceMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
 
 
 TransformerFilenames = namedtuple(
@@ -63,49 +36,123 @@ FormatFilenames = namedtuple(
 )
 
 
-def _transformer_filenames(transformer_name: str) -> TransformerFilenames:
-    """
-    Retrieve filenames for the transformer and its readme
+class Summarizer:
+    def __init__(self, base_dir: Union[Path, str]):
+        self.base_dir: Path = Path(base_dir)
 
-    Input dict must have the key:
-    - 'name': The name of the transformer.
+    def transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
+        """
+        Retrieve filenames for the transformer and its readme
 
-    :param transformer_name: The name of the transformer to retrieve filenames for.
-    :return: A tuple containing the filename and readme filename.
-    """
-    if not transformer_name:
-        return TransformerFilenames(filename=None, readme_filename=None)
+        :param transformer_name: The name of the transformer to retrieve filenames for.
+        :return: A tuple containing the filename and readme filename.
+        """
+        if not transformer_name:
+            return TransformerFilenames(filename=None, readme_filename=None)
 
-    result = {}
-    for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
-        potential_filename = (Path("transformers") / f"{transformer_name}.{ext}").as_posix()
-        if os.path.exists(potential_filename):
-            result[key] = potential_filename
+        result: dict = {}
+        for ext, key in [("fmx", "filename"), ("fmxj", "filename"), ("md", "readme_filename")]:
+            potential_path = self.base_dir / "transformers" / f"{transformer_name}.{ext}"
+            if potential_path.exists():
+                result[key] = potential_path.as_posix()
 
-    return TransformerFilenames(**result)
+        return TransformerFilenames(**result)
 
+    def format_filenames(self, format_name: str) -> FormatFilenames:
+        """
+        Retrieve filenames for the format and its readme
 
-def _format_filenames(format_name: str) -> FormatFilenames:
-    """
-    Retrieve filenames for the format and its readme
+        :param format_name: The name of the format to retrieve filenames for.
+        :return: A tuple containing the filename, db filename, and readme filename.
+        """
+        if not format_name:
+            return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
 
-    :param format_name: The name of the format to retrieve filenames for.
-    :return: A tuple containing the filename, db filename and readme filename.
-    """
-    if not format_name:
-        return FormatFilenames(filename=None, readme_filename=None, db_filename=None)
+        filenames = {
+            "filename": (self.base_dir / "formats" / f"{format_name}.fmf").as_posix(),
+            "db_filename": (self.base_dir / "formats" / f"{format_name}.db").as_posix(),
+            "readme_filename": (self.base_dir / "formats" / f"{format_name}.md").as_posix(),
+        }
 
-    filenames = {
-        "filename": str(Path("formats") / f"{format_name}.fmf"),
-        "db_filename": str(Path("formats") / f"{format_name}.db"),
-        "readme_filename": str(Path("formats") / f"{format_name}.md"),
-    }
+        for key, filename in filenames.items():
+            if not Path(filename).exists():
+                filenames[key] = None
 
-    for key, filename in filenames.items():
-        if not os.path.exists(filename):
-            filenames[key] = None
+        return FormatFilenames(**filenames)
 
-    return FormatFilenames(**filenames)
+    def enhance_transformer_info(
+        self, transformers: Iterable[TransformerMetadata]
+    ) -> Iterable[dict]:
+        """
+        Enhance the transformer entries in the manifest with additional information.
+
+        :return: An iterable of transformer dicts with enhanced information
+        """
+        result = []
+        for tm in transformers:
+            filenames = self.transformer_filenames(tm.name)
+            loaded_transformer = load_transformer(filenames.filename)
+            entry = {
+                "name": tm.name,
+                "latest_version": tm.version,
+            }
+            entry.update(_transformer_data(loaded_transformer))
+            entry.update(_content_description(filenames.readme_filename))
+            result.append(entry)
+
+        return result
+
+    def enhance_web_service_info(
+        self, web_services: Iterable[WebServiceMetadata]
+    ) -> Iterable[dict]:
+        """
+        Enhance the web service entries in the manifest with additional information.
+
+        :return: An iterable of web service dicts with enhanced information
+        """
+        result = []
+        for ws in web_services:
+            ws_name = ws.name
+            web_service_path = self.base_dir / _web_service_path(ws_name)
+            web_service_content = _parse_web_service(web_service_path)
+            # Normalize name without .xml suffix
+            normalized_name = ws_name[:-4] if ws_name.endswith(".xml") else ws_name
+
+            entry = {"name": normalized_name}
+            for key in [
+                "help_url",
+                "description",
+                "markdown_description",
+                "connection_description",
+                "markdown_connection_description",
+            ]:
+                entry[key] = web_service_content.get(key, "") or ""
+            result.append(entry)
+
+        return result
+
+    def enhance_format_info(
+        self, publisher_uid: str, uid: str, formats: Iterable[FormatMetadata]
+    ) -> Iterable[dict]:
+        """
+        Enhance the format entries in the manifest with additional information.
+
+        :return: iterable of format dicts with enhanced information
+        """
+        result = []
+        for fm in formats:
+            short_name = fm.name
+            filenames = self.format_filenames(short_name)
+            format_data = _format_data(load_format_line(filenames.db_filename))
+            entry: dict = {
+                "short_name": short_name,
+                "name": f"{publisher_uid}.{uid}.{short_name}",
+            }
+            entry.update(_content_description(filenames.readme_filename))
+            entry.update(format_data)
+            result.append(entry)
+
+        return result
 
 
 def _transformer_data(loaded_file: TransformerFile) -> dict:
@@ -124,7 +171,6 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
     :param loaded_file: The loaded transformer file.
     :return: The updates for the transformer dictionary.
     """
-    versions: list[Transformer] = loaded_file.versions()
     return {
         "versions": [
             {
@@ -135,7 +181,7 @@ def _transformer_data(loaded_file: TransformerFile) -> dict:
                 "visible": version.visible,
                 "data_processing_types": version.data_processing_types,
             }
-            for version in versions
+            for version in loaded_file.versions()
         ],
     }
 
@@ -182,72 +228,14 @@ def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -
             continue
         all_categories.update(highest_version["categories"])
 
-    for format in formats:
-        if not format.get("categories", None):
+    for fmt in formats:
+        if not fmt.get("categories", None):
             continue
-        all_categories.update(format["categories"])
+        all_categories.update(fmt["categories"])
 
     all_categories_list = list(all_categories)
     all_categories_list.sort()
     return all_categories_list
-
-
-def _enhance_transformer_info(transformers: Iterable[dict]) -> Iterable[dict]:
-    """
-    Enhance the transformer entries in the manifest with additional information.
-
-    :param transformers: An iterable of transformer dicts
-    :return: An iterable of transformer dicts with enhanced information
-    """
-    if not transformers:
-        return []
-
-    for transformer in transformers:
-        filenames = _transformer_filenames(transformer["name"])
-        loaded_transformer = load_transformer(filenames.filename)
-        transformer.update(_transformer_data(loaded_transformer))
-        transformer.update(_content_description(filenames.readme_filename))
-        transformer["latest_version"] = transformer.pop("version")
-
-    return transformers
-
-
-def _enhance_web_service_info(web_services: Iterable[dict]) -> Iterable[dict]:
-    """
-    Enhance the web service entries in the manifest with additional information.
-
-    :param web_services: An iterable of web service dicts
-    :return: An iterable of web service dicts with enhanced information
-    """
-    if not web_services:
-        return []
-
-    for web_service in web_services:
-        web_service_path = _web_service_path(web_service["name"])
-        web_service_content = _parse_web_service(web_service_path)
-        if web_service["name"].endswith(".xml"):
-            web_service["name"] = web_service["name"][:-4]
-
-        for key in [
-            "help_url",
-            "description",
-            "markdown_description",
-            "connection_description",
-            "markdown_connection_description",
-        ]:
-            web_service[key] = web_service_content.get(key, "") or ""
-
-    return web_services
-
-
-def _to_bool(value: str) -> bool:
-    """
-    Convert a string to a boolean.
-
-    :param value: The value to convert.
-    :return: The boolean value.
-    """
-    return value.upper() == "YES"
 
 
 def _format_data(format_line: str) -> dict:
@@ -262,41 +250,16 @@ def _format_data(format_line: str) -> dict:
     :param format_line: The loaded format line.
     :return: The updates for the format dictionary.
     """
+    if format_info := parse_formatinfo(format_line):
+        return {
+            "fds_info": format_line,
+            "visible": format_info.VISIBLE.upper() != "NO",
+            "categories": (
+                format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
+            ),
+        }
 
-    format_info = parse_formatinfo(format_line)
-    format_data = {"visible": None, "fds_info": None, "categories": None}
-
-    if format_info:
-        format_data["fds_info"] = format_line
-        format_data["visible"] = format_info.VISIBLE.upper() != "NO"
-        format_data["categories"] = (
-            format_info.FORMAT_CATEGORIES.split(",") if format_info.FORMAT_CATEGORIES else []
-        )
-
-    return format_data
-
-
-def _enhance_format_info(publisher_uid: str, uid: str, formats: Iterable[dict]) -> Iterable[dict]:
-    """
-    Enhance the format entries in the manifest with additional information.
-
-    :param publisher_uid: The publisher UID
-    :param uid: The UID
-    :param formats: An iterable of format dicts
-    :return: An iterable of format dicts with enhanced information
-    """
-    if not formats:
-        return []
-
-    for format in formats:
-        filenames = _format_filenames(format["name"])
-        format_data = _format_data(_load_format_line(filenames.db_filename))
-        format["short_name"] = format["name"]
-        format["name"] = f"{publisher_uid}.{uid}.{format['name']}"
-        format.update(_content_description(filenames.readme_filename))
-        format.update(format_data)
-
-    return formats
+    return {"visible": None, "fds_info": None, "categories": None}
 
 
 def _load_output_schema() -> dict:
@@ -305,11 +268,11 @@ def _load_output_schema() -> dict:
 
     :return: The output schema.
     """
-    with open(Path(__file__).parent / "summarizer_spec.json", "r") as file:
-        return json.load(file)
+    with open_text("fme_packager", "summarizer_spec.json") as f:
+        return json.load(f)
 
 
-def _package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
+def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
     """
     Determine if the package is deprecated based on its contents.
     If the package contains transformers or formats, and the highest version of all transformers are not visible,
@@ -333,44 +296,54 @@ def _package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -
     return not (is_transformer_visible or is_format_visible)
 
 
-def summarize_fpkg(fpkg_path: str) -> str:
+def summarize_fpkg(fpkg_path: Union[str, os.PathLike]) -> dict:
     """
     Summarize the FME Package.
 
     The output conforms to summarizer_spec.json.
 
-    :param fpkg_path: The path to the FME Package.
-    :return: A JSON string of the summarized FME Package, or an error message under the key 'error'.
+    :param fpkg_path: The path to the FME Package file (.fpkg) or an already extracted package directory.
+    :return: A dict summary of the FME Package, or an error dict with keys 'status' and 'message'.
     """
-    output_schema = _load_output_schema()
+    input_path = Path(fpkg_path)
 
+    # Always create a temp directory to simplify logic; only used when input is an .fpkg file
     with tempfile.TemporaryDirectory() as temp_dir:
-        _unpack_fpkg_file(temp_dir, fpkg_path)
+        temp_dir = Path(temp_dir)
 
-        with chdir(temp_dir):
-            manifest = _parsed_manifest(_manifest_path(temp_dir))
-            transformers = manifest.get("package_content", {}).get("transformers", [])
-            formats = manifest.get("package_content", {}).get("formats", [])
-            web_services = manifest.get("package_content", {}).get("web_services", [])
-            manifest["package_content"] = manifest.get("package_content", {})
-            manifest["package_content"]["transformers"] = _enhance_transformer_info(transformers)
-            manifest["package_content"]["formats"] = _enhance_format_info(
-                manifest.get("publisher_uid", ""), manifest.get("uid", ""), formats
-            )
-            manifest["package_content"]["web_services"] = _enhance_web_service_info(web_services)
-            manifest["categories"] = _get_all_categories(transformers, formats)
-            manifest["deprecated"] = _package_deprecated(
-                manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
-            )
-        try:
-            validate(manifest, output_schema)
-        except ValidationError as e:
-            return json.dumps(
-                {
-                    "status": "error",
-                    "message": f"The generated output did not conform to the schema: {e.message}",
-                },
-                indent=2,
-            )
+        if input_path.is_dir():
+            working_dir = input_path
+        else:
+            extract_fpkg(input_path, temp_dir)
+            working_dir = temp_dir
 
-        return json.dumps(manifest, indent=2)
+        metadata = load_fpkg_metadata(working_dir)
+        manifest = metadata.dict.copy()
+        ctx = Summarizer(working_dir)
+
+        manifest["package_content"] = metadata.package_content
+        manifest["package_content"]["transformers"] = ctx.enhance_transformer_info(
+            metadata.transformers
+        )
+        manifest["package_content"]["formats"] = ctx.enhance_format_info(
+            metadata.publisher_uid, metadata.uid, metadata.formats
+        )
+        manifest["package_content"]["web_services"] = ctx.enhance_web_service_info(
+            metadata.web_services
+        )
+        manifest["categories"] = _get_all_categories(
+            manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
+        )
+        manifest["deprecated"] = package_deprecated(
+            manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
+        )
+
+    try:
+        validate(manifest, _load_output_schema())
+    except ValidationError as e:
+        return {
+            "status": "error",
+            "message": f"The generated output did not conform to the schema: {e.message}",
+        }
+
+    return manifest

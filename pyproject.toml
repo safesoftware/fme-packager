@@ -19,3 +19,9 @@ omit = [
     "*/tests/fixtures/**",
     "*/venv/**",
 ]
+
+[tool.pytest.ini_options]
+addopts = "-s --strict-markers -m 'not slow'"
+markers = [
+    "slow: mark test as slow",
+]

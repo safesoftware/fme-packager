@@ -23,7 +23,9 @@ from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
     TREE_COPY_IGNORE_GLOBS,
+    load_format_line,
 )
+from fme_packager.summarizer import summarize_fpkg
 from fme_packager.transformer import load_transformer, CustomTransformer
 
 
@@ -113,21 +115,6 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
         raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
 
 
-def _load_format_line(db_path) -> str:
-    """
-    Gets the DB info line from the format file.
-    """
-    line = None
-    with open(db_path) as inf:
-        for line in inf:
-            if line.startswith(";"):
-                continue  # comment line.
-            return line.rstrip()
-
-    if not line:
-        return ""
-
-
 def get_formatinfo(package_metadata, format_metadata, db_path):
     """
     Retrieves format info and checks that it is consistent with the package and format metadata.
@@ -140,7 +127,7 @@ def get_formatinfo(package_metadata, format_metadata, db_path):
         package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
     )
 
-    line = _load_format_line(db_path)
+    line = load_format_line(db_path)
     if not line:
         raise ValueError("{} empty".format(db_path))
 
@@ -343,6 +330,11 @@ class FMEPackager:
         self._copy_wheels()
         self._check_wheels()
 
+        # FMEENGINE-87677: Ensure a valid summary can be generated.
+        summary = summarize_fpkg(self.build_dir)
+        if summary.get("status") == "error":
+            raise ValueError(f"Package summary error: {summary.get('message')}")
+
     def _copy_formats(self):
         # First, copy all files we don't specifically care about.
         # Ignore FMF and etc for formats not mentioned in metadata.
@@ -394,7 +386,7 @@ class FMEPackager:
             if transformer.name != expected_fqname:
                 raise ValueError(f"Name must be '{expected_fqname}', not '{transformer.name}'")
             if isinstance(transformer, CustomTransformer):
-                if transformer.header.insert_mode != '"Linked Always"':
+                if transformer.header.insert_mode != "Linked Always":
                     raise ValueError(
                         f'Custom transformer Insert Mode must be "Linked Always", not {transformer.header.insert_mode}'
                     )
@@ -519,7 +511,8 @@ class FMEPackager:
                 if os.path.exists("dist"):
                     shutil.rmtree("dist")
                 try:
-                    ProjectBuilder(".").build("wheel", "dist")
+                    result = ProjectBuilder(".").build("wheel", "dist")
+                    print(f"Built {result}")
                 finally:
                     os.chdir(original_cwd)
 
@@ -552,7 +545,9 @@ class FMEPackager:
                 wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace("-", "_"))
                 for wheel_name in wheel_names
             ):
-                raise ValueError(f"Python library '{lib_name}' is in metadata, but was not found")
+                raise ValueError(
+                    f"Python library '{lib_name}' is in metadata but not in {', '.join(wheel_names)}"
+                )
 
         if not wheels_path.is_dir():
             return

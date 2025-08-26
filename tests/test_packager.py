@@ -149,9 +149,7 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
                 transformer_abs_path.stem
             ]
         except KeyError as e:
-            raise KeyError(
-                f"{transformer_abs_path.stem} not in package.yml, but no metadata given"
-            ) from e
+            raise KeyError(f"{transformer_abs_path.stem} not in package.yml") from e
 
     if not expected_exc:
         # Expect success

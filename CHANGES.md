@@ -1,5 +1,13 @@
 # fme-packager changes
 
+# 0.17.0
+
+* Print output of wheel build result.
+* Fix handling of custom transformers that have multiple categories.
+* `config-env`: don't require write access to the FME installation folder.
+* `config-env`: verify successful configuration by importing fmeobjects.
+* `init`: don't show stack trace for validation errors
+
 # 1.16.1
 
 * Require the `PYTHON_COMPATIBILITY` keyword only for packages where minimum build is before FME 2022. (FMEENGINE-86130)

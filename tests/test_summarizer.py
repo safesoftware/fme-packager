@@ -1,16 +1,24 @@
+from __future__ import division, absolute_import, print_function, unicode_literals
+
 import json
 import pathlib
-import tempfile
+import shutil
 from unittest.mock import patch
 
 import pytest
-import yaml
 from click.testing import CliRunner
 from pathlib import Path
 
 from fme_packager import summarizer
-from fme_packager.cli import summarize
-from fme_packager.summarizer import TransformerFilenames, FormatFilenames, _package_deprecated
+from fme_packager import cli
+from fme_packager.metadata import FMEPackageMetadata
+from fme_packager.operations import extract_fpkg
+from fme_packager.summarizer import (
+    TransformerFilenames,
+    FormatFilenames,
+    package_deprecated,
+    Summarizer,
+)
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
@@ -32,35 +40,42 @@ CWD = pathlib.Path(__file__).parent.resolve()
         (
             "fmx_transformer",
             TransformerFilenames(
-                filename="transformers/fmx_transformer.fmx",
-                readme_filename="transformers/fmx_transformer.md",
+                filename=(Path("/base/dir") / "transformers" / "fmx_transformer.fmx").as_posix(),
+                readme_filename=(
+                    Path("/base/dir") / "transformers" / "fmx_transformer.md"
+                ).as_posix(),
             ),
         ),
         # Case 4: Transformer .fmxj file exists but .fmx file does not
         (
             "fmxj_transformer",
             TransformerFilenames(
-                filename="transformers/fmxj_transformer.fmxj",
-                readme_filename="transformers/fmxj_transformer.md",
+                filename=(Path("/base/dir") / "transformers" / "fmxj_transformer.fmxj").as_posix(),
+                readme_filename=(
+                    Path("/base/dir") / "transformers" / "fmxj_transformer.md"
+                ).as_posix(),
             ),
         ),
     ],
 )
 def test__transformer_filenames(transformer_name, expected, mocker):
-    def side_effect(path):
-        if "non_existing_transformer" in path:
+    # Mock Path.exists as an instance method (self is the path object)
+    def mock_exists(self):
+        path_str = str(self)
+        if "non_existing_transformer" in path_str:
             return False
-        if "fmx_transformer" in path and path.endswith(".fmx"):
+        if "fmx_transformer" in path_str and path_str.endswith(".fmx"):
             return True
-        if "fmxj_transformer" in path and path.endswith(".fmxj"):
+        if "fmxj_transformer" in path_str and path_str.endswith(".fmxj"):
             return True
-        if path.endswith(".md"):
+        if path_str.endswith(".md"):
             return True
         return False
 
-    mocker.patch("os.path.exists", side_effect=side_effect)
+    mocker.patch("pathlib.Path.exists", mock_exists)
 
-    result = summarizer._transformer_filenames(transformer_name)
+    ctx = Summarizer("/base/dir")
+    result = ctx.transformer_filenames(transformer_name)
     assert result == expected
 
 
@@ -71,9 +86,9 @@ def test__transformer_filenames(transformer_name, expected, mocker):
             "test_format",
             True,
             FormatFilenames(
-                filename=str(Path("formats") / "test_format.fmf"),
-                db_filename=str(Path("formats") / "test_format.db"),
-                readme_filename=str(Path("formats") / "test_format.md"),
+                filename=(Path("/base/dir") / "formats" / "test_format.fmf").as_posix(),
+                db_filename=(Path("/base/dir") / "formats" / "test_format.db").as_posix(),
+                readme_filename=(Path("/base/dir") / "formats" / "test_format.md").as_posix(),
             ),
         ),
         (
@@ -88,8 +103,9 @@ def test__transformer_filenames(transformer_name, expected, mocker):
     ],
 )
 def test__format_filenames(format_name, exists, expected):
-    with patch("os.path.exists", return_value=exists):
-        result = summarizer._format_filenames(format_name)
+    with patch("pathlib.Path.exists", return_value=exists):
+        ctx = Summarizer("/base/dir")
+        result = ctx.format_filenames(format_name)
         assert result == expected
 
 
@@ -171,45 +187,27 @@ def test__add_content_description(mocker):
     assert result["description_format"] == "md"
 
 
-def test__parsed_manifest():
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yml") as temp:
-        # Write some data to the file
-        data = {
-            "key1": "value1",
-            "key2": "value2",
-            "key3": "value3",
-        }
-        yaml.dump(data, temp)
-
-    # Call the function with the path of the temporary file
-    result = summarizer._parsed_manifest(pathlib.Path(temp.name))
-
-    # Assert that the returned dictionary matches the data we wrote to the file
-    assert result == data
-
-
 def test_package_transformers_deprecated(mock_transformers, mock_formats):
     # Case: All formats are not visible
     mock_formats[0]["visible"] = False
     mock_formats[1]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: One transformer version is not visible
     mock_transformers[0]["versions"][1]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: Multiple transformer versions are not visible
     mock_transformers[0]["versions"][1]["visible"] = False
     mock_transformers[2]["versions"][0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: All transformer versions are not visible
     mock_transformers[3]["versions"][0]["visible"] = False
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
     mock_transformers[0]["versions"][0]["visible"] = True
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
 
 def test_package_formats_deprecated(mock_transformers, mock_formats):
@@ -217,15 +215,15 @@ def test_package_formats_deprecated(mock_transformers, mock_formats):
     mock_transformers[0]["versions"][1]["visible"] = False
     mock_transformers[2]["versions"][0]["visible"] = False
     mock_transformers[3]["versions"][0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: One format is not visible
     mock_formats[0]["visible"] = False
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
     # Case: All formats are not visible
     mock_formats[1]["visible"] = False
-    assert _package_deprecated(mock_transformers, mock_formats)
+    assert package_deprecated(mock_transformers, mock_formats)
 
 
 def test_package_all_visible(mock_transformers, mock_formats):
@@ -234,7 +232,7 @@ def test_package_all_visible(mock_transformers, mock_formats):
             version["visible"] = True
     for f in mock_formats:
         f["visible"] = True
-    assert not _package_deprecated(mock_transformers, mock_formats)
+    assert not package_deprecated(mock_transformers, mock_formats)
 
 
 @pytest.mark.parametrize(
@@ -263,18 +261,17 @@ def test_package_all_visible(mock_transformers, mock_formats):
             / "summarize_example.data-processing-types-0.1.0.fpkg.json",
         ),
     ],
+    ids=["simple", "format", "deprecated", "data_processing_types"],
 )
 def test_summarize_fpkg(fpkg_path, expected_output_path):
-    expected_output = json.load(open(expected_output_path))
-    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
+    expected_output = json.loads(expected_output_path.read_text())
+    result = summarizer.summarize_fpkg(fpkg_path)
     assert result == expected_output
 
 
-def test_summarize_empty_fpkg(monkeypatch):
-    monkeypatch.setattr(
-        summarizer,
-        "_parsed_manifest",
-        lambda x: {
+def test_summarize_empty_fpkg(monkeypatch, tmp_path):
+    mock_metadata = FMEPackageMetadata(
+        {
             "fpkg_version": 1,
             "uid": "my-package",
             "publisher_uid": "example",
@@ -283,19 +280,80 @@ def test_summarize_empty_fpkg(monkeypatch):
             "version": "0.1.0",
             "minimum_fme_build": 19238,
             "author": {"name": "G Raymond", "email": "me@example.com"},
-        },
+        }
+    )
+    monkeypatch.setattr(
+        summarizer,
+        "load_fpkg_metadata",
+        lambda x: mock_metadata,
     )
     fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
     expected_output = json.load(
         open(CWD / "fixtures" / "json_output" / "summarize_example.empty.json")
     )
-    result = json.loads(summarizer.summarize_fpkg(str(fpkg_path)))
+    result = summarizer.summarize_fpkg(fpkg_path)
     assert result == expected_output
 
 
 def test_summarize():
     runner = CliRunner()
     fpkg_path = str(CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg")
-    result = runner.invoke(summarize, [fpkg_path])
+    result = runner.invoke(cli.summarize, [fpkg_path])
     assert result.exit_code == 0
     json.loads(result.output)
+
+
+@pytest.fixture
+def fpkg_dir_with_bad_data_processing_type(tmp_path):
+    tmp_path = Path(tmp_path)
+    fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
+    extract_fpkg(fpkg_path, tmp_path)
+
+    # Modify the FMX file to have an invalid DATA_PROCESSING_TYPE
+    fmx_path = tmp_path / "transformers" / "MyGreeter.fmx"
+    fmx_txt = fmx_path.read_text()
+    fmx_txt = fmx_txt.replace("ALIASES:", "ALIASES:\nDATA_PROCESSING_TYPE: bad value\n")
+    fmx_path.write_text(fmx_txt)
+    return tmp_path
+
+
+def test_summarize_bad_data_processing_type(fpkg_dir_with_bad_data_processing_type):
+    """
+    Test that summarize_fpkg can run against an extracted FPKG,
+    and rejects a bad data_processing_type in the FMX.
+    """
+    result = summarizer.summarize_fpkg(fpkg_dir_with_bad_data_processing_type)
+    assert result["status"] == "error"
+    assert result["message"].startswith(
+        "The generated output did not conform to the schema: 'bad value' is not one of"
+    )
+
+
+@pytest.mark.parametrize(
+    "subcommand", [cli.summarize, cli.verify, cli.pack], ids=lambda func: str(func)
+)
+def test_cli_bad_data_processing_type(fpkg_dir_with_bad_data_processing_type, subcommand):
+    """
+    Test that CLI commands fail with a bad data_processing_type in the FMX.
+    """
+    if subcommand is cli.verify:
+        # Re-zip the extracted package back to .fpkg.
+        # Can't use `fme-packager pack` because it's expected to reject this bad package.
+        dest = str(fpkg_dir_with_bad_data_processing_type / "example.my-package-0.1.0.fpkg")
+        shutil.make_archive(
+            dest,
+            "zip",
+            root_dir=fpkg_dir_with_bad_data_processing_type,
+        )
+        Path(dest + ".zip").rename(dest)
+        args = [dest]
+    else:
+        args = [fpkg_dir_with_bad_data_processing_type.as_posix()]
+
+    result = CliRunner().invoke(subcommand, args)
+    if subcommand is cli.pack:
+        assert "The generated output did not conform to the schema" in str(result)
+        assert result.exit_code != 0
+    else:
+        assert "The generated output did not conform to the schema" in result.output
+        assert result.exit_code == 0

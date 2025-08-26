@@ -6,7 +6,10 @@ import json
 import os.path
 import re
 from abc import ABC, abstractmethod
-from collections import namedtuple
+from dataclasses import dataclass, field
+from typing import Iterable, List
+import csv
+from io import StringIO
 
 
 def parse_data_processing_type(data_processing_type: dict):
@@ -33,78 +36,106 @@ def parse_data_processing_type(data_processing_type: dict):
     return sorted(list(types))
 
 
+def csv_split(line: str) -> List[str]:
+    """
+    Split a CSV line into a list of values, handling quoted strings.
+
+    :param line: The CSV line to split.
+    :return: List of values from the CSV line.
+    """
+    try:
+        return next(csv.reader(StringIO(line.strip())))
+    except StopIteration:
+        return []
+
+
 class Transformer(ABC):
     """Represents one version of a transformer."""
 
     @property
     @abstractmethod
-    def name(self):
+    def name(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def version(self):
+    def version(self) -> int:
         pass
 
     @property
     @abstractmethod
-    def python_compatibility(self):
+    def python_compatibility(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def categories(self):
+    def categories(self) -> List[str]:
         pass
 
     @property
     @abstractmethod
-    def aliases(self):
+    def aliases(self) -> List[str]:
         pass
 
     @property
     @abstractmethod
-    def visible(self):
+    def visible(self) -> bool:
         pass
 
     @property
     @abstractmethod
-    def data_processing_types(self):
+    def data_processing_types(self) -> List[str]:
         pass
 
 
-NamedTransformerHeader = namedtuple(
-    "NamedTransformerHeader",
-    "name version category guid insert_mode blocked_looping process_count process_group_by process_groups_ordered build_num preserves_attrs deprecated pyver preserve_group_attr replaced_by data_processing_type",
-)
+@dataclass
+class CustomTransformerHeader:
+    name: str
+    version: int
+    category: List[str]
+    guid: str
+    insert_mode: str
+    blocked_looping: str
+    process_count: str
+    process_group_by: str
+    process_groups_ordered: str
+    build_num: int
+    preserves_attrs: str
+    deprecated: bool
+    pyver: str
+    preserve_group_attr: str = ""
+    replaced_by: str = ""
+    data_processing_type: List[str] = field(default_factory=list)
+
+    # noinspection PyUnreachableCode
+    def __post_init__(self):
+        if not isinstance(self.version, int):
+            self.version = int(self.version)
+        if not isinstance(self.build_num, int):
+            self.build_num = int(self.build_num)
+        if isinstance(self.category, str):
+            self.category = csv_split(self.category)
+        if isinstance(self.deprecated, str):
+            self.deprecated = self.deprecated.lower() == "yes"
+        if isinstance(self.data_processing_type, str):
+            self.data_processing_type = self.data_processing_type.split()
 
 
-def parse_custom_transformer_header(line):
+def parse_custom_transformer_header(line: str) -> CustomTransformerHeader:
     """
     Parses custom transformer header.
 
-    :param str line: Custom transformer header line from FMX.
+    :param line: Custom transformer header line from FMX.
     :return: Parsed header
     """
-    fields = line.replace("# TRANSFORMER_BEGIN", "").strip().split(",")
-
-    num_fields_expected = len(NamedTransformerHeader._fields)
-    while len(fields) < num_fields_expected:
-        fields.append("")
-
-    header = NamedTransformerHeader(*fields[:num_fields_expected])
-    data_processing_type = [] if not header.data_processing_type else [header.data_processing_type]
-
-    return header._replace(
-        version=int(header.version),
-        build_num=int(header.build_num),
-        data_processing_type=data_processing_type,
-    )
+    fields = csv_split(line.replace("# TRANSFORMER_BEGIN", ""))
+    return CustomTransformerHeader(*fields)
 
 
 class CustomTransformer(Transformer):
-    def __init__(self, lines):
+    def __init__(self, lines: List[bytes]):
         super().__init__()
-        self.header: NamedTransformerHeader
+        self.header: CustomTransformerHeader
         self.lines = lines
         for line in lines:
             if line.startswith(b"# TRANSFORMER_BEGIN"):
@@ -127,7 +158,7 @@ class CustomTransformer(Transformer):
 
     @property
     def categories(self):
-        return self._split_prop("category", ",")
+        return self.header.category
 
     @property
     def aliases(self):
@@ -135,7 +166,7 @@ class CustomTransformer(Transformer):
 
     @property
     def visible(self):
-        return self.header.deprecated.lower() == "no"
+        return not self.header.deprecated
 
     @property
     def data_processing_types(self):
@@ -144,13 +175,6 @@ class CustomTransformer(Transformer):
     @property
     def is_encrypted(self):
         return self.lines[0].strip() == b"FMW0001"
-
-    def _split_prop(self, property_name, sep=","):
-        return (
-            [p.strip() for p in getattr(self.header, property_name).split(sep)]
-            if getattr(self.header, property_name)
-            else []
-        )
 
 
 class FmxTransformer(Transformer):
@@ -272,7 +296,7 @@ class TransformerFile(ABC):
         self.file_path = file_path
 
     @abstractmethod
-    def versions(self):
+    def versions(self) -> Iterable[Transformer]:
         pass
 
 
