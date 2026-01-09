@@ -235,11 +235,14 @@ def test_package_all_visible(mock_transformers, mock_formats):
     assert not package_deprecated(mock_transformers, mock_formats)
 
 
+VALID_PACKAGE_PATH = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
+
+
 @pytest.mark.parametrize(
     "fpkg_path, expected_output_path",
     [
         (
-            CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg",
+            VALID_PACKAGE_PATH,
             CWD / "fixtures" / "json_output" / "summarize_example.my-package-0.1.0.fpkg.json",
         ),
         (
@@ -269,29 +272,44 @@ def test_summarize_fpkg(fpkg_path, expected_output_path):
     assert result == expected_output
 
 
+MOCK_EMPTY_METADATA = {
+    "fpkg_version": 1,
+    "uid": "my-package",
+    "publisher_uid": "example",
+    "name": "My FME Package",
+    "description": "A short description of my FME Package.",
+    "version": "0.1.0",
+    "minimum_fme_build": 19238,
+    "author": {"name": "G Raymond", "email": "me@example.com"},
+}
+with open(CWD / "fixtures" / "json_output" / "summarize_example.empty.json") as f:
+    EXPECTED_MOCK_EMPTY_SUMMARIZE_OUTPUT = json.load(f)
+
+
 def test_summarize_empty_fpkg(monkeypatch, tmp_path):
-    mock_metadata = FMEPackageMetadata(
-        {
-            "fpkg_version": 1,
-            "uid": "my-package",
-            "publisher_uid": "example",
-            "name": "My FME Package",
-            "description": "A short description of my FME Package.",
-            "version": "0.1.0",
-            "minimum_fme_build": 19238,
-            "author": {"name": "G Raymond", "email": "me@example.com"},
-        }
-    )
-    monkeypatch.setattr(
-        summarizer,
-        "load_fpkg_metadata",
-        lambda x: mock_metadata,
-    )
-    fpkg_path = CWD / "fixtures" / "fpkgs" / "example.my-package-0.1.0.fpkg"
-    expected_output = json.load(
-        open(CWD / "fixtures" / "json_output" / "summarize_example.empty.json")
-    )
-    result = summarizer.summarize_fpkg(fpkg_path)
+    """
+    Valiate summary output for an FPKG with no package_content.
+    Start with a valid .fpkg and mock out its metadata.
+    """
+    mock_metadata = FMEPackageMetadata(MOCK_EMPTY_METADATA)
+    monkeypatch.setattr(summarizer, "load_fpkg_metadata", lambda x: mock_metadata)
+    result = summarizer.summarize_fpkg(VALID_PACKAGE_PATH)
+    assert result == EXPECTED_MOCK_EMPTY_SUMMARIZE_OUTPUT
+
+
+def test_summarize_unsupported_from_build(monkeypatch, tmp_path):
+    """
+    Valiate summary output for an FPKG with unsupported_from_build set.
+    Use the empty metadta mock, and add unsupported_from_build to it.
+    """
+    mock_metadata_dict = MOCK_EMPTY_METADATA.copy()  # shallow is ok
+    mock_metadata_dict["unsupported_from_build"] = 26000
+    mock_metadata = FMEPackageMetadata(mock_metadata_dict)
+    assert mock_metadata.unsupported_from_build == 26000
+    monkeypatch.setattr(summarizer, "load_fpkg_metadata", lambda x: mock_metadata)
+    expected_output = EXPECTED_MOCK_EMPTY_SUMMARIZE_OUTPUT.copy()  # shallow is ok
+    expected_output["unsupported_from_build"] = 26000
+    result = summarizer.summarize_fpkg(VALID_PACKAGE_PATH)
     assert result == expected_output
 
 
