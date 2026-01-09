@@ -204,6 +204,11 @@ def validate_metadata(metadata: FMEPackageMetadata):
     """
     validate(metadata.dict, load_metadata_json_schema())
     enforce_metadata_unique_names(metadata)
+    if (
+        metadata.unsupported_from_build
+        and metadata.unsupported_from_build <= metadata.minimum_fme_build
+    ):
+        raise ValueError("unsupported_from_build must be greater than minimum_fme_build")
 
 
 class FMEPackager:
