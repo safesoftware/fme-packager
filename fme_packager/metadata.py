@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 from typing import Union
+from functools import cache
 
 from ruamel.yaml import YAML
 
@@ -18,6 +19,7 @@ def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
         return FMEPackageMetadata(YAML(typ="safe").load(f))
 
 
+@cache
 def load_metadata_json_schema() -> dict:
     """
     Load in package metadata specification and requirements.
