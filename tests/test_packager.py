@@ -1,9 +1,13 @@
 import os
 import pathlib
 from zipfile import ZipFile
+from copy import deepcopy
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from jsonschema import ValidationError
+from ruamel.yaml import YAML
 
 from fme_packager.cli import pack
 from fme_packager.exception import (
@@ -17,7 +21,7 @@ from fme_packager.packager import (
     is_valid_python_compatibility,
     get_formatinfo,
     get_format_visibility,
-    enforce_metadata_unique_names,
+    validate_metadata,
 )
 from fme_packager.metadata import load_fpkg_metadata
 
@@ -178,30 +182,130 @@ def test_pack(package_name):
         assert "package.yml" in z.namelist()
 
 
-# [FMEENGINE-85295]
-def test_duplicate_names_in_metadata(tmp_path):
-    package_yml = tmp_path / "package.yml"
-    package_yml.write_text(
-        """uid: test_pkg
-publisher_uid: test_pub
-version: 1
-minimum_fme_build: 25000
-package_content:
-  transformers:
-    - name: MyTransformer
-      version: 1
-    - name: MyTransformer
-      version: 1
-  formats:
-    - name: MyFormat
-    - name: MyFormat
-  web_services:
-    - name: MyWebService.xml
-    - name: MyWebService.xml
-  web_filesystems: []
-  python_packages: []
-"""
+PACKAGE_YML_TEMPLATE = {
+    "uid": "test-uid",
+    "publisher_uid": "test-publisher",
+    "name": "test-name",
+    "description": "test_description",
+    "author": {
+        "name": "name",
+        "email": "a@a.com",
+    },
+    "version": "1.0.0",
+    "minimum_fme_build": 25000,
+    "fpkg_version": 1,
+    "package_content": {
+        "transformers": [
+            {"name": "MyTransformer", "version": 1},
+        ],
+        "formats": [
+            {"name": "MyFormat"},
+        ],
+        "web_services": [
+            {"name": "MyWebService.xml"},
+        ],
+    },
+}
+
+
+def _dupe_content(yml):
+    # Add a copy of the first element to each package_content sublist
+    for key, value in yml["package_content"].items():
+        if not value:
+            continue
+        value.append(value[0])
+
+
+PACKAGE_YML_VALIDATION_CASES = [
+    pytest.param(None, None, id="valid"),
+    pytest.param(_dupe_content, "has non-unique elements", id="dupe_content"),
+    pytest.param(
+        lambda x: x.update(
+            {
+                "package_content": {
+                    "transformers": [
+                        {"name": "XFormer", "version": 1},
+                        {"name": "XFormer", "version": 0},
+                    ]
+                }
+            }
+        ),
+        "xformer is defined in transformers more than once",
+        id="dupe_content_name_only",  # FMEENGINE-85295
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update({}),
+        None,
+        id="empty_content_valid",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update({"transformers": []}),
+        "is too short",
+        id="empty_content_subkey",
+    ),
+    pytest.param(
+        lambda x: x.update({"version": 1}),
+        "Failed validating 'type'",
+        id="version_not_str",
+    ),
+    pytest.param(
+        lambda x: x.update({"version": "a.b.c"}),
+        "Failed validating 'pattern'",
+        id="version_not_semantic",
+    ),
+    pytest.param(
+        lambda x: x.update({"foo": "bar"}),
+        "Additional properties are not allowed",
+        id="extra_root_key",
+    ),
+]
+for required_key in (
+    "uid",
+    "publisher_uid",
+    "name",
+    "description",
+    "author",
+    "version",
+    "minimum_fme_build",
+    "fpkg_version",
+    "package_content",
+):
+    PACKAGE_YML_VALIDATION_CASES.append(
+        pytest.param(
+            lambda x, key=required_key: x.pop(key),
+            f"'{required_key}' is a required property",
+            id=f"missing_{required_key}",
+        )
     )
-    metadata = load_fpkg_metadata(str(tmp_path))
-    with pytest.raises(ValueError):
-        enforce_metadata_unique_names(metadata)
+for key in ("uid", "publisher_uid"):
+    PACKAGE_YML_VALIDATION_CASES.append(
+        pytest.param(
+            lambda x, key=key: x.__setitem__(key, "a_b"),
+            "Failed validating 'pattern'",
+            id=f"bad_{key}",
+        )
+    )
+
+
+@pytest.mark.parametrize("mutation_func, expect_msg", PACKAGE_YML_VALIDATION_CASES)
+def test_package_yml_validation(mutation_func, expect_msg, tmp_path):
+    """
+    Starting with a valid package.yml template, apply mutations and validate.
+    If expect_msg is given, it's expected to be a substring in the raised exception message.
+    If not given, validation is expected to succeed.
+    """
+    package_yml_dict = deepcopy(PACKAGE_YML_TEMPLATE)
+    if mutation_func:
+        mutation_func(package_yml_dict)
+
+    with (tmp_path / "package.yml").open("w") as f:
+        YAML().dump(package_yml_dict, f)
+    metadata = load_fpkg_metadata(tmp_path)
+
+    if expect_msg:
+        with pytest.raises((ValidationError, ValueError)) as exc:
+            validate_metadata(metadata)
+        assert expect_msg in str(exc.value)
+    else:
+        # Expect success
+        validate_metadata(metadata)

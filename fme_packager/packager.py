@@ -18,7 +18,12 @@ from fme_packager.exception import (
     CustomTransformerPythonCompatError,
 )
 from fme_packager.help import HelpBuilder
-from fme_packager.metadata import load_fpkg_metadata, load_metadata_json_schema, TransformerMetadata
+from fme_packager.metadata import (
+    load_fpkg_metadata,
+    load_metadata_json_schema,
+    TransformerMetadata,
+    FMEPackageMetadata,
+)
 from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
@@ -193,6 +198,14 @@ def enforce_metadata_unique_names(metadata):
             raise ValueError(f"{duplicate_name} is defined in {content_type} more than once.")
 
 
+def validate_metadata(metadata: FMEPackageMetadata):
+    """
+    Validate the package metadata against the JSON schema, plus additional checks.
+    """
+    validate(metadata.dict, load_metadata_json_schema())
+    enforce_metadata_unique_names(metadata)
+
+
 class FMEPackager:
     def __init__(self, src_dir, verbose=True):
         """
@@ -209,8 +222,7 @@ class FMEPackager:
 
         self.fmt_visible_directions = {}
 
-        validate(self.metadata.dict, load_metadata_json_schema())
-        enforce_metadata_unique_names(self.metadata)
+        validate_metadata(self.metadata)
 
     def apply_help(self, help_src):
         """
