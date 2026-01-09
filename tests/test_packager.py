@@ -258,6 +258,21 @@ PACKAGE_YML_VALIDATION_CASES = [
         "Additional properties are not allowed",
         id="extra_root_key",
     ),
+    pytest.param(
+        lambda x: x.update({"unsupported_from_build": 25000}),
+        "25000 is less than the minimum",
+        id="unsupported_from_build_too_low",
+    ),
+    pytest.param(
+        lambda x: x.update({"minimum_fme_build": 26000, "unsupported_from_build": 26000}),
+        "unsupported_from_build must be greater than minimum_fme_build",
+        id="unsupported_from_build_lte_minimum_fme_build",
+    ),
+    pytest.param(
+        lambda x: x.update({"minimum_fme_build": 26000, "unsupported_from_build": 26001}),
+        None,
+        id="unsupported_from_build_valid",
+    ),
 ]
 for required_key in (
     "uid",
