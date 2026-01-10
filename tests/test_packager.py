@@ -240,7 +240,7 @@ PACKAGE_YML_VALIDATION_CASES = [
     ),
     pytest.param(
         lambda x: x["package_content"].update({"transformers": []}),
-        "is too short",
+        "[] should be non-empty",
         id="empty_content_subkey",
     ),
     pytest.param(
