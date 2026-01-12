@@ -238,10 +238,24 @@ PACKAGE_YML_VALIDATION_CASES = [
         None,
         id="empty_content_valid",
     ),
+    # https://github.com/python-jsonschema/jsonschema/commit/a1d4cb3b94a83f209ebde1506a18b297a42b6219
+    pytest.param(
+        lambda x: x["package_content"].update({"transformers": []}),
+        "[] is too short",
+        id="empty_content_subkey_lt_py_311",
+        marks=pytest.mark.skipif(
+            os.sys.version_info >= (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
+    ),
     pytest.param(
         lambda x: x["package_content"].update({"transformers": []}),
         "[] should be non-empty",
         id="empty_content_subkey",
+        marks=pytest.mark.skipif(
+            os.sys.version_info < (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
     ),
     pytest.param(
         lambda x: x.update({"version": 1}),
