@@ -102,7 +102,12 @@
                                 "type": "array",
                                 "items": {
                                     "type": "string",
-                                    "enum": ["both", "neither", "source", "destination"]
+                                    "enum": [
+                                        "both",
+                                        "neither",
+                                        "source",
+                                        "destination"
+                                    ]
                                 }
                             }
                         },
@@ -243,9 +248,14 @@
             "pattern": "^[0-9]{1,9}\\.[0-9]{1,9}\\.[0-9]{1,9}$"
         },
         "minimum_fme_build": {
-            "description": "Minimum required FME Build version to use the package",
+            "description": "Minimum FME build to use the package",
             "type": "integer",
             "minimum": 19000
+        },
+        "unsupported_from_build": {
+            "description": "This package is unsupported starting from this FME Build",
+            "type": "integer",
+            "minimum": 26000
         },
         "author": {
             "description": "Author of the package",

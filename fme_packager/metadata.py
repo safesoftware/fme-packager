@@ -2,7 +2,8 @@ from importlib.resources import open_text
 import json
 import os
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
+from functools import cache
 
 from ruamel.yaml import YAML
 
@@ -18,6 +19,7 @@ def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
         return FMEPackageMetadata(YAML(typ="safe").load(f))
 
 
+@cache
 def load_metadata_json_schema() -> dict:
     """
     Load in package metadata specification and requirements.
@@ -119,6 +121,10 @@ class FMEPackageMetadata:
     @property
     def minimum_fme_build(self):
         return self.dict["minimum_fme_build"]
+
+    @property
+    def unsupported_from_build(self) -> Optional[int]:
+        return self.dict.get("unsupported_from_build", None)
 
     @property
     def author(self):

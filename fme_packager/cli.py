@@ -182,6 +182,16 @@ def config_env(fme_home, site_packages_dir, verify):
     src = Path(inspect.getfile(fme_packager)).parent / "fme_env.py"
     shutil.copy(src, dst_py)
 
+    # Infer location of python relative to site-packages.
+    # Need to run verification in the target environment,
+    # which isn't necessarily the one used to run this command.
+    # Unit tests for this command create a virtualenv to test against.
+    executable = site_packages_dir.parent.parent
+    if os.name == "nt":
+        executable = executable / "Scripts" / "python.exe"
+    else:
+        executable = executable / "bin" / "python"
+
     if verify:
         print("Verifying access to fmeobjects...")
         for test_import in [
@@ -191,14 +201,14 @@ def config_env(fme_home, site_packages_dir, verify):
         ]:
             try:
                 subprocess.run(
-                    [sys.executable, "-c", f"import sys;sys.tracebacklimit=0;{test_import}"],
+                    [executable, "-c", f"import sys;sys.tracebacklimit=0;{test_import}"],
                     check=True,
                     capture_output=True,
                 )
             except subprocess.CalledProcessError as e:
                 print(f"{test_import}: {e.stderr.decode().strip()}")
                 print("Environment configuration failed.")
-                print(f"Using Python {sys.version} at {sys.executable}")
+                print(f"Using Python {sys.version} at {executable}")
                 return sys.exit(1)
 
     print("\nThis Python environment is now set up for access to fmeobjects.")

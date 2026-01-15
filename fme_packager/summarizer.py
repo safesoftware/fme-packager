@@ -12,6 +12,7 @@ from collections import namedtuple
 from importlib.resources import open_text
 from pathlib import Path
 from typing import Iterable, List, Union
+from functools import cache
 
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -262,6 +263,7 @@ def _format_data(format_line: str) -> dict:
     return {"visible": None, "fds_info": None, "categories": None}
 
 
+@cache
 def _load_output_schema() -> dict:
     """
     Load the output schema for the summarizer in jsonschema format.
