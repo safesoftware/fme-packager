@@ -1,6 +1,6 @@
 # fme-packager changes
 
-# 0.18.0
+# 0.18.1
 
 * Add support for `unsupported_from_build` property in package.yml. Introduced in FME 2026.2. (FMEENGINE-89071)
 * Support Python 3.14.
