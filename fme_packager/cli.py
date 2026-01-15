@@ -195,7 +195,7 @@ def config_env(fme_home, site_packages_dir, verify):
             candidates = ["bin/python", "python", "Scripts/python.exe", "python.exe"]
             for candidate in candidates:
                 if (search_dir / candidate).is_file():
-                    executable = (search_dir / candidate).resolve()
+                    executable = search_dir / candidate
                     break
             if executable:
                 break
