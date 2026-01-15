@@ -182,17 +182,30 @@ def config_env(fme_home, site_packages_dir, verify):
     src = Path(inspect.getfile(fme_packager)).parent / "fme_env.py"
     shutil.copy(src, dst_py)
 
-    # Infer location of python relative to site-packages.
-    # Need to run verification in the target environment,
-    # which isn't necessarily the one used to run this command.
-    # Unit tests for this command create a virtualenv to test against.
-    executable = site_packages_dir.parent.parent
-    if os.name == "nt":
-        executable = executable / "Scripts" / "python.exe"
-    else:
-        executable = executable / "bin" / "python"
-
     if verify:
+        # Infer location of python relative to site-packages.
+        # Need to run verification in the target environment,
+        # which isn't necessarily the one used to run this command.
+        # Unit tests for this command create a virtualenv to test against.
+        executable = None
+        search_dir = site_packages_dir.resolve()
+
+        # Walk up the directory tree to find the environment root
+        while search_dir.parent != search_dir:
+            candidates = ["bin/python", "python", "Scripts/python.exe", "python.exe"]
+            for candidate in candidates:
+                if (search_dir / candidate).is_file():
+                    executable = (search_dir / candidate).resolve()
+                    break
+            if executable:
+                break
+            search_dir = search_dir.parent
+
+        if executable is None:
+            raise FileNotFoundError(
+                f"Could not find Python executable relative to {site_packages_dir}"
+            )
+
         print("Verifying access to fmeobjects...")
         for test_import in [
             "from fmeobjects import FMEFeature",
