@@ -2,7 +2,6 @@ import os
 import pathlib
 from zipfile import ZipFile
 from copy import deepcopy
-from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
