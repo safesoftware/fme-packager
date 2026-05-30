@@ -195,6 +195,25 @@
             "required": [
                 "name"
             ]
+        },
+        "background_worker": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "entry_points": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "entry_points"
+            ]
         }
     },
     "type": "object",
@@ -316,6 +335,15 @@
                     "items": {
                         "type": "object",
                         "$ref": "#/definitions/python_package"
+                    },
+                    "uniqueItems": true
+                },
+                "background_workers": {
+                    "description": "Background workers included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/background_worker"
                     },
                     "uniqueItems": true
                 }

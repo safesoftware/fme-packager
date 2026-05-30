@@ -64,6 +64,25 @@ def check_exists_and_copy(src, dest):
     shutil.copy(src, dest)
 
 
+BGWORKERS_DIR_VAR = "%bgworkersdir%/"
+
+
+def pyz_from_entry_point(command):
+    """
+    Extract the .pyz filename referenced by a background worker entry_point command.
+
+    The command references the worker file via the %bgworkersdir%/ variable, e.g.
+    "... %pythoninterpreter% %bgworkersdir%/agent-plugin.win64.0.2.3.pyz serve %args%".
+
+    :param command: The entry_point command string.
+    :return: The referenced .pyz filename, or None if none is referenced.
+    """
+    for token in command.split():
+        if BGWORKERS_DIR_VAR in token:
+            return token.split(BGWORKERS_DIR_VAR, 1)[1]
+    return None
+
+
 def enforce_png(path, min_width=0, min_height=0, square=False):
     """
     Enforces the path is a valid PNG file and the PNG meets a minimum height and width requirement.
@@ -190,6 +209,7 @@ def enforce_metadata_unique_names(metadata):
         "web_services": metadata.web_services,
         "web_filesystems": metadata.web_filesystems,
         "python_packages": metadata.python_packages,
+        "background_workers": metadata.background_workers,
     }
 
     for content_type, content_values in content_types.items():
@@ -340,6 +360,7 @@ class FMEPackager:
         self._copy_web_services()
         self._copy_web_filesystems()
         self._copy_formats()
+        self._copy_background_workers()
         self._copy_localization()
         self._copy_help()
 
@@ -499,6 +520,28 @@ class FMEPackager:
                 enforce_png(icon_path)
                 # Specification doesn't say anything about dimensions.
                 shutil.copy(icon_path, dest)
+
+    def _copy_background_workers(self):
+        # Background worker .pyz files are not in TREE_COPY_IGNORE_GLOBS, so they're copied.
+        src = self.src_dir / "background_workers"
+        dst = self.build_dir / "background_workers"
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
+
+        for worker in self.metadata.background_workers:
+            self._print(f"Working on background worker: {worker.name}")
+            for platform, command in worker.entry_points.items():
+                pyz_name = pyz_from_entry_point(command)
+                if not pyz_name:
+                    raise ValueError(
+                        f"Background worker '{worker.name}' {platform} entry_point does not "
+                        f"reference a %bgworkersdir%/<file>.pyz"
+                    )
+                if not (dst / pyz_name).is_file():
+                    raise ValueError(
+                        f"Background worker file '{pyz_name}' (referenced by '{worker.name}' "
+                        f"{platform} entry_point) was not found in background_workers/"
+                    )
 
     def _copy_icon(self):
         path = self.src_dir / "icon.png"

@@ -1,5 +1,6 @@
 import os
 import pathlib
+import shutil
 from zipfile import ZipFile
 from copy import deepcopy
 
@@ -168,7 +169,9 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
             packager.validate_transformer(transformer_abs_path, metadata)
 
 
-@pytest.mark.parametrize("package_name", ["valid_package", "fmxj_package"])
+@pytest.mark.parametrize(
+    "package_name", ["valid_package", "fmxj_package", "background_workers_package"]
+)
 def test_pack(package_name):
     runner = CliRunner()
     result = runner.invoke(pack, [str(CWD / "fixtures" / package_name)])
@@ -179,6 +182,18 @@ def test_pack(package_name):
     fpkg_name = os.listdir(dist_dir)[0]
     with ZipFile(dist_dir / fpkg_name) as z:
         assert "package.yml" in z.namelist()
+
+
+def test_pack_background_worker_missing_pyz(tmp_path):
+    """An entry_point referencing a missing .pyz fails the build."""
+    src = CWD / "fixtures" / "background_workers_package"
+    shutil.copytree(src, tmp_path, dirs_exist_ok=True)
+    # Remove a referenced .pyz so the entry_point no longer matches a real file.
+    (tmp_path / "background_workers" / "agent-plugin.macos.0.2.3.pyz").unlink()
+
+    with pytest.raises(ValueError) as exc:
+        FMEPackager(str(tmp_path), verbose=False).build()
+    assert "was not found in background_workers/" in str(exc.value)
 
 
 PACKAGE_YML_TEMPLATE = {
@@ -285,6 +300,63 @@ PACKAGE_YML_VALIDATION_CASES = [
         lambda x: x.update({"minimum_fme_build": 26000, "unsupported_from_build": 26001}),
         None,
         id="unsupported_from_build_valid",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": {"windows-x64": "%bgworkersdir%/agent-plugin.win.0.1.pyz"},
+                    }
+                ]
+            }
+        ),
+        None,
+        id="background_worker_valid",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": {"windows-x64": "x"},
+                    },
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": {"macos": "y"},
+                    },
+                ]
+            }
+        ),
+        "agent-plugin is defined in background_workers more than once",
+        id="background_worker_dupe_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {"name": "Agent_Plugin", "entry_points": {"windows-x64": "x"}}
+                ]
+            }
+        ),
+        "Failed validating 'pattern'",
+        id="background_worker_bad_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {"background_workers": [{"name": "agent-plugin", "entry_points": {}}]}
+        ),
+        "does not have enough properties",
+        id="background_worker_empty_entry_points",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {"background_workers": [{"name": "agent-plugin", "entry_points": {"windows-x64": 1}}]}
+        ),
+        "Failed validating 'type'",
+        id="background_worker_non_string_entry_point",
     ),
 ]
 for required_key in (
