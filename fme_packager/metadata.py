@@ -87,7 +87,7 @@ class BackgroundWorkerMetadata:
 
     @property
     def entry_points(self):
-        return self.dict.get("entry_points", {})
+        return self.dict.get("entry_points", [])
 
 
 class Author:

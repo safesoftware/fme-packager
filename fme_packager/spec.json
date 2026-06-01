@@ -82,6 +82,22 @@
                 "name"
             ]
         },
+        "entry_point": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "platform": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "platform",
+                "target"
+            ]
+        },
         "background_worker": {
             "type": "object",
             "additionalProperties": false,
@@ -91,10 +107,11 @@
                     "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
                 },
                 "entry_points": {
-                    "type": "object",
-                    "minProperties": 1,
-                    "additionalProperties": {
-                        "type": "string"
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/entry_point"
                     }
                 }
             },

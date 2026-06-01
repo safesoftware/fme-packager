@@ -530,8 +530,9 @@ class FMEPackager:
 
         for worker in self.metadata.background_workers:
             self._print(f"Working on background worker: {worker.name}")
-            for platform, command in worker.entry_points.items():
-                pyz_name = pyz_from_entry_point(command)
+            for entry_point in worker.entry_points:
+                platform = entry_point["platform"]
+                pyz_name = pyz_from_entry_point(entry_point["target"])
                 if not pyz_name:
                     raise ValueError(
                         f"Background worker '{worker.name}' {platform} entry_point does not "

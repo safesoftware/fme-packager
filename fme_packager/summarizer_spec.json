@@ -196,6 +196,22 @@
                 "name"
             ]
         },
+        "entry_point": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "platform": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "platform",
+                "target"
+            ]
+        },
         "background_worker": {
             "type": "object",
             "additionalProperties": false,
@@ -204,9 +220,10 @@
                     "type": "string"
                 },
                 "entry_points": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/entry_point"
                     }
                 }
             },

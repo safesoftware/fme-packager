@@ -307,7 +307,12 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": {"windows-x64": "%bgworkersdir%/agent-plugin.win.0.1.pyz"},
+                        "entry_points": [
+                            {
+                                "platform": "windows-x64",
+                                "target": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
+                            }
+                        ],
                     }
                 ]
             }
@@ -321,11 +326,11 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": {"windows-x64": "x"},
+                        "entry_points": [{"platform": "windows-x64", "target": "x"}],
                     },
                     {
                         "name": "agent-plugin",
-                        "entry_points": {"macos": "y"},
+                        "entry_points": [{"platform": "macos", "target": "y"}],
                     },
                 ]
             }
@@ -337,7 +342,10 @@ PACKAGE_YML_VALIDATION_CASES = [
         lambda x: x["package_content"].update(
             {
                 "background_workers": [
-                    {"name": "Agent_Plugin", "entry_points": {"windows-x64": "x"}}
+                    {
+                        "name": "Agent_Plugin",
+                        "entry_points": [{"platform": "windows-x64", "target": "x"}],
+                    }
                 ]
             }
         ),
@@ -346,17 +354,39 @@ PACKAGE_YML_VALIDATION_CASES = [
     ),
     pytest.param(
         lambda x: x["package_content"].update(
-            {"background_workers": [{"name": "agent-plugin", "entry_points": {}}]}
+            {"background_workers": [{"name": "agent-plugin", "entry_points": []}]}
         ),
-        "does not have enough properties",
-        id="background_worker_empty_entry_points",
+        "[] is too short",
+        id="background_worker_empty_entry_points_lt_py_311",
+        marks=pytest.mark.skipif(
+            os.sys.version_info >= (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
     ),
     pytest.param(
         lambda x: x["package_content"].update(
-            {"background_workers": [{"name": "agent-plugin", "entry_points": {"windows-x64": 1}}]}
+            {"background_workers": [{"name": "agent-plugin", "entry_points": []}]}
         ),
-        "Failed validating 'type'",
-        id="background_worker_non_string_entry_point",
+        "[] should be non-empty",
+        id="background_worker_empty_entry_points",
+        marks=pytest.mark.skipif(
+            os.sys.version_info < (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": [{"platform": "windows-x64"}],
+                    }
+                ]
+            }
+        ),
+        "'target' is a required property",
+        id="background_worker_entry_point_missing_target",
     ),
 ]
 for required_key in (
