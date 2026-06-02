@@ -310,7 +310,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                         "entry_points": [
                             {
                                 "platform": "windows-x64",
-                                "target": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
+                                "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
                             }
                         ],
                     }
@@ -326,11 +326,11 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": [{"platform": "windows-x64", "target": "x"}],
+                        "entry_points": [{"platform": "windows-x64", "entry_point": "x"}],
                     },
                     {
                         "name": "agent-plugin",
-                        "entry_points": [{"platform": "macos", "target": "y"}],
+                        "entry_points": [{"platform": "macos", "entry_point": "y"}],
                     },
                 ]
             }
@@ -344,7 +344,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "Agent_Plugin",
-                        "entry_points": [{"platform": "windows-x64", "target": "x"}],
+                        "entry_points": [{"platform": "windows-x64", "entry_point": "x"}],
                     }
                 ]
             }
@@ -385,8 +385,8 @@ PACKAGE_YML_VALIDATION_CASES = [
                 ]
             }
         ),
-        "'target' is a required property",
-        id="background_worker_entry_point_missing_target",
+        "'entry_point' is a required property",
+        id="background_worker_entry_point_missing_entry_point",
     ),
 ]
 for required_key in (

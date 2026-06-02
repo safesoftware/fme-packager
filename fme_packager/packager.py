@@ -67,17 +67,17 @@ def check_exists_and_copy(src, dest):
 BGWORKERS_DIR_VAR = "%bgworkersdir%/"
 
 
-def pyz_from_entry_point(command):
+def worker_file_from_entry_point(entry_point):
     """
-    Extract the .pyz filename referenced by a background worker entry_point command.
+    Extract the background worker filename referenced by an entry_point command.
 
     The command references the worker file via the %bgworkersdir%/ variable, e.g.
     "... %pythoninterpreter% %bgworkersdir%/agent-plugin.win64.0.2.3.pyz serve %args%".
 
-    :param command: The entry_point command string.
-    :return: The referenced .pyz filename, or None if none is referenced.
+    :param entry_point: The entry_point command string.
+    :return: The referenced worker filename, or None if none is referenced.
     """
-    for token in command.split():
+    for token in entry_point.split():
         if BGWORKERS_DIR_VAR in token:
             return token.split(BGWORKERS_DIR_VAR, 1)[1]
     return None
@@ -522,7 +522,7 @@ class FMEPackager:
                 shutil.copy(icon_path, dest)
 
     def _copy_background_workers(self):
-        # Background worker .pyz files are not in TREE_COPY_IGNORE_GLOBS, so they're copied.
+        # Background worker files are not in TREE_COPY_IGNORE_GLOBS, so they're copied.
         src = self.src_dir / "background_workers"
         dst = self.build_dir / "background_workers"
         if src.is_dir():
@@ -532,15 +532,15 @@ class FMEPackager:
             self._print(f"Working on background worker: {worker.name}")
             for entry_point in worker.entry_points:
                 platform = entry_point["platform"]
-                pyz_name = pyz_from_entry_point(entry_point["target"])
-                if not pyz_name:
+                worker_file = worker_file_from_entry_point(entry_point["entry_point"])
+                if not worker_file:
                     raise ValueError(
                         f"Background worker '{worker.name}' {platform} entry_point does not "
-                        f"reference a %bgworkersdir%/<file>.pyz"
+                        f"reference a %bgworkersdir%/<file>"
                     )
-                if not (dst / pyz_name).is_file():
+                if not (dst / worker_file).is_file():
                     raise ValueError(
-                        f"Background worker file '{pyz_name}' (referenced by '{worker.name}' "
+                        f"Background worker file '{worker_file}' (referenced by '{worker.name}' "
                         f"{platform} entry_point) was not found in background_workers/"
                     )
 

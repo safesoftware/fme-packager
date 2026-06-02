@@ -203,13 +203,13 @@
                 "platform": {
                     "type": "string"
                 },
-                "target": {
+                "entry_point": {
                     "type": "string"
                 }
             },
             "required": [
                 "platform",
-                "target"
+                "entry_point"
             ]
         },
         "background_worker": {
