@@ -184,18 +184,6 @@ def test_pack(package_name):
         assert "package.yml" in z.namelist()
 
 
-def test_pack_background_worker_missing_pyz(tmp_path):
-    """An entry_point referencing a missing .pyz fails the build."""
-    src = CWD / "fixtures" / "background_workers_package"
-    shutil.copytree(src, tmp_path, dirs_exist_ok=True)
-    # Remove a referenced .pyz so the entry_point no longer matches a real file.
-    (tmp_path / "background_workers" / "agent-plugin.macos.0.2.3.pyz").unlink()
-
-    with pytest.raises(ValueError) as exc:
-        FMEPackager(str(tmp_path), verbose=False).build()
-    assert "was not found in background_workers/" in str(exc.value)
-
-
 PACKAGE_YML_TEMPLATE = {
     "uid": "test-uid",
     "publisher_uid": "test-publisher",

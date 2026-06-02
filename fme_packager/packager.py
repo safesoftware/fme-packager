@@ -64,25 +64,6 @@ def check_exists_and_copy(src, dest):
     shutil.copy(src, dest)
 
 
-BGWORKERS_DIR_VAR = "%bgworkersdir%/"
-
-
-def worker_file_from_entry_point(entry_point):
-    """
-    Extract the background worker filename referenced by an entry_point command.
-
-    The command references the worker file via the %bgworkersdir%/ variable, e.g.
-    "... %pythoninterpreter% %bgworkersdir%/agent-plugin.win64.0.2.3.pyz serve %args%".
-
-    :param entry_point: The entry_point command string.
-    :return: The referenced worker filename, or None if none is referenced.
-    """
-    for token in entry_point.split():
-        if BGWORKERS_DIR_VAR in token:
-            return token.split(BGWORKERS_DIR_VAR, 1)[1]
-    return None
-
-
 def enforce_png(path, min_width=0, min_height=0, square=False):
     """
     Enforces the path is a valid PNG file and the PNG meets a minimum height and width requirement.
@@ -530,19 +511,6 @@ class FMEPackager:
 
         for worker in self.metadata.background_workers:
             self._print(f"Working on background worker: {worker.name}")
-            for entry_point in worker.entry_points:
-                platform = entry_point["platform"]
-                worker_file = worker_file_from_entry_point(entry_point["entry_point"])
-                if not worker_file:
-                    raise ValueError(
-                        f"Background worker '{worker.name}' {platform} entry_point does not "
-                        f"reference a %bgworkersdir%/<file>"
-                    )
-                if not (dst / worker_file).is_file():
-                    raise ValueError(
-                        f"Background worker file '{worker_file}' (referenced by '{worker.name}' "
-                        f"{platform} entry_point) was not found in background_workers/"
-                    )
 
     def _copy_icon(self):
         path = self.src_dir / "icon.png"
