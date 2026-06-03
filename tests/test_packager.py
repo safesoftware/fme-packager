@@ -289,6 +289,28 @@ PACKAGE_YML_VALIDATION_CASES = [
         id="unsupported_from_build_valid",
     ),
     pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "background_workers": [
+                        {
+                            "name": "agent-plugin",
+                            "entry_points": [
+                                {
+                                    "platform": "windows-x64",
+                                    "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="background_worker_valid",
+    ),
+    pytest.param(
         lambda x: x["package_content"].update(
             {
                 "background_workers": [
@@ -304,8 +326,8 @@ PACKAGE_YML_VALIDATION_CASES = [
                 ]
             }
         ),
-        None,
-        id="background_worker_valid",
+        "background_workers are only allowed for the 'safe' publisher",
+        id="background_worker_non_safe_publisher",
     ),
     pytest.param(
         lambda x: x["package_content"].update(

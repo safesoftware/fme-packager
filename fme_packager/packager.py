@@ -33,6 +33,9 @@ from fme_packager.operations import (
 from fme_packager.summarizer import summarize_fpkg
 from fme_packager.transformer import load_transformer, CustomTransformer
 
+# Background workers are a Safe-only package feature.
+BACKGROUND_WORKER_PUBLISHER_UID = "safe"
+
 
 def is_valid_python_compatibility(python_compat_version):
     """
@@ -210,6 +213,11 @@ def validate_metadata(metadata: FMEPackageMetadata):
         and metadata.unsupported_from_build <= metadata.minimum_fme_build
     ):
         raise ValueError("unsupported_from_build must be greater than minimum_fme_build")
+    if metadata.background_workers and metadata.publisher_uid != BACKGROUND_WORKER_PUBLISHER_UID:
+        raise ValueError(
+            f"background_workers are only allowed for the '{BACKGROUND_WORKER_PUBLISHER_UID}' "
+            f"publisher, not '{metadata.publisher_uid}'"
+        )
 
 
 class FMEPackager:
