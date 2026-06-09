@@ -21,6 +21,7 @@ from fme_packager.packager import (
     get_formatinfo,
     get_format_visibility,
     validate_metadata,
+    enforce_valid_pyz,
 )
 from fme_packager.metadata import load_fpkg_metadata
 
@@ -183,6 +184,33 @@ def test_pack(package_name):
         assert "package.yml" in z.namelist()
 
 
+def test_enforce_valid_pyz_valid(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    with ZipFile(pyz, "w") as z:
+        z.writestr("__main__.py", "print('hi')")
+    enforce_valid_pyz(pyz)  # Does not raise
+
+
+def test_enforce_valid_pyz_missing(tmp_path):
+    with pytest.raises(ValueError, match="does not exist"):
+        enforce_valid_pyz(tmp_path / "missing.pyz")
+
+
+def test_enforce_valid_pyz_not_a_zip(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    pyz.write_text("not a zip")
+    with pytest.raises(ValueError, match="not a valid pyz"):
+        enforce_valid_pyz(pyz)
+
+
+def test_enforce_valid_pyz_missing_main(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    with ZipFile(pyz, "w") as z:
+        z.writestr("other.py", "x = 1")
+    with pytest.raises(ValueError, match="missing __main__.py"):
+        enforce_valid_pyz(pyz)
+
+
 PACKAGE_YML_TEMPLATE = {
     "uid": "test-uid",
     "publisher_uid": "test-publisher",
@@ -298,7 +326,8 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entry_points": [
                                 {
-                                    "platform": "windows-x64",
+                                    "platforms": ["windows-x86-cp14"],
+                                    "filename": "agent-plugin.win.0.1.pyz",
                                     "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
                                 }
                             ],
@@ -318,7 +347,8 @@ PACKAGE_YML_VALIDATION_CASES = [
                         "name": "agent-plugin",
                         "entry_points": [
                             {
-                                "platform": "windows-x64",
+                                "platforms": ["windows-x86"],
+                                "filename": "agent-plugin.win.0.1.pyz",
                                 "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
                             }
                         ],
@@ -335,11 +365,15 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": [{"platform": "windows-x64", "entry_point": "x"}],
+                        "entry_points": [
+                            {"platforms": ["windows-x86"], "filename": "x.pyz", "entry_point": "x"}
+                        ],
                     },
                     {
                         "name": "agent-plugin",
-                        "entry_points": [{"platform": "macos", "entry_point": "y"}],
+                        "entry_points": [
+                            {"platforms": ["macos-x86"], "filename": "y.pyz", "entry_point": "y"}
+                        ],
                     },
                 ]
             }
@@ -353,13 +387,49 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "Agent_Plugin",
-                        "entry_points": [{"platform": "windows-x64", "entry_point": "x"}],
+                        "entry_points": [
+                            {"platforms": ["windows-x86"], "filename": "x.pyz", "entry_point": "x"}
+                        ],
                     }
                 ]
             }
         ),
         "Failed validating 'pattern'",
         id="background_worker_bad_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": [
+                            {
+                                "platforms": ["windows-aarch64"],
+                                "filename": "x.pyz",
+                                "entry_point": "x",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        "Failed validating 'pattern'",
+        id="background_worker_bad_platform",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "background_workers": [
+                    {
+                        "name": "agent-plugin",
+                        "entry_points": [{"platforms": ["windows-x86"], "entry_point": "x"}],
+                    }
+                ]
+            }
+        ),
+        "'filename' is a required property",
+        id="background_worker_missing_filename",
     ),
     pytest.param(
         lambda x: x["package_content"].update(
@@ -389,7 +459,9 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": [{"platform": "windows-x64"}],
+                        "entry_points": [
+                            {"platforms": ["windows-x86"], "filename": "x.pyz"}
+                        ],
                     }
                 ]
             }

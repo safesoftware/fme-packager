@@ -12,7 +12,9 @@ package_content:
   background_workers:
     - name: agent-plugin
       entry_points:
-        - platform: windows-x64
-          entry_point: PEX_ROOT=%writabledir%/.pycache %pythoninterpreter% %bgworkersdir%/agent-plugin.windows-x64.0.2.3.pyz %debug% serve %args%
-        - platform: macos
-          entry_point: PEX_ROOT=%writabledir%/.pycache %pythoninterpreter% %bgworkersdir%/agent-plugin.macos.0.2.3.pyz %debug% serve %args%
+        - platforms: [windows-x86-cp14]
+          filename: agent-plugin.windows-x86-cp14.0.2.3.pyz
+          entry_point: PEX_ROOT=%writabledir%/.pycache %pythoninterpreter% %bgworkersdir%/agent-plugin.windows-x86-cp14.0.2.3.pyz %debug% serve %args%
+        - platforms: [macos-aarch64]
+          filename: agent-plugin.macos-aarch64.0.2.3.pyz
+          entry_point: PEX_ROOT=%writabledir%/.pycache %pythoninterpreter% %bgworkersdir%/agent-plugin.macos-aarch64.0.2.3.pyz %debug% serve %args%

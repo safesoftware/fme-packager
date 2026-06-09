@@ -67,6 +67,25 @@ def check_exists_and_copy(src, dest):
     shutil.copy(src, dest)
 
 
+def enforce_valid_pyz(path):
+    """
+    Enforces that the path is a proper pyz file: it exists, is a valid zip archive,
+    and contains a __main__.py entry (zipapp/PEX format).
+
+    :raises ValueError: If the file is missing or is not a valid pyz.
+    :param path: Path to the pyz file.
+    """
+    if not os.path.isfile(path):
+        raise ValueError(f"background worker file {path} is declared but does not exist")
+    if not zipfile.is_zipfile(path):
+        raise ValueError(f"background worker file {path} is not a valid pyz (zip) file")
+    with zipfile.ZipFile(path) as archive:
+        if "__main__.py" not in archive.namelist():
+            raise ValueError(
+                f"background worker file {path} is not a proper pyz: missing __main__.py"
+            )
+
+
 def enforce_png(path, min_width=0, min_height=0, square=False):
     """
     Enforces the path is a valid PNG file and the PNG meets a minimum height and width requirement.
@@ -519,6 +538,10 @@ class FMEPackager:
 
         for worker in self.metadata.background_workers:
             self._print(f"Working on background worker: {worker.name}")
+            for entry_point in worker.entry_points:
+                filename = entry_point["filename"]
+                if filename.endswith(".pyz"):
+                    enforce_valid_pyz(src / filename)
 
     def _copy_icon(self):
         path = self.src_dir / "icon.png"
