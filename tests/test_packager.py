@@ -432,6 +432,29 @@ PACKAGE_YML_VALIDATION_CASES = [
         id="background_worker_missing_filename",
     ),
     pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "background_workers": [
+                        {
+                            "name": "agent-plugin",
+                            "entry_points": [
+                                {
+                                    "platforms": ["windows-x86"],
+                                    "filename": "agent-plugin.bin",
+                                    "entry_point": "x",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="background_worker_non_pyz_filename_allowed",
+    ),
+    pytest.param(
         lambda x: x["package_content"].update(
             {"background_workers": [{"name": "agent-plugin", "entry_points": []}]}
         ),
@@ -459,9 +482,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "background_workers": [
                     {
                         "name": "agent-plugin",
-                        "entry_points": [
-                            {"platforms": ["windows-x86"], "filename": "x.pyz"}
-                        ],
+                        "entry_points": [{"platforms": ["windows-x86"], "filename": "x.pyz"}],
                     }
                 ]
             }

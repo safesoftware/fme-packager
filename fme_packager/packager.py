@@ -530,18 +530,21 @@ class FMEPackager:
                 shutil.copy(icon_path, dest)
 
     def _copy_background_workers(self):
-        # Background worker files are not in TREE_COPY_IGNORE_GLOBS, so they're copied.
+        # Only copy files declared in package.yml, per the fme-packager philosophy
+        # of packing only files it recognizes from the metadata and spec.
         src = self.src_dir / "background_workers"
         dst = self.build_dir / "background_workers"
-        if src.is_dir():
-            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
 
         for worker in self.metadata.background_workers:
             self._print(f"Working on background worker: {worker.name}")
             for entry_point in worker.entry_points:
                 filename = entry_point["filename"]
+                src_file = src / filename
                 if filename.endswith(".pyz"):
-                    enforce_valid_pyz(src / filename)
+                    enforce_valid_pyz(src_file)
+                dst.mkdir(parents=True, exist_ok=True)
+                check_exists_and_copy(src_file, dst / filename)
+                self._print(f"  Copied {filename}")
 
     def _copy_icon(self):
         path = self.src_dir / "icon.png"

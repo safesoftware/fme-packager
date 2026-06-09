@@ -36,7 +36,6 @@ Once installed, the `fme-packager` command is available on your system.
 * Cleans and rebuilds wheels for Python packages that are subdirectories of `python/`.
 * Copies wheels from `python/*/dist` into `python/`.
 * Enforces required package icon dimensions.
-* Includes background workers (files in `background_workers/`).
 
 These steps are done while copying files into a temporary build directory,
 so existing files are not modified.
