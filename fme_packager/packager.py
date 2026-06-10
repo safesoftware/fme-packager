@@ -33,8 +33,8 @@ from fme_packager.operations import (
 from fme_packager.summarizer import summarize_fpkg
 from fme_packager.transformer import load_transformer, CustomTransformer
 
-# Background workers are a Safe-only package feature.
-BACKGROUND_WORKER_PUBLISHER_UID = "safe"
+# Application plugins are a Safe-only package feature.
+APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
 
 
 def is_valid_python_compatibility(python_compat_version):
@@ -76,13 +76,13 @@ def enforce_valid_pyz(path):
     :param path: Path to the pyz file.
     """
     if not os.path.isfile(path):
-        raise ValueError(f"background worker file {path} is declared but does not exist")
+        raise ValueError(f"application plugin file {path} is declared but does not exist")
     if not zipfile.is_zipfile(path):
-        raise ValueError(f"background worker file {path} is not a valid pyz (zip) file")
+        raise ValueError(f"application plugin file {path} is not a valid pyz (zip) file")
     with zipfile.ZipFile(path) as archive:
         if "__main__.py" not in archive.namelist():
             raise ValueError(
-                f"background worker file {path} is not a proper pyz: missing __main__.py"
+                f"application plugin file {path} is not a proper pyz: missing __main__.py"
             )
 
 
@@ -212,7 +212,7 @@ def enforce_metadata_unique_names(metadata):
         "web_services": metadata.web_services,
         "web_filesystems": metadata.web_filesystems,
         "python_packages": metadata.python_packages,
-        "background_workers": metadata.background_workers,
+        "application_plugins": metadata.application_plugins,
     }
 
     for content_type, content_values in content_types.items():
@@ -232,9 +232,9 @@ def validate_metadata(metadata: FMEPackageMetadata):
         and metadata.unsupported_from_build <= metadata.minimum_fme_build
     ):
         raise ValueError("unsupported_from_build must be greater than minimum_fme_build")
-    if metadata.background_workers and metadata.publisher_uid != BACKGROUND_WORKER_PUBLISHER_UID:
+    if metadata.application_plugins and metadata.publisher_uid != APPLICATION_PLUGIN_PUBLISHER_UID:
         raise ValueError(
-            f"background_workers are only allowed for the '{BACKGROUND_WORKER_PUBLISHER_UID}' "
+            f"application_plugins are only allowed for the '{APPLICATION_PLUGIN_PUBLISHER_UID}' "
             f"publisher, not '{metadata.publisher_uid}'"
         )
 
@@ -368,7 +368,7 @@ class FMEPackager:
         self._copy_web_services()
         self._copy_web_filesystems()
         self._copy_formats()
-        self._copy_background_workers()
+        self._copy_application_plugins()
         self._copy_localization()
         self._copy_help()
 
@@ -529,18 +529,18 @@ class FMEPackager:
                 # Specification doesn't say anything about dimensions.
                 shutil.copy(icon_path, dest)
 
-    def _copy_background_workers(self):
+    def _copy_application_plugins(self):
         # Only copy files declared in package.yml, per the fme-packager philosophy
         # of packing only files it recognizes from the metadata and spec.
-        src = self.src_dir / "background_workers"
-        dst = self.build_dir / "background_workers"
+        src = self.src_dir / "application_plugins"
+        dst = self.build_dir / "application_plugins"
 
-        for worker in self.metadata.background_workers:
-            self._print(f"Working on background worker: {worker.name}")
-            for entry_point in worker.entry_points:
-                filename = entry_point["filename"]
+        for plugin in self.metadata.application_plugins:
+            self._print(f"Working on application plugin: {plugin.name}")
+            for entry in plugin.entries:
+                filename = entry["file"]
                 src_file = src / filename
-                if filename.endswith(".pyz"):
+                if entry["type"] == "pyz":
                     enforce_valid_pyz(src_file)
                 dst.mkdir(parents=True, exist_ok=True)
                 check_exists_and_copy(src_file, dst / filename)

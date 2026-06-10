@@ -170,7 +170,7 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
 
 
 @pytest.mark.parametrize(
-    "package_name", ["valid_package", "fmxj_package", "background_workers_package"]
+    "package_name", ["valid_package", "fmxj_package", "application_plugins_package"]
 )
 def test_pack(package_name):
     runner = CliRunner()
@@ -321,14 +321,20 @@ PACKAGE_YML_VALIDATION_CASES = [
             x.update({"publisher_uid": "safe"}),
             x["package_content"].update(
                 {
-                    "background_workers": [
+                    "application_plugins": [
                         {
                             "name": "agent-plugin",
-                            "entry_points": [
+                            "entries": [
                                 {
                                     "platforms": ["windows-x86-cp14"],
-                                    "filename": "agent-plugin.win.0.1.pyz",
-                                    "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
+                                    "file": "agent-plugin.win.0.1.pyz",
+                                    "type": "pyz",
+                                    "env": {"PEX_ROOT": "%writabledir%/.pycache"},
+                                    "command": [
+                                        "%pythoninterpreter%",
+                                        "%plugindir%/agent-plugin.win.0.1.pyz",
+                                        "serve",
+                                    ],
                                 }
                             ],
                         }
@@ -337,113 +343,21 @@ PACKAGE_YML_VALIDATION_CASES = [
             ),
         ),
         None,
-        id="background_worker_valid",
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [
-                            {
-                                "platforms": ["windows-x86"],
-                                "filename": "agent-plugin.win.0.1.pyz",
-                                "entry_point": "%bgworkersdir%/agent-plugin.win.0.1.pyz",
-                            }
-                        ],
-                    }
-                ]
-            }
-        ),
-        "background_workers are only allowed for the 'safe' publisher",
-        id="background_worker_non_safe_publisher",
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [
-                            {"platforms": ["windows-x86"], "filename": "x.pyz", "entry_point": "x"}
-                        ],
-                    },
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [
-                            {"platforms": ["macos-x86"], "filename": "y.pyz", "entry_point": "y"}
-                        ],
-                    },
-                ]
-            }
-        ),
-        "agent-plugin is defined in background_workers more than once",
-        id="background_worker_dupe_name",
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "Agent_Plugin",
-                        "entry_points": [
-                            {"platforms": ["windows-x86"], "filename": "x.pyz", "entry_point": "x"}
-                        ],
-                    }
-                ]
-            }
-        ),
-        "Failed validating 'pattern'",
-        id="background_worker_bad_name",
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [
-                            {
-                                "platforms": ["windows-aarch64"],
-                                "filename": "x.pyz",
-                                "entry_point": "x",
-                            }
-                        ],
-                    }
-                ]
-            }
-        ),
-        "Failed validating 'pattern'",
-        id="background_worker_bad_platform",
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [{"platforms": ["windows-x86"], "entry_point": "x"}],
-                    }
-                ]
-            }
-        ),
-        "'filename' is a required property",
-        id="background_worker_missing_filename",
+        id="application_plugin_valid",
     ),
     pytest.param(
         lambda x: (
             x.update({"publisher_uid": "safe"}),
             x["package_content"].update(
                 {
-                    "background_workers": [
+                    "application_plugins": [
                         {
                             "name": "agent-plugin",
-                            "entry_points": [
+                            "entries": [
                                 {
-                                    "platforms": ["windows-x86"],
-                                    "filename": "agent-plugin.bin",
-                                    "entry_point": "x",
+                                    "platforms": ["windows-x86-cp14"],
+                                    "file": "agent-plugin.win.0.1.pyz",
+                                    "type": "pyz",
                                 }
                             ],
                         }
@@ -452,14 +366,155 @@ PACKAGE_YML_VALIDATION_CASES = [
             ),
         ),
         None,
-        id="background_worker_non_pyz_filename_allowed",
+        id="application_plugin_env_command_optional",
     ),
     pytest.param(
         lambda x: x["package_content"].update(
-            {"background_workers": [{"name": "agent-plugin", "entry_points": []}]}
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {
+                                "platforms": ["windows-x86"],
+                                "file": "agent-plugin.win.0.1.pyz",
+                                "type": "pyz",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        "application_plugins are only allowed for the 'safe' publisher",
+        id="application_plugin_non_safe_publisher",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}
+                        ],
+                    },
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {"platforms": ["macos-x86"], "file": "y.pyz", "type": "pyz"}
+                        ],
+                    },
+                ]
+            }
+        ),
+        "agent-plugin is defined in application_plugins more than once",
+        id="application_plugin_dupe_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "Agent_Plugin",
+                        "entries": [
+                            {"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}
+                        ],
+                    }
+                ]
+            }
+        ),
+        "Failed validating 'pattern'",
+        id="application_plugin_bad_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {"platforms": ["windows-aarch64"], "file": "x.pyz", "type": "pyz"}
+                        ],
+                    }
+                ]
+            }
+        ),
+        "Failed validating 'pattern'",
+        id="application_plugin_bad_platform",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x86"], "type": "pyz"}],
+                    }
+                ]
+            }
+        ),
+        "'file' is a required property",
+        id="application_plugin_missing_file",
+    ),
+    pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "application_plugins": [
+                        {
+                            "name": "agent-plugin",
+                            "entries": [
+                                {
+                                    "platforms": ["windows-x86"],
+                                    "file": "agent-plugin.bin",
+                                    "type": "pyz",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="application_plugin_non_pyz_filename_allowed",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz"}],
+                    }
+                ]
+            }
+        ),
+        "'type' is a required property",
+        id="application_plugin_entry_missing_type",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {"platforms": ["windows-x86"], "file": "x.exe", "type": "exe"}
+                        ],
+                    }
+                ]
+            }
+        ),
+        "Failed validating 'enum'",
+        id="application_plugin_entry_bad_type",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
         ),
         "[] is too short",
-        id="background_worker_empty_entry_points_lt_py_311",
+        id="application_plugin_empty_entries_lt_py_311",
         marks=pytest.mark.skipif(
             os.sys.version_info >= (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
@@ -467,28 +522,14 @@ PACKAGE_YML_VALIDATION_CASES = [
     ),
     pytest.param(
         lambda x: x["package_content"].update(
-            {"background_workers": [{"name": "agent-plugin", "entry_points": []}]}
+            {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
         ),
         "[] should be non-empty",
-        id="background_worker_empty_entry_points",
+        id="application_plugin_empty_entries",
         marks=pytest.mark.skipif(
             os.sys.version_info < (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {
-                "background_workers": [
-                    {
-                        "name": "agent-plugin",
-                        "entry_points": [{"platforms": ["windows-x86"], "filename": "x.pyz"}],
-                    }
-                ]
-            }
-        ),
-        "'entry_point' is a required property",
-        id="background_worker_entry_point_missing_entry_point",
     ),
 ]
 for required_key in (

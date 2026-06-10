@@ -77,7 +77,7 @@ class WebFilesystemMetadata:
         return self.dict["name"]
 
 
-class BackgroundWorkerMetadata:
+class ApplicationPluginMetadata:
     def __init__(self, metadata_dict):
         self.dict = metadata_dict
 
@@ -86,8 +86,8 @@ class BackgroundWorkerMetadata:
         return self.dict["name"]
 
     @property
-    def entry_points(self):
-        return self.dict.get("entry_points", [])
+    def entries(self):
+        return self.dict.get("entries", [])
 
 
 class Author:
@@ -172,8 +172,8 @@ class FMEPackageMetadata:
         ]
 
     @property
-    def background_workers(self):
+    def application_plugins(self):
         return [
-            BackgroundWorkerMetadata(item)
-            for item in self.package_content.get("background_workers", [])
+            ApplicationPluginMetadata(item)
+            for item in self.package_content.get("application_plugins", [])
         ]

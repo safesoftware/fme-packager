@@ -196,7 +196,7 @@
                 "name"
             ]
         },
-        "entry_point": {
+        "plugin_entry": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -209,37 +209,56 @@
                         "pattern": "^(windows-x86|(macos|linux)-(x86|aarch64))(-cp[0-9]+)?$"
                     }
                 },
-                "entry_point": {
+                "file": {
                     "type": "string"
                 },
-                "filename": {
-                    "type": "string"
+                "type": {
+                    "description": "The type of the plugin file. Only 'pyz' is currently supported.",
+                    "type": "string",
+                    "enum": [
+                        "pyz"
+                    ]
+                },
+                "env": {
+                    "description": "Environment variables set by the host when launching the plugin. %-delimited parameters are substituted by the host at launch.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "command": {
+                    "description": "Command line (argv) the host spawns to run the plugin. If absent, the host does not spawn anything. %-delimited parameters are substituted by the host at launch.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
             "required": [
                 "platforms",
-                "entry_point",
-                "filename"
+                "file",
+                "type"
             ]
         },
-        "background_worker": {
+        "application_plugin": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string"
                 },
-                "entry_points": {
+                "entries": {
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "$ref": "#/definitions/entry_point"
+                        "$ref": "#/definitions/plugin_entry"
                     }
                 }
             },
             "required": [
                 "name",
-                "entry_points"
+                "entries"
             ]
         }
     },
@@ -365,12 +384,12 @@
                     },
                     "uniqueItems": true
                 },
-                "background_workers": {
-                    "description": "Background workers included in the package",
+                "application_plugins": {
+                    "description": "Application plugins included in the package",
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "$ref": "#/definitions/background_worker"
+                        "$ref": "#/definitions/application_plugin"
                     },
                     "uniqueItems": true
                 }
