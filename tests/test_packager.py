@@ -211,6 +211,46 @@ def test_enforce_valid_pyz_missing_main(tmp_path):
         enforce_valid_pyz(pyz)
 
 
+def _make_plugin_package(tmp_path, plugin_file):
+    """Create a minimal valid plugin package whose single entry references plugin_file."""
+    pkg_dir = tmp_path / "pkg"
+    (pkg_dir / "application_plugins").mkdir(parents=True)
+    yml = deepcopy(PACKAGE_YML_TEMPLATE)
+    yml["publisher_uid"] = "safe"
+    yml["package_content"] = {
+        "application_plugins": [
+            {
+                "name": "agent-plugin",
+                "entries": [{"platforms": ["windows-x86"], "file": plugin_file, "type": "pyz"}],
+            }
+        ]
+    }
+    with (pkg_dir / "package.yml").open("w") as f:
+        YAML().dump(yml, f)
+    return pkg_dir
+
+
+@pytest.mark.parametrize("plugin_file", ["../secret", "../../secret"])
+def test_copy_application_plugins_rejects_traversal(tmp_path, plugin_file):
+    # A file outside the application_plugins folder that must not be copied.
+    (tmp_path / "secret").write_text("secret")
+    pkg_dir = _make_plugin_package(tmp_path, plugin_file)
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="must be inside the"):
+        packager._copy_application_plugins()
+
+
+def test_copy_application_plugins_rejects_absolute_path(tmp_path):
+    secret = tmp_path / "secret"
+    secret.write_text("secret")
+    pkg_dir = _make_plugin_package(tmp_path, str(secret))
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="must be inside the"):
+        packager._copy_application_plugins()
+
+
 PACKAGE_YML_TEMPLATE = {
     "uid": "test-uid",
     "publisher_uid": "test-publisher",
@@ -326,7 +366,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entries": [
                                 {
-                                    "platforms": ["windows-x86-cp14"],
+                                    "platforms": ["windows-x86-cp314"],
                                     "file": "agent-plugin.win.0.1.pyz",
                                     "type": "pyz",
                                     "env": {"PEX_ROOT": "%writabledir%/.pycache"},
@@ -355,7 +395,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entries": [
                                 {
-                                    "platforms": ["windows-x86-cp14"],
+                                    "platforms": ["windows-x86-cp314"],
                                     "file": "agent-plugin.win.0.1.pyz",
                                     "type": "pyz",
                                 }
@@ -401,7 +441,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                     {
                         "name": "agent-plugin",
                         "entries": [
-                            {"platforms": ["macos-x86"], "file": "y.pyz", "type": "pyz"}
+                            {"platforms": ["macosx-x86"], "file": "y.pyz", "type": "pyz"}
                         ],
                     },
                 ]
@@ -433,7 +473,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                     {
                         "name": "agent-plugin",
                         "entries": [
-                            {"platforms": ["windows-aarch64"], "file": "x.pyz", "type": "pyz"}
+                            {"platforms": ["windows-sparc"], "file": "x.pyz", "type": "pyz"}
                         ],
                     }
                 ]

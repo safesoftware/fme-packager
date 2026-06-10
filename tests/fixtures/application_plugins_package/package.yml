@@ -12,13 +12,13 @@ package_content:
   application_plugins:
     - name: agent-plugin
       entries:
-        - platforms: [windows-x86-cp14]
-          file: agent-plugin.windows-x86-cp14.0.2.3.pyz
+        - platforms: [windows-x86-cp314]
+          file: agent-plugin.windows-x86-cp314.0.2.3.pyz
           type: pyz
           env: { PEX_ROOT: "%writabledir%/.pycache" }
-          command: ["%pythoninterpreter%", "%plugindir%/agent-plugin.windows-x86-cp14.0.2.3.pyz", "serve"]
-        - platforms: [macos-aarch64]
-          file: agent-plugin.macos-aarch64.0.2.3.pyz
+          command: ["%pythoninterpreter%", "%bgworkersdir%/agent-plugin.windows-x86-cp314.0.2.3.pyz", "%debug%", "serve", "%args%"]
+        - platforms: [macosx-aarch64]
+          file: agent-plugin.macosx-aarch64.0.2.3.pyz
           type: pyz
           env: { PEX_ROOT: "%writabledir%/.pycache" }
-          command: ["%pythoninterpreter%", "%plugindir%/agent-plugin.macos-aarch64.0.2.3.pyz", "serve"]
+          command: ["%pythoninterpreter%", "%bgworkersdir%/agent-plugin.macosx-aarch64.0.2.3.pyz", "%debug%", "serve", "%args%"]

@@ -534,13 +534,22 @@ class FMEPackager:
         # of packing only files it recognizes from the metadata and spec.
         src = self.src_dir / "application_plugins"
         dst = self.build_dir / "application_plugins"
+        resolved_src = src.resolve()
 
         for plugin in self.metadata.application_plugins:
             self._print(f"Working on application plugin: {plugin.name}")
             for entry in plugin.entries:
                 filename = entry["file"]
-                src_file = src / filename
-                if entry["type"] == "pyz":
+                # Plugin files must live inside the package's application_plugins
+                # folder. Reject anything that escapes it (e.g. "../" or an
+                # absolute path) before touching the filesystem.
+                src_file = (src / filename).resolve()
+                if not src_file.is_relative_to(resolved_src):
+                    raise ValueError(
+                        f"application plugin file {filename} must be inside the "
+                        f"application_plugins folder"
+                    )
+                if entry.get("type") == "pyz":
                     enforce_valid_pyz(src_file)
                 dst.mkdir(parents=True, exist_ok=True)
                 check_exists_and_copy(src_file, dst / filename)
