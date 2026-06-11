@@ -434,15 +434,11 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [
-                            {"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}
-                        ],
+                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}],
                     },
                     {
                         "name": "agent-plugin",
-                        "entries": [
-                            {"platforms": ["macosx-x86"], "file": "y.pyz", "type": "pyz"}
-                        ],
+                        "entries": [{"platforms": ["macosx-x86"], "file": "y.pyz", "type": "pyz"}],
                     },
                 ]
             }
@@ -456,9 +452,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "Agent_Plugin",
-                        "entries": [
-                            {"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}
-                        ],
+                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}],
                     }
                 ]
             }
@@ -539,9 +533,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [
-                            {"platforms": ["windows-x86"], "file": "x.exe", "type": "exe"}
-                        ],
+                        "entries": [{"platforms": ["windows-x86"], "file": "x.exe", "type": "exe"}],
                     }
                 ]
             }

@@ -1,5 +1,9 @@
 # fme-packager changes
 
+# 1.19.0
+
+* Add support for Safe internal `application_plugins` content. (AISERVICE-375)
+
 # 0.18.2
 
 * Add support for `unsupported_from_build` property in package.yml. Introduced in FME 2026.2. (FMEENGINE-89071)
