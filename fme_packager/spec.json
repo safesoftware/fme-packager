@@ -91,7 +91,7 @@
                     "minItems": 1,
                     "items": {
                         "type": "string",
-                        "pattern": "^(windows|macosx|linux)-(x86|aarch64)(-cp[0-9]+)?$"
+                        "pattern": "^(windows|macosx|linux)-(x86|aarch64)(-cp3[0-9]+)?$"
                     }
                 },
                 "file": {

@@ -86,6 +86,14 @@ def enforce_valid_pyz(path):
             )
 
 
+# Validators for each supported application plugin type. To support a new type,
+# add its value to the schema's application_plugin_entry "type" enum and register
+# a validator here. Only files of a registered type are packed.
+APPLICATION_PLUGIN_VALIDATORS = {
+    "pyz": enforce_valid_pyz,
+}
+
+
 def enforce_png(path, min_width=0, min_height=0, square=False):
     """
     Enforces the path is a valid PNG file and the PNG meets a minimum height and width requirement.
@@ -549,8 +557,17 @@ class FMEPackager:
                         f"application plugin file {filename} must be inside the "
                         f"application_plugins folder"
                     )
-                if entry.get("type") == "pyz":
-                    enforce_valid_pyz(src_file)
+                # Only pack files whose declared type has a known validator.
+                # The schema constrains "type" to the supported set, but guard
+                # here too so a file is never copied without being validated.
+                entry_type = entry.get("type")
+                validator = APPLICATION_PLUGIN_VALIDATORS.get(entry_type)
+                if validator is None:
+                    raise ValueError(
+                        f"application plugin file {filename} has unsupported "
+                        f"type {entry_type!r}"
+                    )
+                validator(src_file)
                 dst.mkdir(parents=True, exist_ok=True)
                 check_exists_and_copy(src_file, dst / filename)
                 self._print(f"  Copied {filename}")

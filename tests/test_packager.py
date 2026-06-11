@@ -251,6 +251,20 @@ def test_copy_application_plugins_rejects_absolute_path(tmp_path):
         packager._copy_application_plugins()
 
 
+def _write_valid_pyz(path):
+    with ZipFile(path, "w") as z:
+        z.writestr("__main__.py", "print('hi')")
+
+
+def test_copy_application_plugins_copies_pyz(tmp_path):
+    pkg_dir = _make_plugin_package(tmp_path, "worker.pyz")
+    _write_valid_pyz(pkg_dir / "application_plugins" / "worker.pyz")
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    packager._copy_application_plugins()
+    assert (packager.build_dir / "application_plugins" / "worker.pyz").is_file()
+
+
 PACKAGE_YML_TEMPLATE = {
     "uid": "test-uid",
     "publisher_uid": "test-publisher",
