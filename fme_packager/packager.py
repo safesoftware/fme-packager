@@ -10,7 +10,6 @@ from pathlib import Path
 import png
 import xmltodict
 from build import ProjectBuilder
-from jsonschema import validate
 from packaging import version
 
 from fme_packager.exception import (
@@ -20,10 +19,10 @@ from fme_packager.exception import (
 from fme_packager.help import HelpBuilder
 from fme_packager.metadata import (
     load_fpkg_metadata,
-    load_metadata_json_schema,
     TransformerMetadata,
     FMEPackageMetadata,
 )
+from fme_packager.schema_validation import load_schema_validator
 from fme_packager.operations import (
     build_fpkg_filename,
     parse_formatinfo,
@@ -202,7 +201,7 @@ def validate_metadata(metadata: FMEPackageMetadata):
     """
     Validate the package metadata against the JSON schema, plus additional checks.
     """
-    validate(metadata.dict, load_metadata_json_schema())
+    load_schema_validator("spec.json").validate(metadata.dict)
     enforce_metadata_unique_names(metadata)
     if (
         metadata.unsupported_from_build
@@ -316,7 +315,7 @@ class FMEPackager:
         if fpkg_path.exists():
             fpkg_path.unlink()
 
-        new_zip = shutil.make_archive(fpkg_path, "zip", root_dir=self.build_dir)
+        new_zip = shutil.make_archive(fpkg_path.as_posix(), "zip", root_dir=self.build_dir)
         Path(new_zip).rename(fpkg_path)  # Strip zip extension
         self._print("Done.")
 

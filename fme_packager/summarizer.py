@@ -5,19 +5,16 @@ with additional properties surfaced from the package's contents.
 The output is for FME Hub's use, and conforms to summarizer_spec.json.
 """
 
-import json
 import os
 import tempfile
 from collections import namedtuple
-from importlib.resources import open_text
 from pathlib import Path
 from typing import Iterable, List, Union
-from functools import cache
 
-from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 from fme_packager.operations import parse_formatinfo, extract_fpkg, load_format_line
+from fme_packager.schema_validation import load_schema_validator
 from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
 from fme_packager.metadata import (
@@ -263,17 +260,6 @@ def _format_data(format_line: str) -> dict:
     return {"visible": None, "fds_info": None, "categories": None}
 
 
-@cache
-def _load_output_schema() -> dict:
-    """
-    Load the output schema for the summarizer in jsonschema format.
-
-    :return: The output schema.
-    """
-    with open_text("fme_packager", "summarizer_spec.json") as f:
-        return json.load(f)
-
-
 def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) -> bool:
     """
     Determine if the package is deprecated based on its contents.
@@ -341,7 +327,7 @@ def summarize_fpkg(fpkg_path: Union[str, os.PathLike]) -> dict:
         )
 
     try:
-        validate(manifest, _load_output_schema())
+        load_schema_validator("summarizer_spec.json").validate(manifest)
     except ValidationError as e:
         return {
             "status": "error",
