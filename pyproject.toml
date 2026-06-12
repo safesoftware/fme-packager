@@ -9,7 +9,7 @@ name = "fme_packager"
 dynamic = ["version"]
 description = "Tool for creating FME Packages."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "BSD-2-Clause"
 keywords = ["FME", "fmeobjects"]
 authors = [
