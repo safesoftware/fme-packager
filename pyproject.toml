@@ -4,6 +4,64 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "fme_packager"
+dynamic = ["version"]
+description = "Tool for creating FME Packages."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "BSD-2-Clause"
+keywords = ["FME", "fmeobjects"]
+authors = [
+    { name = "Safe Software Inc." },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+]
+# jsonschema pinned for PY <= 3.11 due to rpds-py problem in Linux CIB
+# https://github.com/python-jsonschema/jsonschema/issues/1117
+dependencies = [
+    "click>=8.1.6",
+    "cookiecutter>=2.2.3",
+    "jsonschema==4.17.3; python_version < '3.11'",
+    "jsonschema>=4.25.1; python_version >= '3.11'",
+    "pypng>=0.20220715.0",
+    "ruamel.yaml>=0.17.32",
+    "xmltodict>=0.13.0",
+    "packaging>=23.1",
+    "build>=0.10.0",
+    "wheel>=0.40.0",
+    "setuptools>=68.0.0",
+    "markdown>=3.4.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.0",
+    "coverage[toml]>=7.6.10",
+    "ruff>=0.9.4",
+    "tox>=4.16.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/safesoftware/fme-packager"
+
+[project.scripts]
+fme-packager = "fme_packager.cli:cli"
+
+[tool.setuptools]
+packages = ["fme_packager"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "fme_packager.__version__" }
+
+[tool.setuptools.package-data]
+fme_packager = ["*.json"]
+
 [tool.ruff]
 line-length = 100
 
