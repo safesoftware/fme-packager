@@ -386,7 +386,9 @@ class FMEPackager:
 
         new_zip = shutil.make_archive(fpkg_path.as_posix(), "zip", root_dir=self.build_dir)
         Path(new_zip).rename(fpkg_path)  # Strip zip extension
-        self._print("Done.")
+        # Always report where the package was written, even when not verbose.
+        print("Success!")
+        print(fpkg_path.as_posix())
 
     def build(self):
         """
