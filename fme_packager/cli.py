@@ -13,8 +13,6 @@ from pathlib import Path
 
 import click
 from click import BadParameter
-from cookiecutter.exceptions import OutputDirExistsException, FailedHookException
-from cookiecutter.main import cookiecutter
 
 import fme_packager
 from fme_packager.packager import FMEPackager
@@ -46,6 +44,9 @@ def init(template):
 
     TEMPLATE -- Name of the template to use.
     """
+    from cookiecutter.exceptions import FailedHookException, OutputDirExistsException
+    from cookiecutter.main import cookiecutter
+
     print("Enter the values to use for the template. Press Enter to accept the [default].")
     try:
         cookiecutter(COOKIECUTTER_TEMPLATES[template])

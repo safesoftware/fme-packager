@@ -8,8 +8,6 @@ import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
 
-import png
-import xmltodict
 from build import ProjectBuilder
 from packaging import version
 
@@ -134,6 +132,8 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
     :param min_height: The minimum width of the image.
     :param square: Whether the image should be square.
     """
+    import png
+
     width, height, _, _ = png.Reader(filename=path).read()  # Raises if not PNG
     if width < min_width or height < min_height:
         raise ValueError(
@@ -303,6 +303,8 @@ class FMEPackager:
 
         :param help_src: Help source path.
         """
+        import xmltodict
+
         tmp_doc_dir = tempfile.mkdtemp(prefix="fme-packager_")
         try:
             # If help source is a ZIP, extract it to a temporary folder.
