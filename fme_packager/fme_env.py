@@ -5,6 +5,7 @@ See `fme-packager config-env` for details.
 """
 
 import os
+import site
 import sysconfig
 
 
@@ -15,6 +16,7 @@ with open(src_pth, "r") as f:
     fme_home = f.readline().strip("#\n ")
 
 if fme_home:
+    site.addsitedir(os.path.join(fme_home, "python"))  # to follow .pth files there
     if hasattr(os, "add_dll_directory"):
         os.add_dll_directory(fme_home)
     else:
