@@ -4,15 +4,14 @@ from pathlib import Path
 import pytest
 
 from fme_packager.transformer import (
-    load_transformer,
-    CustomTransformerFmxFile,
     CustomTransformer,
+    CustomTransformerFmxFile,
     FmxFile,
     FmxjFile,
     FmxjValidationError,
+    load_transformer,
     parse_custom_transformer_header,
 )
-
 
 CWD = Path(__file__).parent.resolve()
 

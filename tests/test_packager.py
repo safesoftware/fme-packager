@@ -1,7 +1,7 @@
 import os
 import pathlib
-from zipfile import ZipFile
 from copy import deepcopy
+from zipfile import ZipFile
 
 import pytest
 from click.testing import CliRunner
@@ -10,20 +10,24 @@ from ruamel.yaml import YAML
 
 from fme_packager.cli import pack
 from fme_packager.exception import (
-    TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
+    TransformerPythonCompatError,
 )
-from fme_packager.metadata import TransformerMetadata, FormatMetadata, FMEPackageMetadata
+from fme_packager.metadata import (
+    FMEPackageMetadata,
+    FormatMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
 from fme_packager.operations import parse_formatinfo
 from fme_packager.packager import (
     FMEPackager,
-    is_valid_python_compatibility,
-    get_formatinfo,
     get_format_visibility,
+    get_formatinfo,
+    is_valid_python_compatibility,
     validate_metadata,
     enforce_valid_pyz,
 )
-from fme_packager.metadata import load_fpkg_metadata
 
 CWD = pathlib.Path(__file__).parent.resolve()
 

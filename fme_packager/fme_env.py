@@ -8,7 +8,6 @@ import os
 import site
 import sysconfig
 
-
 # First line from fme_env.pth is FME_HOME
 site_packages_dir = sysconfig.get_paths()["purelib"]
 src_pth = os.path.join(site_packages_dir, "fme_env.pth")

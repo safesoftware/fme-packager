@@ -3,7 +3,7 @@ import pathlib
 import pytest
 from click.testing import CliRunner
 
-from fme_packager.cli import verify, pack
+from fme_packager.cli import pack, verify
 
 CWD = pathlib.Path(__file__).parent.resolve()
 

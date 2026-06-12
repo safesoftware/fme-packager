@@ -12,7 +12,6 @@ import sysconfig
 from pathlib import Path
 
 import click
-from click import BadParameter
 
 import fme_packager
 from fme_packager.packager import FMEPackager
@@ -149,7 +148,7 @@ def config_env(fme_home, site_packages_dir, verify):
     """
     fme_home = Path(fme_home)
     if not (fme_home / "fme").is_file() and not (fme_home / "fme.exe").is_file():
-        raise BadParameter(f"'{fme_home}' does not contain an FME executable")
+        raise click.BadParameter(f"'{fme_home}' does not contain an FME executable")
 
     leaf_dir = "python%s%s" % (sys.version_info.major, sys.version_info.minor)
     paths_to_add = [

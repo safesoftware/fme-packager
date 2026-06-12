@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from fme_packager.web_service import _web_service_path, _parse_web_service
+from fme_packager.web_service import _parse_web_service, _web_service_path
 
 CWD = Path(__file__).parent.resolve()
 

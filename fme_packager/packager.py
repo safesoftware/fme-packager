@@ -1,7 +1,6 @@
 import csv
 import os
 import shutil
-
 import tempfile
 import warnings
 import zipfile
@@ -12,27 +11,27 @@ from build import ProjectBuilder
 from packaging import version
 
 from fme_packager.exception import (
-    TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
+    TransformerPythonCompatError,
 )
 from fme_packager.help import HelpBuilder
 from fme_packager.metadata import (
-    load_fpkg_metadata,
-    TransformerMetadata,
     FMEPackageMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
+from fme_packager.operations import (
+    TREE_COPY_IGNORE_GLOBS,
+    build_fpkg_filename,
+    load_format_line,
+    parse_formatinfo,
 )
 from fme_packager.schema_validation import (
     format_schema_validation_errors,
     load_schema_validator,
 )
-from fme_packager.operations import (
-    build_fpkg_filename,
-    parse_formatinfo,
-    TREE_COPY_IGNORE_GLOBS,
-    load_format_line,
-)
 from fme_packager.summarizer import summarize_fpkg
-from fme_packager.transformer import load_transformer, CustomTransformer
+from fme_packager.transformer import CustomTransformer, load_transformer
 
 # Application plugins are a Safe-only package feature.
 APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
