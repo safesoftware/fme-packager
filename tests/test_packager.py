@@ -221,7 +221,7 @@ def _make_plugin_package(tmp_path, plugin_file):
         "application_plugins": [
             {
                 "name": "agent-plugin",
-                "entries": [{"platforms": ["windows-x86"], "file": plugin_file, "type": "pyz"}],
+                "entries": [{"platforms": ["windows-x64"], "file": plugin_file, "type": "pyz"}],
             }
         ]
     }
@@ -380,7 +380,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entries": [
                                 {
-                                    "platforms": ["windows-x86-cp314"],
+                                    "platforms": ["windows-x64-cp314"],
                                     "file": "agent-plugin.win.0.1.pyz",
                                     "type": "pyz",
                                     "env": {"PEX_ROOT": "%writabledir%/.pycache"},
@@ -409,7 +409,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entries": [
                                 {
-                                    "platforms": ["windows-x86-cp314"],
+                                    "platforms": ["windows-x64-cp314"],
                                     "file": "agent-plugin.win.0.1.pyz",
                                     "type": "pyz",
                                 }
@@ -430,7 +430,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                         "name": "agent-plugin",
                         "entries": [
                             {
-                                "platforms": ["windows-x86"],
+                                "platforms": ["windows-x64"],
                                 "file": "agent-plugin.win.0.1.pyz",
                                 "type": "pyz",
                             }
@@ -448,11 +448,11 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}],
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz", "type": "pyz"}],
                     },
                     {
                         "name": "agent-plugin",
-                        "entries": [{"platforms": ["macosx-x86"], "file": "y.pyz", "type": "pyz"}],
+                        "entries": [{"platforms": ["macosx-x64"], "file": "y.pyz", "type": "pyz"}],
                     },
                 ]
             }
@@ -466,7 +466,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "Agent_Plugin",
-                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz", "type": "pyz"}],
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz", "type": "pyz"}],
                     }
                 ]
             }
@@ -496,7 +496,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [{"platforms": ["windows-x86"], "type": "pyz"}],
+                        "entries": [{"platforms": ["windows-x64"], "type": "pyz"}],
                     }
                 ]
             }
@@ -514,7 +514,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                             "name": "agent-plugin",
                             "entries": [
                                 {
-                                    "platforms": ["windows-x86"],
+                                    "platforms": ["windows-x64"],
                                     "file": "agent-plugin.bin",
                                     "type": "pyz",
                                 }
@@ -533,7 +533,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [{"platforms": ["windows-x86"], "file": "x.pyz"}],
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz"}],
                     }
                 ]
             }
@@ -547,7 +547,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 "application_plugins": [
                     {
                         "name": "agent-plugin",
-                        "entries": [{"platforms": ["windows-x86"], "file": "x.exe", "type": "exe"}],
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.exe", "type": "exe"}],
                     }
                 ]
             }
