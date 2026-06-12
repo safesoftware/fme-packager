@@ -19,5 +19,4 @@ if fme_home:
     site.addsitedir(os.path.join(fme_home, "python"))  # to follow .pth files there
     if hasattr(os, "add_dll_directory"):
         os.add_dll_directory(fme_home)
-    else:
-        os.environ["PATH"] = fme_home + ";" + os.environ["PATH"]
+    os.environ["PATH"] = ";".join([fme_home, os.environ.get("PATH", "")])
