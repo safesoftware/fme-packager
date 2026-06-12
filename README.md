@@ -28,7 +28,8 @@ Once installed, the `fme-packager` command is available on your system.
 * Verifies that components listed in package.yml are present.
 * Checks that transformer and format names are valid and well-formed.
 * Verifies that the transformer version in the package.yml is
-  included in the FMX.
+  included in the FMX/FMXJ.
+* Verifies FMXJ schema compliance.
 * Requires that Custom Transformers be Linked Always, declare Python 3 support,
   and authored with a sufficiently recent version of FME Workbench.
 * Excludes components that are present in directories,
@@ -50,7 +51,7 @@ Available templates:
 
 * `transformer`: [Transformer template for FME Packages](https://github.com/safesoftware/fpkg-transformer-template)
 
-_These templates are not currently bundled with fme-packager._
+_These templates are not bundled with fme-packager._
 
 
 ## Make an fpkg distribution
