@@ -11,10 +11,11 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from jsonschema.exceptions import ValidationError
-
 from fme_packager.operations import parse_formatinfo, extract_fpkg, load_format_line
-from fme_packager.schema_validation import load_schema_validator
+from fme_packager.schema_validation import (
+    format_schema_validation_errors,
+    load_schema_validator,
+)
 from fme_packager.transformer import load_transformer, TransformerFile
 from fme_packager.web_service import _web_service_path, _parse_web_service
 from fme_packager.metadata import (
@@ -326,12 +327,11 @@ def summarize_fpkg(fpkg_path: Union[str, os.PathLike]) -> dict:
             manifest["package_content"]["transformers"], manifest["package_content"]["formats"]
         )
 
-    try:
-        load_schema_validator("summarizer_spec.json").validate(manifest)
-    except ValidationError as e:
+    errors = list(load_schema_validator("summarizer_spec.json").iter_errors(manifest))
+    if errors:
         return {
             "status": "error",
-            "message": f"The generated output did not conform to the schema: {e.message}",
+            "message": format_schema_validation_errors(errors, subject="The generated summary"),
         }
 
     return manifest
