@@ -19,13 +19,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Intended Audience :: Developers",
 ]
-# jsonschema pinned for PY <= 3.11 due to rpds-py problem in Linux CIB
-# https://github.com/python-jsonschema/jsonschema/issues/1117
 dependencies = [
     "click>=8.1.6",
     "cookiecutter>=2.2.3",
-    "jsonschema==4.17.3; python_version < '3.11'",
-    "jsonschema>=4.25.1; python_version >= '3.11'",
+    "jsonschema>=4.26.0",
     "pypng>=0.20220715.0",
     "ruamel.yaml>=0.17.32",
     "xmltodict>=1.0.4",
