@@ -258,12 +258,12 @@ PACKAGE_YML_VALIDATION_CASES = [
     ),
     pytest.param(
         lambda x: x.update({"version": 1}),
-        "Failed validating 'type'",
+        "is not of type 'string'",
         id="version_not_str",
     ),
     pytest.param(
         lambda x: x.update({"version": "a.b.c"}),
-        "Failed validating 'pattern'",
+        "does not match",
         id="version_not_semantic",
     ),
     pytest.param(
@@ -309,7 +309,7 @@ for key in ("uid", "publisher_uid"):
     PACKAGE_YML_VALIDATION_CASES.append(
         pytest.param(
             lambda x, key=key: x.__setitem__(key, "a_b"),
-            "Failed validating 'pattern'",
+            "does not match",
             id=f"bad_{key}",
         )
     )

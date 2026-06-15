@@ -1,5 +1,10 @@
 # fme-packager changes
 
+# Unreleased
+
+* `pack`: Move build steps and wheel output behind `-v`/`--verbose` flag. (FMEENGINE-97734)
+* `pack`: Add schema validation for FMXJ transformers. (FMEENGINE-98381)
+
 # 0.18.2
 
 * Add support for `unsupported_from_build` property in package.yml. Introduced in FME 2026.2. (FMEENGINE-89071)

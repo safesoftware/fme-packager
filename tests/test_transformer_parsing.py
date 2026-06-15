@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from fme_packager.transformer import (
     CustomTransformer,
     FmxFile,
     FmxjFile,
+    FmxjValidationError,
     parse_custom_transformer_header,
 )
 
@@ -103,6 +105,24 @@ def test_fmxj_transformer(fmxj_package_dir):
     assert item.categories == ["Integrations"]
     assert item.aliases == ["example.my-package.NemoGreeter", "example.my-package.MemoGreeter"]
     assert item.data_processing_types == []
+
+
+def test_fmxj_transformer_invalid_schema_multiple_errors(fmxj_package_dir, tmp_path):
+    """Multiple violations are listed (up to 10) under a single header."""
+    src = Path(fmxj_package_dir) / "transformers" / "DemoGreeter.fmxj"
+    body = json.loads(src.read_text())
+    body.pop("info")  # required
+    body["versions"][0]["version"] = "not-an-int"  # must be integer
+    invalid = tmp_path / "DemoGreeter.fmxj"
+    invalid.write_text(json.dumps(body))
+
+    with pytest.raises(FmxjValidationError) as exc:
+        load_transformer(invalid)
+
+    message = str(exc.value)
+    assert "DemoGreeter.fmxj failed schema validation:" in message
+    assert "  - at $: 'info' is a required property" in message
+    assert "  - at $.versions[0].version: 'not-an-int' is not of type 'integer'" in message
 
 
 def test_fmx_transformer_data_processing_types(data_processing_types_package_dir):

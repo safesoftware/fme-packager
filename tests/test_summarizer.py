@@ -342,9 +342,8 @@ def test_summarize_bad_data_processing_type(fpkg_dir_with_bad_data_processing_ty
     """
     result = summarizer.summarize_fpkg(fpkg_dir_with_bad_data_processing_type)
     assert result["status"] == "error"
-    assert result["message"].startswith(
-        "The generated output did not conform to the schema: 'bad value' is not one of"
-    )
+    assert result["message"].startswith("The generated summary failed schema validation:")
+    assert "'bad value' is not one of" in result["message"]
 
 
 @pytest.mark.parametrize(
@@ -370,8 +369,8 @@ def test_cli_bad_data_processing_type(fpkg_dir_with_bad_data_processing_type, su
 
     result = CliRunner().invoke(subcommand, args)
     if subcommand is cli.pack:
-        assert "The generated output did not conform to the schema" in str(result)
+        assert "The generated summary failed schema validation" in str(result)
         assert result.exit_code != 0
     else:
-        assert "The generated output did not conform to the schema" in result.output
+        assert "The generated summary failed schema validation" in result.output
         assert result.exit_code == 0

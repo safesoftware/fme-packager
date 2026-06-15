@@ -11,6 +11,17 @@ from typing import Iterable, List
 import csv
 from io import StringIO
 
+from fme_packager.schema_validation import (
+    format_schema_validation_errors,
+    load_schema_validator,
+)
+
+FMXJ_SCHEMA_FILENAME = "fmxj.schema.min.json"
+
+
+class FmxjValidationError(ValueError):
+    """Raised when a .fmxj file fails FMXJ JSON-schema validation."""
+
 
 def parse_data_processing_type(data_processing_type: dict):
     """
@@ -357,6 +368,12 @@ class FmxjFile(TransformerFile):
         super().__init__(file_path)
         with open(file_path) as f:
             self.body = json.load(f)
+        validator = load_schema_validator(FMXJ_SCHEMA_FILENAME)
+        errors = list(validator.iter_errors(self.body))
+        if errors:
+            raise FmxjValidationError(
+                format_schema_validation_errors(errors, subject=os.path.basename(file_path))
+            )
 
     def versions(self):
         for item in self.body["versions"]:
