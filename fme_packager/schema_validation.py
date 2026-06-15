@@ -4,7 +4,7 @@ Reusable helpers for JSON-schema validation.
 
 import json
 from functools import cache
-from importlib.resources import open_text
+from importlib.resources import files
 
 from jsonschema.exceptions import best_match
 from jsonschema.validators import validator_for
@@ -18,8 +18,7 @@ def load_schema_validator(schema_filename: str):
     :param schema_filename: Name of the schema file bundled in fme_packager.
     :return: A jsonschema validator instance bound to the loaded schema.
     """
-    with open_text("fme_packager", schema_filename) as f:
-        schema = json.load(f)
+    schema = json.loads(files("fme_packager").joinpath(schema_filename).read_text(encoding="utf-8"))
     cls = validator_for(schema)
     cls.check_schema(schema)
     return cls(schema)
