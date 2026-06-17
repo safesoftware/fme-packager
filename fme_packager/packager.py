@@ -36,6 +36,9 @@ from fme_packager.transformer import load_transformer, CustomTransformer
 # Application plugins are a Safe-only package feature.
 APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
 
+# Application plugins are only supported by FME from this build onwards.
+APPLICATION_PLUGIN_MINIMUM_FME_BUILD = 26538
+
 
 def is_valid_python_compatibility(python_compat_version):
     """
@@ -544,6 +547,15 @@ class FMEPackager:
         dst = self.build_dir / "application_plugins"
         resolved_src = src.resolve()
 
+        if (
+            self.metadata.application_plugins
+            and self.metadata.minimum_fme_build < APPLICATION_PLUGIN_MINIMUM_FME_BUILD
+        ):
+            raise ValueError(
+                f"application plugins require minimum_fme_build >= "
+                f"{APPLICATION_PLUGIN_MINIMUM_FME_BUILD}"
+            )
+
         for plugin in self.metadata.application_plugins:
             self._print(f"Working on application plugin: {plugin.name}")
             for entry in plugin.entries:
@@ -564,8 +576,7 @@ class FMEPackager:
                 validator = APPLICATION_PLUGIN_VALIDATORS.get(entry_type)
                 if validator is None:
                     raise ValueError(
-                        f"application plugin file {filename} has unsupported "
-                        f"type {entry_type!r}"
+                        f"application plugin file {filename} has unsupported type {entry_type!r}"
                     )
                 validator(src_file)
                 dst.mkdir(parents=True, exist_ok=True)

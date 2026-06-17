@@ -4,7 +4,7 @@ publisher_uid: safe
 name: My FME Package
 description: A short description of my FME Package.
 version: 0.1.0
-minimum_fme_build: 25000
+minimum_fme_build: 26538
 author:
   name: G Raymond
   email: me@example.com

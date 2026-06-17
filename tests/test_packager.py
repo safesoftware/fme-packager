@@ -217,6 +217,7 @@ def _make_plugin_package(tmp_path, plugin_file):
     (pkg_dir / "application_plugins").mkdir(parents=True)
     yml = deepcopy(PACKAGE_YML_TEMPLATE)
     yml["publisher_uid"] = "safe"
+    yml["minimum_fme_build"] = 26538
     yml["package_content"] = {
         "application_plugins": [
             {
@@ -263,6 +264,21 @@ def test_copy_application_plugins_copies_pyz(tmp_path):
     packager.build_dir.mkdir(parents=True, exist_ok=True)
     packager._copy_application_plugins()
     assert (packager.build_dir / "application_plugins" / "worker.pyz").is_file()
+
+
+def test_copy_application_plugins_rejects_old_minimum_fme_build(tmp_path):
+    pkg_dir = _make_plugin_package(tmp_path, "worker.pyz")
+    _write_valid_pyz(pkg_dir / "application_plugins" / "worker.pyz")
+    # Lower the build below the application plugin minimum.
+    yml_path = pkg_dir / "package.yml"
+    yml = YAML().load(yml_path)
+    yml["minimum_fme_build"] = 26537
+    with yml_path.open("w") as f:
+        YAML().dump(yml, f)
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="require minimum_fme_build >= 26538"):
+        packager._copy_application_plugins()
 
 
 PACKAGE_YML_TEMPLATE = {
