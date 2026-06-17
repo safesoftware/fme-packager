@@ -1,8 +1,62 @@
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools>=82.0.1",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fme_packager"
+dynamic = ["version"]
+description = "Tool for creating FME Packages."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-2-Clause"
+keywords = ["FME", "fmeobjects"]
+authors = [
+    { name = "Safe Software Inc." },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "click>=8.1.6",
+    "cookiecutter>=2.2.3",
+    "jsonschema>=4.26.0",
+    "pypng>=0.20220715.0",
+    "ruamel.yaml>=0.17.32",
+    "xmltodict>=1.0.4",
+    "packaging>=26.2",
+    "build>=0.10.0",
+    "wheel>=0.46.3",
+    "setuptools>=82.0.1",
+    "markdown>=3.10.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.15.17",
+    "tox>=4.55.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/safesoftware/fme-packager"
+
+[project.scripts]
+fme-packager = "fme_packager.cli:cli"
+
+[tool.setuptools]
+packages = ["fme_packager"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "fme_packager.__version__" }
+
+[tool.setuptools.package-data]
+fme_packager = ["*.json"]
 
 [tool.ruff]
 line-length = 100
