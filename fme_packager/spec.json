@@ -81,6 +81,72 @@
             "required": [
                 "name"
             ]
+        },
+        "plugin_entry": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "platforms": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "pattern": "^(windows-x64|(macosx|linux)-(x64|aarch64))(-cp314)?$"
+                    }
+                },
+                "file": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the plugin file, used to select type-specific validation. Only 'pyz' is currently supported; additional types may be added in future.",
+                    "type": "string",
+                    "enum": [
+                        "pyz"
+                    ]
+                },
+                "env": {
+                    "description": "Environment variables set by the host when launching the plugin. %-delimited parameters are substituted by the host at launch.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "command": {
+                    "description": "Command line (argv) the host spawns to run the plugin. If absent, the host does not spawn anything. %-delimited parameters are substituted by the host at launch.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "platforms",
+                "file",
+                "type"
+            ]
+        },
+        "application_plugin": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "entries": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/plugin_entry"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "entries"
+            ]
         }
     },
     "type": "object",
@@ -193,6 +259,16 @@
                     "items": {
                         "type": "object",
                         "$ref": "#/definitions/python_package"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "application_plugins": {
+                    "description": "Application plugins included in the package",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "$ref": "#/definitions/application_plugin"
                     },
                     "minItems": 1,
                     "uniqueItems": true

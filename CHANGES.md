@@ -1,7 +1,8 @@
 # fme-packager changes
 
-# Unreleased
+# 1.19.0
 
+* Add support for Safe internal `application_plugins` content. (AISERVICE-375)
 * `pack`: Move build steps and wheel output behind `-v`/`--verbose` flag. (FMEENGINE-97734)
 * `pack`: Add schema validation for FMXJ transformers. (FMEENGINE-98381)
 * Require Python >= 3.10.

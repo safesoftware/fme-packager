@@ -36,6 +36,12 @@ from fme_packager.operations import (
 from fme_packager.summarizer import summarize_fpkg
 from fme_packager.transformer import load_transformer, CustomTransformer
 
+# Application plugins are a Safe-only package feature.
+APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
+
+# Application plugins are only supported by FME from this build onwards.
+APPLICATION_PLUGIN_MINIMUM_FME_BUILD = 26538
+
 
 def _quiet_subprocess_runner(cmd, cwd=None, extra_environ=None):
     """
@@ -89,6 +95,33 @@ def check_exists_and_copy(src, dest):
     if not os.path.exists(src):
         raise ValueError("{} is required but does not exist".format(src))
     shutil.copy(src, dest)
+
+
+def enforce_valid_pyz(path):
+    """
+    Enforces that the path is a proper pyz file: it exists, is a valid zip archive,
+    and contains a __main__.py entry (zipapp/PEX format).
+
+    :raises ValueError: If the file is missing or is not a valid pyz.
+    :param path: Path to the pyz file.
+    """
+    if not os.path.isfile(path):
+        raise ValueError(f"application plugin file {path} is declared but does not exist")
+    if not zipfile.is_zipfile(path):
+        raise ValueError(f"application plugin file {path} is not a valid pyz (zip) file")
+    with zipfile.ZipFile(path) as archive:
+        if "__main__.py" not in archive.namelist():
+            raise ValueError(
+                f"application plugin file {path} is not a proper pyz: missing __main__.py"
+            )
+
+
+# Validators for each supported application plugin type. To support a new type,
+# add its value to the schema's application_plugin_entry "type" enum and register
+# a validator here. Only files of a registered type are packed.
+APPLICATION_PLUGIN_VALIDATORS = {
+    "pyz": enforce_valid_pyz,
+}
 
 
 def enforce_png(path, min_width=0, min_height=0, square=False):
@@ -217,6 +250,7 @@ def enforce_metadata_unique_names(metadata):
         "web_services": metadata.web_services,
         "web_filesystems": metadata.web_filesystems,
         "python_packages": metadata.python_packages,
+        "application_plugins": metadata.application_plugins,
     }
 
     for content_type, content_values in content_types.items():
@@ -238,6 +272,11 @@ def validate_metadata(metadata: FMEPackageMetadata):
         and metadata.unsupported_from_build <= metadata.minimum_fme_build
     ):
         raise ValueError("unsupported_from_build must be greater than minimum_fme_build")
+    if metadata.application_plugins and metadata.publisher_uid != APPLICATION_PLUGIN_PUBLISHER_UID:
+        raise ValueError(
+            f"application_plugins are only allowed for the '{APPLICATION_PLUGIN_PUBLISHER_UID}' "
+            f"publisher, not '{metadata.publisher_uid}'"
+        )
 
 
 class FMEPackager:
@@ -369,6 +408,7 @@ class FMEPackager:
         self._copy_web_services()
         self._copy_web_filesystems()
         self._copy_formats()
+        self._copy_application_plugins()
         self._copy_localization()
         self._copy_help()
 
@@ -528,6 +568,49 @@ class FMEPackager:
                 enforce_png(icon_path)
                 # Specification doesn't say anything about dimensions.
                 shutil.copy(icon_path, dest)
+
+    def _copy_application_plugins(self):
+        # Only copy files declared in package.yml, per the fme-packager philosophy
+        # of packing only files it recognizes from the metadata and spec.
+        src = self.src_dir / "application_plugins"
+        dst = self.build_dir / "application_plugins"
+        resolved_src = src.resolve()
+
+        if (
+            self.metadata.application_plugins
+            and self.metadata.minimum_fme_build < APPLICATION_PLUGIN_MINIMUM_FME_BUILD
+        ):
+            raise ValueError(
+                f"application plugins require minimum_fme_build >= "
+                f"{APPLICATION_PLUGIN_MINIMUM_FME_BUILD}"
+            )
+
+        for plugin in self.metadata.application_plugins:
+            self._print(f"Working on application plugin: {plugin.name}")
+            for entry in plugin.entries:
+                filename = entry["file"]
+                # Plugin files must live inside the package's application_plugins
+                # folder. Reject anything that escapes it (e.g. "../" or an
+                # absolute path) before touching the filesystem.
+                src_file = (src / filename).resolve()
+                if not src_file.is_relative_to(resolved_src):
+                    raise ValueError(
+                        f"application plugin file {filename} must be inside the "
+                        f"application_plugins folder"
+                    )
+                # Only pack files whose declared type has a known validator.
+                # The schema constrains "type" to the supported set, but guard
+                # here too so a file is never copied without being validated.
+                entry_type = entry.get("type")
+                validator = APPLICATION_PLUGIN_VALIDATORS.get(entry_type)
+                if validator is None:
+                    raise ValueError(
+                        f"application plugin file {filename} has unsupported type {entry_type!r}"
+                    )
+                validator(src_file)
+                dst.mkdir(parents=True, exist_ok=True)
+                check_exists_and_copy(src_file, dst / filename)
+                self._print(f"  Copied {filename}")
 
     def _copy_icon(self):
         path = self.src_dir / "icon.png"

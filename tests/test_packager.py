@@ -21,6 +21,7 @@ from fme_packager.packager import (
     get_formatinfo,
     get_format_visibility,
     validate_metadata,
+    enforce_valid_pyz,
 )
 from fme_packager.metadata import load_fpkg_metadata
 
@@ -168,7 +169,9 @@ def test_validate_transformer(transformer_path, metadata, expected_exc):
             packager.validate_transformer(transformer_abs_path, metadata)
 
 
-@pytest.mark.parametrize("package_name", ["valid_package", "fmxj_package"])
+@pytest.mark.parametrize(
+    "package_name", ["valid_package", "fmxj_package", "application_plugins_package"]
+)
 def test_pack(package_name):
     runner = CliRunner()
     result = runner.invoke(pack, [str(CWD / "fixtures" / package_name)])
@@ -179,6 +182,103 @@ def test_pack(package_name):
     fpkg_name = os.listdir(dist_dir)[0]
     with ZipFile(dist_dir / fpkg_name) as z:
         assert "package.yml" in z.namelist()
+
+
+def test_enforce_valid_pyz_valid(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    with ZipFile(pyz, "w") as z:
+        z.writestr("__main__.py", "print('hi')")
+    enforce_valid_pyz(pyz)  # Does not raise
+
+
+def test_enforce_valid_pyz_missing(tmp_path):
+    with pytest.raises(ValueError, match="does not exist"):
+        enforce_valid_pyz(tmp_path / "missing.pyz")
+
+
+def test_enforce_valid_pyz_not_a_zip(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    pyz.write_text("not a zip")
+    with pytest.raises(ValueError, match="not a valid pyz"):
+        enforce_valid_pyz(pyz)
+
+
+def test_enforce_valid_pyz_missing_main(tmp_path):
+    pyz = tmp_path / "worker.pyz"
+    with ZipFile(pyz, "w") as z:
+        z.writestr("other.py", "x = 1")
+    with pytest.raises(ValueError, match="missing __main__.py"):
+        enforce_valid_pyz(pyz)
+
+
+def _make_plugin_package(tmp_path, plugin_file):
+    """Create a minimal valid plugin package whose single entry references plugin_file."""
+    pkg_dir = tmp_path / "pkg"
+    (pkg_dir / "application_plugins").mkdir(parents=True)
+    yml = deepcopy(PACKAGE_YML_TEMPLATE)
+    yml["publisher_uid"] = "safe"
+    yml["minimum_fme_build"] = 26538
+    yml["package_content"] = {
+        "application_plugins": [
+            {
+                "name": "agent-plugin",
+                "entries": [{"platforms": ["windows-x64"], "file": plugin_file, "type": "pyz"}],
+            }
+        ]
+    }
+    with (pkg_dir / "package.yml").open("w") as f:
+        YAML().dump(yml, f)
+    return pkg_dir
+
+
+@pytest.mark.parametrize("plugin_file", ["../secret", "../../secret"])
+def test_copy_application_plugins_rejects_traversal(tmp_path, plugin_file):
+    # A file outside the application_plugins folder that must not be copied.
+    (tmp_path / "secret").write_text("secret")
+    pkg_dir = _make_plugin_package(tmp_path, plugin_file)
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="must be inside the"):
+        packager._copy_application_plugins()
+
+
+def test_copy_application_plugins_rejects_absolute_path(tmp_path):
+    secret = tmp_path / "secret"
+    secret.write_text("secret")
+    pkg_dir = _make_plugin_package(tmp_path, str(secret))
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="must be inside the"):
+        packager._copy_application_plugins()
+
+
+def _write_valid_pyz(path):
+    with ZipFile(path, "w") as z:
+        z.writestr("__main__.py", "print('hi')")
+
+
+def test_copy_application_plugins_copies_pyz(tmp_path):
+    pkg_dir = _make_plugin_package(tmp_path, "worker.pyz")
+    _write_valid_pyz(pkg_dir / "application_plugins" / "worker.pyz")
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    packager._copy_application_plugins()
+    assert (packager.build_dir / "application_plugins" / "worker.pyz").is_file()
+
+
+def test_copy_application_plugins_rejects_old_minimum_fme_build(tmp_path):
+    pkg_dir = _make_plugin_package(tmp_path, "worker.pyz")
+    _write_valid_pyz(pkg_dir / "application_plugins" / "worker.pyz")
+    # Lower the build below the application plugin minimum.
+    yml_path = pkg_dir / "package.yml"
+    yml = YAML().load(yml_path)
+    yml["minimum_fme_build"] = 26537
+    with yml_path.open("w") as f:
+        YAML().dump(yml, f)
+    packager = FMEPackager(pkg_dir)
+    packager.build_dir.mkdir(parents=True, exist_ok=True)
+    with pytest.raises(ValueError, match="require minimum_fme_build >= 26538"):
+        packager._copy_application_plugins()
 
 
 PACKAGE_YML_TEMPLATE = {
@@ -285,6 +385,213 @@ PACKAGE_YML_VALIDATION_CASES = [
         lambda x: x.update({"minimum_fme_build": 26000, "unsupported_from_build": 26001}),
         None,
         id="unsupported_from_build_valid",
+    ),
+    pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "application_plugins": [
+                        {
+                            "name": "agent-plugin",
+                            "entries": [
+                                {
+                                    "platforms": ["windows-x64-cp314"],
+                                    "file": "agent-plugin.win.0.1.pyz",
+                                    "type": "pyz",
+                                    "env": {"PEX_ROOT": "%writabledir%/.pycache"},
+                                    "command": [
+                                        "%pythoninterpreter%",
+                                        "%plugindir%/agent-plugin.win.0.1.pyz",
+                                        "serve",
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="application_plugin_valid",
+    ),
+    pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "application_plugins": [
+                        {
+                            "name": "agent-plugin",
+                            "entries": [
+                                {
+                                    "platforms": ["windows-x64-cp314"],
+                                    "file": "agent-plugin.win.0.1.pyz",
+                                    "type": "pyz",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="application_plugin_env_command_optional",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {
+                                "platforms": ["windows-x64"],
+                                "file": "agent-plugin.win.0.1.pyz",
+                                "type": "pyz",
+                            }
+                        ],
+                    }
+                ]
+            }
+        ),
+        "application_plugins are only allowed for the 'safe' publisher",
+        id="application_plugin_non_safe_publisher",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz", "type": "pyz"}],
+                    },
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["macosx-x64"], "file": "y.pyz", "type": "pyz"}],
+                    },
+                ]
+            }
+        ),
+        "agent-plugin is defined in application_plugins more than once",
+        id="application_plugin_dupe_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "Agent_Plugin",
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz", "type": "pyz"}],
+                    }
+                ]
+            }
+        ),
+        "does not match",
+        id="application_plugin_bad_name",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [
+                            {"platforms": ["windows-sparc"], "file": "x.pyz", "type": "pyz"}
+                        ],
+                    }
+                ]
+            }
+        ),
+        "does not match",
+        id="application_plugin_bad_platform",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x64"], "type": "pyz"}],
+                    }
+                ]
+            }
+        ),
+        "'file' is a required property",
+        id="application_plugin_missing_file",
+    ),
+    pytest.param(
+        lambda x: (
+            x.update({"publisher_uid": "safe"}),
+            x["package_content"].update(
+                {
+                    "application_plugins": [
+                        {
+                            "name": "agent-plugin",
+                            "entries": [
+                                {
+                                    "platforms": ["windows-x64"],
+                                    "file": "agent-plugin.bin",
+                                    "type": "pyz",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
+        ),
+        None,
+        id="application_plugin_non_pyz_filename_allowed",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.pyz"}],
+                    }
+                ]
+            }
+        ),
+        "'type' is a required property",
+        id="application_plugin_entry_missing_type",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {
+                "application_plugins": [
+                    {
+                        "name": "agent-plugin",
+                        "entries": [{"platforms": ["windows-x64"], "file": "x.exe", "type": "exe"}],
+                    }
+                ]
+            }
+        ),
+        "is not one of",
+        id="application_plugin_entry_bad_type",
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
+        ),
+        "[] is too short",
+        id="application_plugin_empty_entries_lt_py_311",
+        marks=pytest.mark.skipif(
+            os.sys.version_info >= (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
+    ),
+    pytest.param(
+        lambda x: x["package_content"].update(
+            {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
+        ),
+        "[] should be non-empty",
+        id="application_plugin_empty_entries",
+        marks=pytest.mark.skipif(
+            os.sys.version_info < (3, 11),
+            reason="jsonschema pinned on PY<3.11, which has different msg",
+        ),
     ),
 ]
 for required_key in (

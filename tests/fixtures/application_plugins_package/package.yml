@@ -1,0 +1,24 @@
+fpkg_version: 1
+uid: my-package
+publisher_uid: safe
+name: My FME Package
+description: A short description of my FME Package.
+version: 0.1.0
+minimum_fme_build: 26538
+author:
+  name: G Raymond
+  email: me@example.com
+package_content:
+  application_plugins:
+    - name: agent-plugin
+      entries:
+        - platforms: [windows-x64-cp314]
+          file: agent-plugin.windows-x64-cp314.0.2.3.pyz
+          type: pyz
+          env: { PEX_ROOT: "%writabledir%/.pycache" }
+          command: ["%pythoninterpreter%", "%bgworkersdir%/agent-plugin.windows-x64-cp314.0.2.3.pyz", "%debug%", "serve", "%args%"]
+        - platforms: [macosx-aarch64]
+          file: agent-plugin.macosx-aarch64.0.2.3.pyz
+          type: pyz
+          env: { PEX_ROOT: "%writabledir%/.pycache" }
+          command: ["%pythoninterpreter%", "%bgworkersdir%/agent-plugin.macosx-aarch64.0.2.3.pyz", "%debug%", "serve", "%args%"]
