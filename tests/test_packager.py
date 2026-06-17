@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 from copy import deepcopy
 from zipfile import ZipFile
 
@@ -22,11 +23,11 @@ from fme_packager.metadata import (
 from fme_packager.operations import parse_formatinfo
 from fme_packager.packager import (
     FMEPackager,
+    enforce_valid_pyz,
     get_format_visibility,
     get_formatinfo,
     is_valid_python_compatibility,
     validate_metadata,
-    enforce_valid_pyz,
 )
 
 CWD = pathlib.Path(__file__).parent.resolve()
@@ -347,7 +348,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] is too short",
         id="empty_content_subkey_lt_py_311",
         marks=pytest.mark.skipif(
-            os.sys.version_info >= (3, 11),
+            sys.version_info >= (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -356,7 +357,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] should be non-empty",
         id="empty_content_subkey",
         marks=pytest.mark.skipif(
-            os.sys.version_info < (3, 11),
+            sys.version_info < (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -582,7 +583,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] is too short",
         id="application_plugin_empty_entries_lt_py_311",
         marks=pytest.mark.skipif(
-            os.sys.version_info >= (3, 11),
+            sys.version_info >= (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -593,7 +594,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] should be non-empty",
         id="application_plugin_empty_entries",
         marks=pytest.mark.skipif(
-            os.sys.version_info < (3, 11),
+            sys.version_info < (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
