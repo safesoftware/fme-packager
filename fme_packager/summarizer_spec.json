@@ -205,7 +205,7 @@
                     "minItems": 1,
                     "items": {
                         "type": "string",
-                        "pattern": "^(windows-x64|(macosx|linux)-(x64|aarch64))(-cp31[456])?$"
+                        "pattern": "^(windows-x64|(macosx|linux)-(x64|aarch64))(-cp314)?$"
                     }
                 },
                 "file": {
