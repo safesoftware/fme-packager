@@ -1,9 +1,6 @@
-from importlib.resources import open_text
-import json
 import os
 from pathlib import Path
 from typing import Optional, Union
-from functools import cache
 
 from ruamel.yaml import YAML
 
@@ -17,15 +14,6 @@ def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
     """
     with open(Path(fpkg_path) / "package.yml") as f:
         return FMEPackageMetadata(YAML(typ="safe").load(f))
-
-
-@cache
-def load_metadata_json_schema() -> dict:
-    """
-    Load in package metadata specification and requirements.
-    """
-    with open_text("fme_packager", "spec.json") as f:
-        return json.load(f)
 
 
 class TransformerMetadata:

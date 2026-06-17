@@ -358,12 +358,12 @@ PACKAGE_YML_VALIDATION_CASES = [
     ),
     pytest.param(
         lambda x: x.update({"version": 1}),
-        "Failed validating 'type'",
+        "is not of type 'string'",
         id="version_not_str",
     ),
     pytest.param(
         lambda x: x.update({"version": "a.b.c"}),
-        "Failed validating 'pattern'",
+        "does not match",
         id="version_not_semantic",
     ),
     pytest.param(
@@ -487,7 +487,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 ]
             }
         ),
-        "Failed validating 'pattern'",
+        "does not match",
         id="application_plugin_bad_name",
     ),
     pytest.param(
@@ -503,7 +503,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 ]
             }
         ),
-        "Failed validating 'pattern'",
+        "does not match",
         id="application_plugin_bad_platform",
     ),
     pytest.param(
@@ -568,7 +568,7 @@ PACKAGE_YML_VALIDATION_CASES = [
                 ]
             }
         ),
-        "Failed validating 'enum'",
+        "is not one of",
         id="application_plugin_entry_bad_type",
     ),
     pytest.param(
@@ -616,7 +616,7 @@ for key in ("uid", "publisher_uid"):
     PACKAGE_YML_VALIDATION_CASES.append(
         pytest.param(
             lambda x, key=key: x.__setitem__(key, "a_b"),
-            "Failed validating 'pattern'",
+            "does not match",
             id=f"bad_{key}",
         )
     )

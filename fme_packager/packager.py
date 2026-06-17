@@ -1,6 +1,7 @@
 import csv
 import os
 import shutil
+
 import tempfile
 import warnings
 import zipfile
@@ -10,7 +11,6 @@ from pathlib import Path
 import png
 import xmltodict
 from build import ProjectBuilder
-from jsonschema import validate
 from packaging import version
 
 from fme_packager.exception import (
@@ -20,9 +20,12 @@ from fme_packager.exception import (
 from fme_packager.help import HelpBuilder
 from fme_packager.metadata import (
     load_fpkg_metadata,
-    load_metadata_json_schema,
     TransformerMetadata,
     FMEPackageMetadata,
+)
+from fme_packager.schema_validation import (
+    format_schema_validation_errors,
+    load_schema_validator,
 )
 from fme_packager.operations import (
     build_fpkg_filename,
@@ -38,6 +41,30 @@ APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
 
 # Application plugins are only supported by FME from this build onwards.
 APPLICATION_PLUGIN_MINIMUM_FME_BUILD = 26538
+
+
+def _quiet_subprocess_runner(cmd, cwd=None, extra_environ=None):
+    """
+    A ``build`` subprocess runner that suppresses the build backend's output,
+    surfacing it only if the build fails.
+
+    Matches the runner signature expected by ``build.ProjectBuilder``.
+    """
+    import subprocess
+    import sys
+
+    env = os.environ.copy()
+    if extra_environ:
+        env.update(extra_environ)
+    try:
+        subprocess.run(cmd, cwd=cwd, env=env, check=True, capture_output=True)
+    except subprocess.CalledProcessError as e:
+        # Build failed: replay the captured output so the error stays diagnosable.
+        if e.stdout:
+            sys.stdout.buffer.write(e.stdout)
+        if e.stderr:
+            sys.stderr.buffer.write(e.stderr)
+        raise
 
 
 def is_valid_python_compatibility(python_compat_version):
@@ -236,7 +263,9 @@ def validate_metadata(metadata: FMEPackageMetadata):
     """
     Validate the package metadata against the JSON schema, plus additional checks.
     """
-    validate(metadata.dict, load_metadata_json_schema())
+    errors = list(load_schema_validator("spec.json").iter_errors(metadata.dict))
+    if errors:
+        raise ValueError(format_schema_validation_errors(errors, subject="package.yml"))
     enforce_metadata_unique_names(metadata)
     if (
         metadata.unsupported_from_build
@@ -355,7 +384,7 @@ class FMEPackager:
         if fpkg_path.exists():
             fpkg_path.unlink()
 
-        new_zip = shutil.make_archive(fpkg_path, "zip", root_dir=self.build_dir)
+        new_zip = shutil.make_archive(fpkg_path.as_posix(), "zip", root_dir=self.build_dir)
         Path(new_zip).rename(fpkg_path)  # Strip zip extension
         self._print("Done.")
 
@@ -610,9 +639,15 @@ class FMEPackager:
                 # The only wheel in the directory will be the one to include in the fpkg.
                 if os.path.exists("dist"):
                     shutil.rmtree("dist")
+                # The build backend prints every file it adds to the wheel.
+                # Suppress that output unless verbose, only surfacing it on failure.
+                if self.verbose:
+                    builder = ProjectBuilder(".")  # default runner streams output
+                else:
+                    builder = ProjectBuilder(".", runner=_quiet_subprocess_runner)
                 try:
-                    result = ProjectBuilder(".").build("wheel", "dist")
-                    print(f"Built {result}")
+                    result = builder.build("wheel", "dist")
+                    self._print(f"Built {result}")
                 finally:
                     os.chdir(original_cwd)
 

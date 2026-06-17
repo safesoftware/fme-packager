@@ -73,7 +73,8 @@ def apply_help(help_path, fpkg_path):
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True, file_okay=False, writable=True))
-def pack(path):
+@click.option("--verbose", "-v", is_flag=True, help="Show build steps and wheel build output")
+def pack(path, verbose):
     """
     Create an .fpkg file.
 
@@ -82,7 +83,7 @@ def pack(path):
 
     PATH -- Path to an FME Package directory.
     """
-    steps = FMEPackager(path)
+    steps = FMEPackager(path, verbose=verbose)
     steps.build()
     steps.make_fpkg()
 
