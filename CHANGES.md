@@ -1,5 +1,12 @@
 # fme-packager changes
 
+## Unreleased
+
+* `pack`: Improve package.yml validation errors for transformers and web services. (FMEENGINE-98557)
+* `pack`: Output absolute path to the created package upon success.
+* `config-env`: Add `$FME_HOME` to `$PATH`.
+* Lazy-load dependencies that are only needed by the `init` command.
+
 ## 1.19.0
 
 * Add support for Safe internal `application_plugins` content. (AISERVICE-375)
