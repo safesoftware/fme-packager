@@ -4,6 +4,7 @@
 
 * `pack`: Improve package.yml validation errors for transformers and web services. (FMEENGINE-98557)
 * `pack`: Output absolute path to the created package upon success.
+* `pack`: Make path to FPKG root optional. If not given, then walk up directory tree to find `package.yml`.
 * `config-env`: Add `$FME_HOME` to `$PATH`.
 * Lazy-load dependencies that are only needed by the `init` command.
 

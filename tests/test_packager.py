@@ -189,6 +189,31 @@ def test_pack(package_name):
         assert "package.yml" in z.namelist()
 
 
+def test_pack_no_arg_from_package_root(monkeypatch):
+    """pack with no PATH discovers package.yml in CWD."""
+    monkeypatch.chdir(CWD / "fixtures" / "fmxj_package")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code == 0
+
+
+def test_pack_no_arg_from_subdirectory(monkeypatch):
+    """pack with no PATH walks up from a subdirectory to find package.yml."""
+    monkeypatch.chdir(CWD / "fixtures" / "fmxj_package" / "python" / "fme_demogreeter")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code == 0
+
+
+def test_pack_no_arg_no_package_yml(monkeypatch, tmp_path):
+    """pack with no PATH and no package.yml in any ancestor fails with a clear message."""
+    monkeypatch.chdir(CWD / "fixtures")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code != 0
+    assert "No package.yml" in result.output
+
+
 def test_enforce_valid_pyz_valid(tmp_path):
     pyz = tmp_path / "worker.pyz"
     with ZipFile(pyz, "w") as z:
