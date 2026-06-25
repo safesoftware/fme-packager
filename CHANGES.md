@@ -1,6 +1,6 @@
 # fme-packager changes
 
-## Unreleased
+## 1.20.0
 
 * `pack`: Improve package.yml validation errors for transformers and web services. (FMEENGINE-98557)
 * `pack`: Output absolute path to the created package upon success.
