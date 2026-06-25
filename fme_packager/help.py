@@ -17,7 +17,6 @@ from markdown import Markdown
 from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.operations import TREE_COPY_IGNORE_GLOBS
 
-
 HTML_TPL = """<!DOCTYPE html>
 <html>
 <head>

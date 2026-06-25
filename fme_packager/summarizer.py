@@ -11,20 +11,19 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from fme_packager.operations import parse_formatinfo, extract_fpkg, load_format_line
+from fme_packager.metadata import (
+    FormatMetadata,
+    TransformerMetadata,
+    WebServiceMetadata,
+    load_fpkg_metadata,
+)
+from fme_packager.operations import extract_fpkg, load_format_line, parse_formatinfo
 from fme_packager.schema_validation import (
     format_schema_validation_errors,
     load_schema_validator,
 )
-from fme_packager.transformer import load_transformer, TransformerFile
-from fme_packager.web_service import _web_service_path, _parse_web_service
-from fme_packager.metadata import (
-    FormatMetadata,
-    WebServiceMetadata,
-    TransformerMetadata,
-    load_fpkg_metadata,
-)
-
+from fme_packager.transformer import TransformerFile, load_transformer
+from fme_packager.web_service import _parse_web_service, _web_service_path
 
 TransformerFilenames = namedtuple(
     "TransformerFilenames", ["filename", "readme_filename"], defaults=[None, None]

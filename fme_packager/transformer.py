@@ -2,14 +2,14 @@
 Tools for extracting key information out of FME's transformer definition files.
 """
 
+import csv
 import json
 import os.path
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Iterable, List
-import csv
 from io import StringIO
+from typing import Iterable, List
 
 from fme_packager.schema_validation import (
     format_schema_validation_errors,

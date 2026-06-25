@@ -12,9 +12,6 @@ import sysconfig
 from pathlib import Path
 
 import click
-from click import BadParameter
-from cookiecutter.exceptions import OutputDirExistsException, FailedHookException
-from cookiecutter.main import cookiecutter
 
 import fme_packager
 from fme_packager.packager import FMEPackager
@@ -46,6 +43,9 @@ def init(template):
 
     TEMPLATE -- Name of the template to use.
     """
+    from cookiecutter.exceptions import FailedHookException, OutputDirExistsException
+    from cookiecutter.main import cookiecutter
+
     print("Enter the values to use for the template. Press Enter to accept the [default].")
     try:
         cookiecutter(COOKIECUTTER_TEMPLATES[template])
@@ -71,8 +71,23 @@ def apply_help(help_path, fpkg_path):
     steps.apply_help(help_path)
 
 
+def _find_package_root(start: Path) -> Path:
+    for d in [start, *start.parents]:
+        if (d / "package.yml").is_file():
+            return d
+    raise click.UsageError(
+        "No package.yml found in the current directory or any parent directory.\n"
+        "Provide a path to the FME Package root directory."
+    )
+
+
 @cli.command()
-@click.argument("path", type=click.Path(exists=True, file_okay=False, writable=True))
+@click.argument(
+    "path",
+    type=click.Path(exists=True, file_okay=False, writable=True),
+    default=None,
+    required=False,
+)
 @click.option("--verbose", "-v", is_flag=True, help="Show build steps and wheel build output")
 def pack(path, verbose):
     """
@@ -81,9 +96,10 @@ def pack(path, verbose):
     Package contents are validated during this process.
     Components not referenced by the package's metadata.yml may not be included in the resulting fpkg.
 
-    PATH -- Path to an FME Package directory.
+    PATH -- Path to an FME Package directory. Defaults to the nearest ancestor directory containing package.yml.
     """
-    steps = FMEPackager(path, verbose=verbose)
+    resolved = Path(path) if path is not None else _find_package_root(Path.cwd())
+    steps = FMEPackager(resolved, verbose=verbose)
     steps.build()
     steps.make_fpkg()
 
@@ -148,7 +164,7 @@ def config_env(fme_home, site_packages_dir, verify):
     """
     fme_home = Path(fme_home)
     if not (fme_home / "fme").is_file() and not (fme_home / "fme.exe").is_file():
-        raise BadParameter(f"'{fme_home}' does not contain an FME executable")
+        raise click.BadParameter(f"'{fme_home}' does not contain an FME executable")
 
     leaf_dir = "python%s%s" % (sys.version_info.major, sys.version_info.minor)
     paths_to_add = [

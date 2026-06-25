@@ -3,9 +3,9 @@ example.my-package.DemoGreeter implementation.
 """
 
 from fmeobjects import FMEFeature
-from ._vendor.fmetools.plugins import FMEEnhancedTransformer
-from ._vendor.fmetools.guiparams import GuiParameterParser
 
+from ._vendor.fmetools.guiparams import GuiParameterParser
+from ._vendor.fmetools.plugins import FMEEnhancedTransformer
 
 # Build a parser for getting GUI parameter values from input features.
 # It takes a mapping of the internal attribute name to the GUI type supplying its value.

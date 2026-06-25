@@ -1,40 +1,37 @@
 import csv
 import os
 import shutil
-
 import tempfile
 import warnings
 import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
 
-import png
-import xmltodict
 from build import ProjectBuilder
 from packaging import version
 
 from fme_packager.exception import (
-    TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
+    TransformerPythonCompatError,
 )
 from fme_packager.help import HelpBuilder
 from fme_packager.metadata import (
-    load_fpkg_metadata,
-    TransformerMetadata,
     FMEPackageMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
+from fme_packager.operations import (
+    TREE_COPY_IGNORE_GLOBS,
+    build_fpkg_filename,
+    load_format_line,
+    parse_formatinfo,
 )
 from fme_packager.schema_validation import (
     format_schema_validation_errors,
     load_schema_validator,
 )
-from fme_packager.operations import (
-    build_fpkg_filename,
-    parse_formatinfo,
-    TREE_COPY_IGNORE_GLOBS,
-    load_format_line,
-)
 from fme_packager.summarizer import summarize_fpkg
-from fme_packager.transformer import load_transformer, CustomTransformer
+from fme_packager.transformer import CustomTransformer, load_transformer
 
 # Application plugins are a Safe-only package feature.
 APPLICATION_PLUGIN_PUBLISHER_UID = "safe"
@@ -134,6 +131,8 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
     :param min_height: The minimum width of the image.
     :param square: Whether the image should be square.
     """
+    import png
+
     width, height, _, _ = png.Reader(filename=path).read()  # Raises if not PNG
     if width < min_width or height < min_height:
         raise ValueError(
@@ -303,6 +302,8 @@ class FMEPackager:
 
         :param help_src: Help source path.
         """
+        import xmltodict
+
         tmp_doc_dir = tempfile.mkdtemp(prefix="fme-packager_")
         try:
             # If help source is a ZIP, extract it to a temporary folder.
@@ -386,7 +387,9 @@ class FMEPackager:
 
         new_zip = shutil.make_archive(fpkg_path.as_posix(), "zip", root_dir=self.build_dir)
         Path(new_zip).rename(fpkg_path)  # Strip zip extension
-        self._print("Done.")
+        # Always report where the package was written, even when not verbose.
+        print("Success!")
+        print(fpkg_path.as_posix())
 
     def build(self):
         """
@@ -510,8 +513,11 @@ class FMEPackager:
             if transformer.version < 1:
                 raise ValueError(f"{transformer.name} version must be >= 1")
 
-            if not (dst / f"{transformer.name}.md").is_file():
-                raise ValueError(f"{transformer.name} is missing doc")
+            doc_path = dst / f"{transformer.name}.md"
+            if not doc_path.is_file():
+                raise ValueError(
+                    f"Transformer {transformer.name}: missing documentation file at {doc_path}"
+                )
 
             fms_path = src / f"{transformer.name}.fms"
             if fms_path.is_file():
@@ -520,12 +526,18 @@ class FMEPackager:
             fmx_path = src / f"{transformer.name}.fmx"
             fmxj_path = src / f"{transformer.name}.fmxj"
             if fmx_path.is_file() and fmxj_path.is_file():
-                raise ValueError(f"{transformer.name} cannot have both FMX and FMXJ")
+                raise ValueError(
+                    f"Transformer {transformer.name}: cannot have both FMX ({fmx_path}) and FMXJ ({fmxj_path})"
+                )
             if not fmx_path.is_file() and not fmxj_path.is_file():
-                raise ValueError(f"{fmx_path} is in metadata, but was not found")
+                raise ValueError(
+                    f"Transformer {transformer.name}: neither {fmx_path} nor {fmxj_path} found"
+                )
             transformer_path = fmx_path if fmx_path.is_file() else fmxj_path
             if transformer_path == fmxj_path and self.metadata.minimum_fme_build < 23146:
-                raise ValueError("FMXJ requires minimum_fme_build >= 23146")
+                raise ValueError(
+                    f"Transformer {transformer.name}: FMXJ at {fmxj_path} requires minimum_fme_build ≥ 23146"
+                )
 
             # Copy file if it passed validation
             self.validate_transformer(transformer_path, transformer)
@@ -538,7 +550,7 @@ class FMEPackager:
             definition_path = self.src_dir / "web_services" / web_service.name
             if not definition_path.exists():
                 raise ValueError(
-                    f"Web Service '{web_service.name}' is in metadata, but was not found"
+                    f"Web Service '{web_service.name}': file not found at {definition_path}"
                 )
             if not dest.exists():
                 dest.mkdir(parents=True)

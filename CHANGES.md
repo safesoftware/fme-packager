@@ -1,19 +1,27 @@
 # fme-packager changes
 
-# 1.19.0
+## 1.20.0
+
+* `pack`: Improve package.yml validation errors for transformers and web services. (FMEENGINE-98557)
+* `pack`: Output absolute path to the created package upon success.
+* `pack`: Make path to FPKG root optional. If not given, then walk up directory tree to find `package.yml`.
+* `config-env`: Add `$FME_HOME` to `$PATH`.
+* Lazy-load dependencies that are only needed by the `init` command.
+
+## 1.19.0
 
 * Add support for Safe internal `application_plugins` content. (AISERVICE-375)
 * `pack`: Move build steps and wheel output behind `-v`/`--verbose` flag. (FMEENGINE-97734)
 * `pack`: Add schema validation for FMXJ transformers. (FMEENGINE-98381)
 * Require Python >= 3.10.
 
-# 0.18.2
+## 0.18.2
 
 * Add support for `unsupported_from_build` property in package.yml. Introduced in FME 2026.2. (FMEENGINE-89071)
 * Support Python 3.14.
 * `config-env`: Infer interpreter path from site-packages location.
 
-# 0.17.0
+## 0.17.0
 
 * Print output of wheel build result.
 * Fix handling of custom transformers that have multiple categories.
@@ -21,77 +29,77 @@
 * `config-env`: verify successful configuration by importing fmeobjects.
 * `init`: don't show stack trace for validation errors
 
-# 1.16.1
+## 1.16.1
 
 * Require the `PYTHON_COMPATIBILITY` keyword only for packages where minimum build is before FME 2022. (FMEENGINE-86130)
 
-# 1.16.0
+## 1.16.0
 
 * Add support for data processing types (FMEHUBDEV-1661)
 
-# 1.15.1
+## 1.15.1
 
 * Fix bug where deprecated custom transformers did not set the deprecation status of the package
 
-# 1.15.0
+## 1.15.0
 
 * Require Python >= 3.9.
 * Allow wheel builds for packages that use pyproject.toml exclusively.
 
-# 1.14.0
+## 1.14.0
 
 * Add support for optional contexts in package_help.csv (FMEENGINE-85240)
 
-# 1.13.0
+## 1.13.0
 
 * Validate that package.yml contains unique names for content items for each type (FMEENGINE-85295)
 
-# 1.9.0
+## 1.9.0
 
 * Add support for optional FORMAT_CATEGORIES column in format.db (Column introduced in FME b24591).
 
-# 1.8.0
+## 1.8.0
 
 * Add formats support for summarize command.
 
-# 1.7.3
+## 1.7.3
 
 * Fix bug in summarize command when the package does not contain any transformers
 
-# 1.7.2
+## 1.7.2
 
 * Fix bug after removal of verbose option from summarize command
 
-# 1.7.1
+## 1.7.1
 
 * Fix missing spec file for summarize command
 
-# 1.7.0
+## 1.7.0
 
 * Add summarize command to show a detailed summary of the contents of an fpkg file.
 
-# 1.6.0
+## 1.6.0
 
 * Update `fme-packager config-env` for path changes in FME 2023.2+.
 
-# 1.5.0
+## 1.5.0
 
 * Require Python 3.7 or newer.
 * Update dependencies.
 
-# 1.4.4
+## 1.4.4
 
 * Improve help validation for packages with hyphenated UIDs.
 
-# 1.4.3
+## 1.4.3
 
 * Improve verify command
 
-# 1.4.2
+## 1.4.2
 
 * Improve help validation for packages containing formats.
 
-# 1.4.0
+## 1.4.0
 
 * Added `fme-packager verify` to check that a `.fpkg` is valid.
 * Moved `fme-packager version` to the standardized `fme-packager --version`.

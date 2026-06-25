@@ -1,23 +1,22 @@
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
 import pathlib
 import shutil
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
-from pathlib import Path
 
-from fme_packager import summarizer
-from fme_packager import cli
+from fme_packager import cli, summarizer
 from fme_packager.metadata import FMEPackageMetadata
 from fme_packager.operations import extract_fpkg
 from fme_packager.summarizer import (
-    TransformerFilenames,
     FormatFilenames,
-    package_deprecated,
     Summarizer,
+    TransformerFilenames,
+    package_deprecated,
 )
 
 CWD = pathlib.Path(__file__).parent.resolve()

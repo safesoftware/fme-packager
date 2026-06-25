@@ -1,7 +1,8 @@
 import os
 import pathlib
-from zipfile import ZipFile
+import sys
 from copy import deepcopy
+from zipfile import ZipFile
 
 import pytest
 from click.testing import CliRunner
@@ -10,20 +11,24 @@ from ruamel.yaml import YAML
 
 from fme_packager.cli import pack
 from fme_packager.exception import (
-    TransformerPythonCompatError,
     CustomTransformerPythonCompatError,
+    TransformerPythonCompatError,
 )
-from fme_packager.metadata import TransformerMetadata, FormatMetadata, FMEPackageMetadata
+from fme_packager.metadata import (
+    FMEPackageMetadata,
+    FormatMetadata,
+    TransformerMetadata,
+    load_fpkg_metadata,
+)
 from fme_packager.operations import parse_formatinfo
 from fme_packager.packager import (
     FMEPackager,
-    is_valid_python_compatibility,
-    get_formatinfo,
-    get_format_visibility,
-    validate_metadata,
     enforce_valid_pyz,
+    get_format_visibility,
+    get_formatinfo,
+    is_valid_python_compatibility,
+    validate_metadata,
 )
-from fme_packager.metadata import load_fpkg_metadata
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
@@ -182,6 +187,31 @@ def test_pack(package_name):
     fpkg_name = os.listdir(dist_dir)[0]
     with ZipFile(dist_dir / fpkg_name) as z:
         assert "package.yml" in z.namelist()
+
+
+def test_pack_no_arg_from_package_root(monkeypatch):
+    """pack with no PATH discovers package.yml in CWD."""
+    monkeypatch.chdir(CWD / "fixtures" / "fmxj_package")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code == 0
+
+
+def test_pack_no_arg_from_subdirectory(monkeypatch):
+    """pack with no PATH walks up from a subdirectory to find package.yml."""
+    monkeypatch.chdir(CWD / "fixtures" / "fmxj_package" / "python" / "fme_demogreeter")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code == 0
+
+
+def test_pack_no_arg_no_package_yml(monkeypatch, tmp_path):
+    """pack with no PATH and no package.yml in any ancestor fails with a clear message."""
+    monkeypatch.chdir(CWD / "fixtures")
+    runner = CliRunner()
+    result = runner.invoke(pack, [])
+    assert result.exit_code != 0
+    assert "No package.yml" in result.output
 
 
 def test_enforce_valid_pyz_valid(tmp_path):
@@ -343,7 +373,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] is too short",
         id="empty_content_subkey_lt_py_311",
         marks=pytest.mark.skipif(
-            os.sys.version_info >= (3, 11),
+            sys.version_info >= (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -352,7 +382,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] should be non-empty",
         id="empty_content_subkey",
         marks=pytest.mark.skipif(
-            os.sys.version_info < (3, 11),
+            sys.version_info < (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -578,7 +608,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] is too short",
         id="application_plugin_empty_entries_lt_py_311",
         marks=pytest.mark.skipif(
-            os.sys.version_info >= (3, 11),
+            sys.version_info >= (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),
@@ -589,7 +619,7 @@ PACKAGE_YML_VALIDATION_CASES = [
         "[] should be non-empty",
         id="application_plugin_empty_entries",
         marks=pytest.mark.skipif(
-            os.sys.version_info < (3, 11),
+            sys.version_info < (3, 11),
             reason="jsonschema pinned on PY<3.11, which has different msg",
         ),
     ),

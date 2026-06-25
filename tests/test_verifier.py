@@ -3,7 +3,7 @@ import pathlib
 import pytest
 from click.testing import CliRunner
 
-from fme_packager.cli import verify, pack
+from fme_packager.cli import pack, verify
 
 CWD = pathlib.Path(__file__).parent.resolve()
 
@@ -39,9 +39,12 @@ def test_verify_invalid(flags):
     )
 
     if "--json" in flags:
-        assert '{"status": "error", "message": "MyInvalidGreeter is missing doc"}' in result.output
+        assert '"status": "error"' in result.output
+        assert "MyInvalidGreeter" in result.output
+        assert "missing documentation file" in result.output
     else:
-        assert "MyInvalidGreeter is missing doc" in result.output
+        assert "MyInvalidGreeter" in result.output
+        assert "missing documentation file" in result.output
 
     if "--verbose" in flags:
         assert "Working on transformer" in result.output

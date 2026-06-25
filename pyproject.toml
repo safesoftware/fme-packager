@@ -62,6 +62,7 @@ fme_packager = ["*.json"]
 line-length = 100
 
 [tool.ruff.lint]
+extend-select = ["I"]
 ignore = ["E741"]
 
 [tool.coverage.run]
