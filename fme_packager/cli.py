@@ -165,7 +165,7 @@ def config_env(fme_home, site_packages_dir, verify):
     if not (fme_home / "fme").is_file() and not (fme_home / "fme.exe").is_file():
         raise click.BadParameter(f"'{fme_home}' does not contain an FME executable")
 
-    leaf_dir = "python%s%s" % (sys.version_info.major, sys.version_info.minor)
+    leaf_dir = f"python{sys.version_info.major}{sys.version_info.minor}"
     paths_to_add = [
         "#" + fme_home.as_posix(),  # fme_env.py reads this line
         (fme_home / "python").as_posix(),  # fmeobjects API and third-party libraries

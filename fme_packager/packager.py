@@ -7,9 +7,9 @@ import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
 
+from build import ProjectBuilder
 from packaging import version
 
-from build import ProjectBuilder
 from fme_packager.exception import (
     CustomTransformerPythonCompatError,
     TransformerPythonCompatError,
@@ -676,7 +676,7 @@ class FMEPackager:
         for expected_py_package in self.metadata.python_packages:
             lib_name = expected_py_package.name
             if not any(
-                wheel_name.startswith(lib_name) or wheel_name.startswith(lib_name.replace("-", "_"))
+                wheel_name.startswith((lib_name, lib_name.replace("-", "_")))
                 for wheel_name in wheel_names
             ):
                 raise ValueError(

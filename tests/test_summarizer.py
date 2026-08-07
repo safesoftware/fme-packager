@@ -65,9 +65,7 @@ def test__transformer_filenames(transformer_name, expected, mocker):
             return True
         if "fmxj_transformer" in path_str and path_str.endswith(".fmxj"):
             return True
-        if path_str.endswith(".md"):
-            return True
-        return False
+        return bool(path_str.endswith(".md"))
 
     mocker.patch("pathlib.Path.exists", mock_exists)
 

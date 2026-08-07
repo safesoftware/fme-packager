@@ -231,7 +231,7 @@ class HelpBuilder:
                     links[row[0]] = row[1]
             except IndexError as e:
                 raise IndexError("Invalid package_help.csv: must have 2 columns") from e
-        for ctx, doc_path in links.items():
+        for doc_path in links.values():
             if not doc_path.startswith("/"):
                 raise ValueError(f"Path must start with /: {doc_path}")
             expected_doc = Path(doc_dir) / doc_path.lstrip("/")

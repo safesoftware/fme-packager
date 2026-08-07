@@ -44,7 +44,7 @@ def parse_data_processing_type(data_processing_type: dict):
     if default_value:
         types.add(default_value)
 
-    return sorted(list(types))
+    return sorted(types)
 
 
 def csv_split(line: str) -> list[str]:
@@ -381,13 +381,13 @@ class FmxjFile(TransformerFile):
 
 
 def load_transformer(transformer_path) -> TransformerFile:
-    filename, ext = os.path.splitext(transformer_path)
+    _filename, ext = os.path.splitext(transformer_path)
     ext = ext.lower()
     if ext == ".fmx":
         # Check first line for Custom Transformer text
         with open(transformer_path, "rb") as f:
             line = f.readline()
-        if line.startswith(b"#!") or line.startswith(b"FMW0001"):
+        if line.startswith((b"#!", b"FMW0001")):
             return CustomTransformerFmxFile(transformer_path)
         return FmxFile(transformer_path)
     if ext == ".fmxj":

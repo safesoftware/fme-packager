@@ -339,7 +339,7 @@ PACKAGE_YML_TEMPLATE = {
 
 def _dupe_content(yml):
     # Add a copy of the first element to each package_content sublist
-    for key, value in yml["package_content"].items():
+    for value in yml["package_content"].values():
         if not value:
             continue
         value.append(value[0])
