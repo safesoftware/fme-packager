@@ -7,9 +7,9 @@ import json
 import os.path
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import Iterable, List
 
 from fme_packager.schema_validation import (
     format_schema_validation_errors,
@@ -47,7 +47,7 @@ def parse_data_processing_type(data_processing_type: dict):
     return sorted(list(types))
 
 
-def csv_split(line: str) -> List[str]:
+def csv_split(line: str) -> list[str]:
     """
     Split a CSV line into a list of values, handling quoted strings.
 
@@ -80,12 +80,12 @@ class Transformer(ABC):
 
     @property
     @abstractmethod
-    def categories(self) -> List[str]:
+    def categories(self) -> list[str]:
         pass
 
     @property
     @abstractmethod
-    def aliases(self) -> List[str]:
+    def aliases(self) -> list[str]:
         pass
 
     @property
@@ -95,7 +95,7 @@ class Transformer(ABC):
 
     @property
     @abstractmethod
-    def data_processing_types(self) -> List[str]:
+    def data_processing_types(self) -> list[str]:
         pass
 
 
@@ -103,7 +103,7 @@ class Transformer(ABC):
 class CustomTransformerHeader:
     name: str
     version: int
-    category: List[str]
+    category: list[str]
     guid: str
     insert_mode: str
     blocked_looping: str
@@ -116,7 +116,7 @@ class CustomTransformerHeader:
     pyver: str
     preserve_group_attr: str = ""
     replaced_by: str = ""
-    data_processing_type: List[str] = field(default_factory=list)
+    data_processing_type: list[str] = field(default_factory=list)
 
     # noinspection PyUnreachableCode
     def __post_init__(self):
@@ -144,7 +144,7 @@ def parse_custom_transformer_header(line: str) -> CustomTransformerHeader:
 
 
 class CustomTransformer(Transformer):
-    def __init__(self, lines: List[bytes]):
+    def __init__(self, lines: list[bytes]):
         super().__init__()
         self.header: CustomTransformerHeader
         self.lines = lines

@@ -8,8 +8,8 @@ The output is for FME Hub's use, and conforms to summarizer_spec.json.
 import os
 import tempfile
 from collections import namedtuple
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List, Union
 
 from fme_packager.metadata import (
     FormatMetadata,
@@ -35,7 +35,7 @@ FormatFilenames = namedtuple(
 
 
 class Summarizer:
-    def __init__(self, base_dir: Union[Path, str]):
+    def __init__(self, base_dir: Path | str):
         self.base_dir: Path = Path(base_dir)
 
     def transformer_filenames(self, transformer_name: str) -> TransformerFilenames:
@@ -114,7 +114,7 @@ class Summarizer:
             web_service_path = self.base_dir / _web_service_path(ws_name)
             web_service_content = _parse_web_service(web_service_path)
             # Normalize name without .xml suffix
-            normalized_name = ws_name[:-4] if ws_name.endswith(".xml") else ws_name
+            normalized_name = ws_name.removesuffix(".xml")
 
             entry = {"name": normalized_name}
             for key in [
@@ -208,7 +208,7 @@ def _content_description(readme_filename: str) -> dict:
         }
 
 
-def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -> List[str]:
+def _get_all_categories(transformers: Iterable[dict], formats: Iterable[dict]) -> list[str]:
     """
     Get the union of all the categories from the transformers.
 
@@ -284,7 +284,7 @@ def package_deprecated(transformers: Iterable[dict], formats: Iterable[dict]) ->
     return not (is_transformer_visible or is_format_visible)
 
 
-def summarize_fpkg(fpkg_path: Union[str, os.PathLike]) -> dict:
+def summarize_fpkg(fpkg_path: str | os.PathLike) -> dict:
     """
     Summarize the FME Package.
 

@@ -7,9 +7,9 @@ import zipfile
 from fnmatch import fnmatch
 from pathlib import Path
 
-from build import ProjectBuilder
 from packaging import version
 
+from build import ProjectBuilder
 from fme_packager.exception import (
     CustomTransformerPythonCompatError,
     TransformerPythonCompatError,
@@ -90,7 +90,7 @@ def check_exists_and_copy(src, dest):
     :param dest: The destination path.
     """
     if not os.path.exists(src):
-        raise ValueError("{} is required but does not exist".format(src))
+        raise ValueError(f"{src} is required but does not exist")
     shutil.copy(src, dest)
 
 
@@ -135,13 +135,9 @@ def enforce_png(path, min_width=0, min_height=0, square=False):
 
     width, height, _, _ = png.Reader(filename=path).read()  # Raises if not PNG
     if width < min_width or height < min_height:
-        raise ValueError(
-            "Min dimensions are {}x{}. {} is {}x{}".format(
-                min_width, min_height, path, width, height
-            )
-        )
+        raise ValueError(f"Min dimensions are {min_width}x{min_height}. {path} is {width}x{height}")
     if square and width != height:
-        raise ValueError("{} must be square".format(path))
+        raise ValueError(f"{path} must be square")
 
 
 def fq_format_short_name(publisher_uid, package_uid, format_name):
@@ -153,7 +149,7 @@ def fq_format_short_name(publisher_uid, package_uid, format_name):
     :param format_name: The format name.
     :return: publisher_uid, package_uid, format_name dot delimited and upper case.
     """
-    return "{}.{}.{}".format(publisher_uid, package_uid, format_name).upper()
+    return f"{publisher_uid}.{package_uid}.{format_name}".upper()
 
 
 def check_fmf(package_metadata, format_metadata, fmf_path):
@@ -172,11 +168,8 @@ def check_fmf(package_metadata, format_metadata, fmf_path):
         package_metadata.publisher_uid, package_metadata.uid, format_metadata.name
     )
 
-    if (
-        "SOURCE_READER {}".format(fqname) not in contents
-        or "FORMAT_NAME {}".format(fqname) not in contents
-    ):
-        raise ValueError("SOURCE_READER and FORMAT_NAME must be '{}'".format(fqname))
+    if f"SOURCE_READER {fqname}" not in contents or f"FORMAT_NAME {fqname}" not in contents:
+        raise ValueError(f"SOURCE_READER and FORMAT_NAME must be '{fqname}'")
 
 
 def get_formatinfo(package_metadata, format_metadata, db_path):
@@ -193,13 +186,13 @@ def get_formatinfo(package_metadata, format_metadata, db_path):
 
     line = load_format_line(db_path)
     if not line:
-        raise ValueError("{} empty".format(db_path))
+        raise ValueError(f"{db_path} empty")
 
     format_info = parse_formatinfo(line)
     if format_info.FORMAT_NAME == fqname:
         return format_info
 
-    raise ValueError("{} must have FORMAT_NAME of '{}'".format(db_path, fqname))
+    raise ValueError(f"{db_path} must have FORMAT_NAME of '{fqname}'")
 
 
 def get_format_visibility(formatinfo):
@@ -218,9 +211,7 @@ def get_format_visibility(formatinfo):
         return direction_to_visibility_map[formatinfo.DIRECTION][formatinfo.VISIBLE]
     except KeyError:
         raise ValueError(
-            "Format visibility '{visible}' is not compatible with direction '{direction}'".format(
-                visible=formatinfo.VISIBLE, direction=formatinfo.DIRECTION
-            )
+            f"Format visibility '{formatinfo.VISIBLE}' is not compatible with direction '{formatinfo.DIRECTION}'"
         )
 
 
@@ -309,13 +300,13 @@ class FMEPackager:
             # If help source is a ZIP, extract it to a temporary folder.
             if os.path.isfile(help_src):
                 with zipfile.ZipFile(help_src) as zipf:
-                    self._print("Extracting {} to {}".format(help_src, tmp_doc_dir))
+                    self._print(f"Extracting {help_src} to {tmp_doc_dir}")
                     zipf.extractall(tmp_doc_dir)
                 root_contents = os.listdir(tmp_doc_dir)
                 # If help ZIP started with a single root level folder, then unnest.
                 if len(root_contents) == 1:
                     nested_dir = os.path.join(tmp_doc_dir, root_contents[0])
-                    self._print("Flattening single top-level folder {}".format(nested_dir))
+                    self._print(f"Flattening single top-level folder {nested_dir}")
                     for item in os.listdir(nested_dir):
                         shutil.move(os.path.join(nested_dir, item), tmp_doc_dir)
                     os.rmdir(nested_dir)
@@ -329,15 +320,13 @@ class FMEPackager:
             embedded_doc_dirs = [x for x in os.listdir(help_src) if x.startswith("!")]
             if embedded_doc_dirs:
                 warnings.warn(
-                    "{} embedded doc folders (starting with '!'). Avoid these if possible".format(
-                        len(embedded_doc_dirs)
-                    )
+                    f"{len(embedded_doc_dirs)} embedded doc folders (starting with '!'). Avoid these if possible"
                 )
 
             # (Re)create destination help folder and copy over the bulk of the doc files.
             dest = os.path.join(self.src_dir, "help")
             if os.path.exists(dest):
-                self._print("Deleting {}".format(dest))
+                self._print(f"Deleting {dest}")
                 shutil.rmtree(dest)
             shutil.copytree(help_src, dest, ignore=shutil.ignore_patterns(*TREE_COPY_IGNORE_GLOBS))
         finally:
@@ -359,12 +348,10 @@ class FMEPackager:
                     link = new_link
                 expected_doc_path = os.path.join(dest, link.lstrip("/"))
                 if os.path.exists(expected_doc_path):
-                    self._print("{} exists".format(expected_doc_path))
+                    self._print(f"{expected_doc_path} exists")
                     writer.writerow([name, link])
                     copied_rows += 1
-        self._print(
-            "Wrote {} of {} flali row(s) to package_help.csv".format(copied_rows, len(rows))
-        )
+        self._print(f"Wrote {copied_rows} of {len(rows)} flali row(s) to package_help.csv")
         if not copied_rows:
             raise ValueError("flali doesn't reference any included doc")
 
@@ -395,7 +382,7 @@ class FMEPackager:
         """
         Build and validate package files.
         """
-        self._print("Collecting files into {}".format(self.build_dir))
+        self._print(f"Collecting files into {self.build_dir}")
 
         # Clear out the build dir.
         if os.path.exists(self.build_dir):
@@ -461,8 +448,8 @@ class FMEPackager:
         self._print(f"Checking {transformer_path}")
         transformer_file = load_transformer(transformer_path)
 
-        expected_fqname = "{}.{}.{}".format(
-            self.metadata.publisher_uid, self.metadata.uid, expected_metadata.name
+        expected_fqname = (
+            f"{self.metadata.publisher_uid}.{self.metadata.uid}.{expected_metadata.name}"
         )
 
         transformer_versions = list(transformer_file.versions())
@@ -701,9 +688,9 @@ class FMEPackager:
         for wheel_path in wheels_path.iterdir():
             wheel_name = wheel_path.name
             if "py3" not in wheel_name:
-                warnings.warn("{} is not a Python 3 wheel".format(wheel_name))
+                warnings.warn(f"{wheel_name} is not a Python 3 wheel")
             if not wheel_name.endswith("-none-any.whl"):
-                warnings.warn("{} is not a pure-Python wheel".format(wheel_name))
+                warnings.warn(f"{wheel_name} is not a pure-Python wheel")
 
     def _copy_localization(self):
         # Copy any optional localization files. The only sanity check is a filename whitelist:

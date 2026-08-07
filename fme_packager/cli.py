@@ -25,7 +25,6 @@ def cli():
     """
     fme_packager: The FME Packages Tool.
     """
-    pass
 
 
 COOKIECUTTER_TEMPLATES = {

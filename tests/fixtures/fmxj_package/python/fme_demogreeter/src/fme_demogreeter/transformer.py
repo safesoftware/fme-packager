@@ -23,7 +23,7 @@ class TransformerImpl(FMEEnhancedTransformer):
     """
 
     def __init__(self):
-        super(TransformerImpl, self).__init__()
+        super().__init__()
 
     def receive_feature(self, feature: FMEFeature):
         """
@@ -33,7 +33,7 @@ class TransformerImpl(FMEEnhancedTransformer):
         first_name = param_parser.get(feature, "___XF_FIRST_NAME")
 
         # Set the output attribute, and output the feature.
-        feature.setAttribute("_greeting", "Hello, {}!".format(first_name))
+        feature.setAttribute("_greeting", f"Hello, {first_name}!")
         self.pyoutput(feature)
 
     def process_group(self):

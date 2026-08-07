@@ -1,7 +1,6 @@
 import os
 import shutil
 from collections import namedtuple
-from typing import Union
 
 
 def split_fpkg_filename(filename):
@@ -15,11 +14,11 @@ def split_fpkg_filename(filename):
     """
     name, _, extension = filename.partition(".")
     if extension != "fpkg":
-        raise ValueError("FME Package extension must be 'fpkg', not '{}'".format(extension))
+        raise ValueError(f"FME Package extension must be 'fpkg', not '{extension}'")
     publisher_uid, _, right = name.partition(".")
     package_uid, _, version = right.rpartition("-")
     if not publisher_uid or not package_uid or not version:
-        raise ValueError("Unrecognized fpkg name '{}'".format(name))
+        raise ValueError(f"Unrecognized fpkg name '{name}'")
     return publisher_uid, package_uid, version
 
 
@@ -31,7 +30,7 @@ def build_fpkg_filename(publisher_uid, package_uid, version):
     """
     if not publisher_uid or not package_uid or not version:
         raise ValueError("All parts of the fpkg filename are required")
-    return "{}.{}-{}.fpkg".format(publisher_uid, package_uid, version)
+    return f"{publisher_uid}.{package_uid}-{version}.fpkg"
 
 
 FORMATINFO_HDR = "FORMAT_NAME|FORMAT_LONG_NAME|DATASET_TYPE|DIRECTION|AUTOMATED_TRANSLATION_FLAG|COORDSYS_AWARE|FILTER|FORMAT_TYPE|USE_NATIVE_SPATIAL_INDEX|SOURCE_SETTINGS|DESTINATION_SETTINGS|VISIBLE|MIN_VERSION|MAX_VERSION|FORMAT_FAMILY|HAS_SIDECARS|MARKETING_FAMILY|FORMAT_CATEGORIES"
@@ -51,9 +50,7 @@ def parse_formatinfo(line) -> FormatInfo:
     parts = line.strip().split("|")
     if len(parts) not in [num_columns, num_required_columns]:
         raise ValueError(
-            "FormatInfo has {} elements, but expects at least {}".format(
-                len(parts), num_required_columns
-            )
+            f"FormatInfo has {len(parts)} elements, but expects at least {num_required_columns}"
         )
     return FormatInfo(*parts)
 
@@ -75,9 +72,7 @@ TREE_COPY_IGNORE_GLOBS = [
 ]
 
 
-def extract_fpkg(
-    fpkg_file_path: Union[str, os.PathLike], dest_dir: Union[str, os.PathLike]
-) -> None:
+def extract_fpkg(fpkg_file_path: str | os.PathLike, dest_dir: str | os.PathLike) -> None:
     """
     Extract .fpkg file to a directory.
     """
