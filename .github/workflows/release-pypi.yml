@@ -4,17 +4,18 @@ on:
     types: [created]
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+    if: github.server_url == 'https://github.com'
     permissions:
       id-token: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: '3.x'
     - name: Install
-      run: pip install .[dev]
+      run: pip install --group dev -e .
     - name: Run tests
       run: pytest
     - name: Build
