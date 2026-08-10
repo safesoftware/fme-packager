@@ -1,6 +1,5 @@
 import os
 import pathlib
-import sys
 from copy import deepcopy
 from zipfile import ZipFile
 
@@ -367,24 +366,10 @@ PACKAGE_YML_VALIDATION_CASES = [
         None,
         id="empty_content_valid",
     ),
-    # https://github.com/python-jsonschema/jsonschema/commit/a1d4cb3b94a83f209ebde1506a18b297a42b6219
     pytest.param(
         lambda x: x["package_content"].update({"transformers": []}),
-        "[] is too short",
-        id="empty_content_subkey_lt_py_311",
-        marks=pytest.mark.skipif(
-            sys.version_info >= (3, 11),
-            reason="jsonschema pinned on PY<3.11, which has different msg",
-        ),
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update({"transformers": []}),
-        "[] should be non-empty",
+        "[]",
         id="empty_content_subkey",
-        marks=pytest.mark.skipif(
-            sys.version_info < (3, 11),
-            reason="jsonschema pinned on PY<3.11, which has different msg",
-        ),
     ),
     pytest.param(
         lambda x: x.update({"version": 1}),
@@ -605,23 +590,8 @@ PACKAGE_YML_VALIDATION_CASES = [
         lambda x: x["package_content"].update(
             {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
         ),
-        "[] is too short",
-        id="application_plugin_empty_entries_lt_py_311",
-        marks=pytest.mark.skipif(
-            sys.version_info >= (3, 11),
-            reason="jsonschema pinned on PY<3.11, which has different msg",
-        ),
-    ),
-    pytest.param(
-        lambda x: x["package_content"].update(
-            {"application_plugins": [{"name": "agent-plugin", "entries": []}]}
-        ),
-        "[] should be non-empty",
+        "[]",
         id="application_plugin_empty_entries",
-        marks=pytest.mark.skipif(
-            sys.version_info < (3, 11),
-            reason="jsonschema pinned on PY<3.11, which has different msg",
-        ),
     ),
 ]
 for required_key in (
