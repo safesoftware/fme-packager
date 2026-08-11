@@ -1,5 +1,9 @@
 # fme-packager changes
 
+## 1.20.2
+
+* CI: Fix PyPI release workflow.
+
 ## 1.20.1
 
 * CI: Drop Python 3.9 and add Python 3.14. (FMEENGINE-99235)

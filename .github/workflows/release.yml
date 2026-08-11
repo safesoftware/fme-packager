@@ -4,7 +4,7 @@ on:
     types: [created]
 jobs:
   pypi:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     if: github.server_url == 'https://github.com'
     permissions:
       contents: write
@@ -26,6 +26,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
     - name: Release to PyPI
+      # Needs docker, which is not on ubuntu-slim
       uses: pypa/gh-action-pypi-publish@release/v1
   internal:
     runs-on: [self-hosted]
