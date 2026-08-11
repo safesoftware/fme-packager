@@ -1,11 +1,10 @@
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 from ruamel.yaml import YAML
 
 
-def load_fpkg_metadata(fpkg_path: Union[str, os.PathLike]):
+def load_fpkg_metadata(fpkg_path: str | os.PathLike):
     """
     Load package.yml as a FMEPackageMetadata object.
 
@@ -124,7 +123,7 @@ class FMEPackageMetadata:
         return self.dict["minimum_fme_build"]
 
     @property
-    def unsupported_from_build(self) -> Optional[int]:
+    def unsupported_from_build(self) -> int | None:
         return self.dict.get("unsupported_from_build", None)
 
     @property

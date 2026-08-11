@@ -1,0 +1,53 @@
+name: Build and release wheel to Python package indexes
+on:
+  release:
+    types: [created]
+jobs:
+  pypi:
+    runs-on: ubuntu-slim
+    if: github.server_url == 'https://github.com'
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+    - uses: actions/checkout@v7
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.x'
+    - name: Install
+      run: pip install --group dev -e .
+    - name: Run tests
+      run: pytest
+    - name: Build
+      run: python -m build
+    - name: Attach wheel to GitHub release
+      run: gh release upload "${{ github.event.release.tag_name }}" dist/*.whl --clobber
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - name: Release to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+  internal:
+    runs-on: [self-hosted]
+    if: github.server_url != 'https://github.com'
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install
+      run: uv sync
+    - name: Run tests
+      run: uv run pytest
+    - name: Build
+      run: uv build --wheel
+    - name: Attach wheel to GitHub release
+      run: gh release upload "${{ github.event.release.tag_name }}" dist/*.whl --clobber
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_ENTERPRISE_TOKEN: ${{ github.token }}
+    - name: Release to internal package index
+      run: uv publish
+      env:
+        UV_PUBLISH_URL: ${{ vars.UV_PUBLISH_URL }}
+        UV_PUBLISH_USERNAME: ${{ secrets.UV_PUBLISH_USERNAME }}
+        UV_PUBLISH_PASSWORD: ${{ secrets.UV_PUBLISH_PASSWORD }}

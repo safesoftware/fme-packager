@@ -16,7 +16,7 @@ class FMEVerifier:
         success, message = True, "valid"
         try:
             self._unzip_and_build()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             success, message = False, str(e)
 
         if self.output_json:
